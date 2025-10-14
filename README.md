@@ -16,10 +16,10 @@ go get github.com/renatopp/go-cli
 import "github.com/renatopp/go-cli"
 
 func main() {
-	cli.Name("hello")
+  cli.Name("hello")
   cli.Description("Prints a classical message.")
   cli.AutoHelp()
-	cli.Parse()
+  cli.Parse()
   println("Hello, World!")
 }
 ```
@@ -53,11 +53,11 @@ All flags have long and short names, following a description, example: `Flag(lon
 import "github.com/renatopp/go-cli"
 
 func main() {
-	cli.Name("hello")
+  cli.Name("hello")
   cli.Description("Prints a classical message.")
   cli.AutoHelp()
   name := cli.Flag("name", "n", "Your name.").WithDefault("World")
-	cli.Parse()
+  cli.Parse()
   println("Hello, " + name.Value + "!")
 }
 ```
@@ -93,12 +93,12 @@ Positional arguments works similarly to flags, you can define them with the foll
 import "github.com/renatopp/go-cli"
 
 func main() {
-	cli.Name("hello")
+  cli.Name("hello")
   cli.AutoHelp()
   verbose := cli.FlagBool("verbose", "v", "Verbose logs")
   first := cli.Pos(0, "input", "The config file").WithDefault("config.yaml")
   second := cli.Pos(1, "output", "The output file").WithDefault("output.yaml")
-	cli.Parse()
+  cli.Parse()
   if verbose.Value {
     println(first.Value, "->", second.Value)
   }
@@ -134,8 +134,8 @@ You can define sub commands recursively using the same functions for flags and p
 import "github.com/renatopp/go-cli"
 
 func main() {
-	cli.Name("hello")
-	cli.AutoHelp()
+  cli.Name("hello")
+  cli.AutoHelp()
   cli.Cmd("version", "Show the version.", cmdVersion)
   cli.Cmd("greet", "Greet someone", cmdGreet)
   cli.Parse()
