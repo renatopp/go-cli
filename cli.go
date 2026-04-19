@@ -106,6 +106,28 @@ func FlagInt64(long, short, description string) *internal.Int64Flag {
 	return flag
 }
 
+// FlagUint registers an unsigned integer flag option for the current command.
+// Flags capture user input in the form of --flag=value or -f value.
+//
+// The UintFlag will attempt to parse the provided value as an unsigned integer,
+// and if parsing fails, go-cli will handle the error appropriately.
+func FlagUint(long, short, description string) *internal.UintFlag {
+	flag := internal.NewUintFlag(long, short, description)
+	internal.GetCmd().WithFlag(flag)
+	return flag
+}
+
+// FlagUint64 registers a 64-bit unsigned integer flag option for the current command.
+// Flags capture user input in the form of --flag=value or -f value.
+//
+// The Uint64Flag will attempt to parse the provided value as a 64-bit unsigned integer,
+// and if parsing fails, go-cli will handle the error appropriately.
+func FlagUint64(long, short, description string) *internal.Uint64Flag {
+	flag := internal.NewUint64Flag(long, short, description)
+	internal.GetCmd().WithFlag(flag)
+	return flag
+}
+
 // FlagFloat registers a floating-point flag option for the current command.
 // Flags capture user input in the form of --flag=value or -f value.
 //

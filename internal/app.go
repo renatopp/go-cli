@@ -64,13 +64,13 @@ func (a *App) Help() {
 		opts = " [options]"
 	}
 
-	positionals := " "
+	positionals := ""
 	for _, p := range a.cmd.positionals {
 		if p.IsRequired() {
-			positionals += "<" + p.Name() + ">"
+			positionals += " <" + p.Name() + ">"
 			continue
 		}
-		positionals += "[" + p.Name() + "]"
+		positionals += " [<" + p.Name() + ">]"
 	}
 
 	writer := NewDefaultTypewriter()
@@ -92,10 +92,14 @@ func (a *App) Help() {
 				opts = fmt.Sprintf("--%s", f.Long())
 			}
 			desc := f.Description()
+			req := ""
 			if f.IsRequired() {
-				desc += " Required."
+				req = "(required) "
+			} else if f.HasDefault() {
+				req = fmt.Sprintf("(default=%v) ", f.DefaultValue())
 			}
-			writer.WriteLine("  %s\t%s", opts, desc)
+
+			writer.WriteLine("  %s\t%s%s", opts, req, desc)
 		}
 	}
 
@@ -106,6 +110,20 @@ func (a *App) Help() {
 			writer.WriteLine("  %s\t%s", cmd.name, cmd.shortDescription)
 		}
 	}
+
+	if len(a.cmd.positionals) > 0 {
+		writer.WriteLine("")
+		writer.WriteLine("Positionals:")
+		for _, p := range a.cmd.positionals {
+			desc := p.Description()
+			req := ""
+			if p.IsRequired() {
+				req = "(required) "
+			}
+			writer.WriteLine("  %s\t%s%s", p.Name(), req, desc)
+		}
+	}
+
 	s := writer.Flush()
 	a.printf(s[:len(s)-1])
 }
@@ -149,7 +167,7 @@ func (a *App) parseArguments() {
 		os.Exit(0)
 	}
 	if err != nil {
-		println(err.Error())
+		a.printf("%v", err.Error())
 		os.Exit(1)
 	}
 	a.arguments = args

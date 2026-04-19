@@ -33,9 +33,13 @@ func (f *FloatFlag) fromString(value string) error {
 }
 func (f *FloatFlag) WithDefault(value float64) *FloatFlag {
 	f.Value = value
+	f.BaseFlag.defaultSet = true
 	return f
 }
 func (f *FloatFlag) AsRequired() *FloatFlag {
 	f.BaseFlag.required = true
 	return f
+}
+func (f *FloatFlag) DefaultValue() string {
+	return fmt.Sprintf("%f", f.Value)
 }

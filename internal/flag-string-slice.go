@@ -1,6 +1,9 @@
 package internal
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 type StringSliceFlag struct {
 	*BaseFlag
@@ -26,9 +29,13 @@ func (f *StringSliceFlag) fromString(value string) error {
 }
 func (f *StringSliceFlag) WithDefault(value []string) *StringSliceFlag {
 	f.Value = value
+	f.BaseFlag.defaultSet = true
 	return f
 }
 func (f *StringSliceFlag) AsRequired() *StringSliceFlag {
 	f.BaseFlag.required = true
 	return f
+}
+func (f *StringSliceFlag) DefaultValue() string {
+	return fmt.Sprintf("\"%s\"", strings.Join(f.Value, ","))
 }

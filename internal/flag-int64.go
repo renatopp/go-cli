@@ -33,9 +33,13 @@ func (f *Int64Flag) fromString(value string) error {
 }
 func (f *Int64Flag) WithDefault(value int64) *Int64Flag {
 	f.Value = value
+	f.BaseFlag.defaultSet = true
 	return f
 }
 func (f *Int64Flag) AsRequired() *Int64Flag {
 	f.BaseFlag.required = true
 	return f
+}
+func (f *Int64Flag) DefaultValue() string {
+	return fmt.Sprintf("%d", f.Value)
 }

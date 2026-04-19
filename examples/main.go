@@ -50,10 +50,11 @@ func cmdRepeat() {
 	cli.Description("Repeat the provided message.")
 	message := cli.PosString(0, "message", "The message to repeat.").AsRequired()
 	times := cli.FlagInt("times", "t", "Number of times to repeat the message.").WithDefault(2)
+	prefix := cli.FlagString("prefix", "p", "A prefix to add before the message.")
 	cli.Parse()
 
 	for i := 0; i < times.Value; i++ {
-		println(message.Value)
+		println(prefix.Value + message.Value)
 	}
 }
 

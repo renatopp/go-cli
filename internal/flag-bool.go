@@ -33,9 +33,13 @@ func (f *BoolFlag) fromString(value string) error {
 }
 func (f *BoolFlag) WithDefault(value bool) *BoolFlag {
 	f.Value = value
+	f.BaseFlag.defaultSet = true
 	return f
 }
 func (f *BoolFlag) AsRequired() *BoolFlag {
 	f.BaseFlag.required = true
 	return f
+}
+func (f *BoolFlag) DefaultValue() string {
+	return fmt.Sprintf("%t", f.Value)
 }

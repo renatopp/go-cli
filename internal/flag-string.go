@@ -1,5 +1,7 @@
 package internal
 
+import "fmt"
+
 type StringFlag struct {
 	*BaseFlag
 	Value string
@@ -24,9 +26,13 @@ func (f *StringFlag) fromString(value string) error {
 }
 func (f *StringFlag) WithDefault(value string) *StringFlag {
 	f.Value = value
+	f.BaseFlag.defaultSet = true
 	return f
 }
 func (f *StringFlag) AsRequired() *StringFlag {
 	f.BaseFlag.required = true
 	return f
+}
+func (f *StringFlag) DefaultValue() string {
+	return fmt.Sprintf("\"%s\"", f.Value)
 }

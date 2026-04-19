@@ -10,6 +10,7 @@ type BaseFlag struct {
 	parsed      bool
 	required    bool
 	set         bool
+	defaultSet  bool
 }
 
 func (f *BaseFlag) acceptsValue() bool  { return true }
@@ -20,6 +21,7 @@ func (f *BaseFlag) Short() string       { return f.short }
 func (f *BaseFlag) Description() string { return f.description }
 func (f *BaseFlag) IsSet() bool         { return f.set }
 func (f *BaseFlag) Raw() string         { return f.raw }
+func (f *BaseFlag) HasDefault() bool    { return f.defaultSet }
 func (f *BaseFlag) IsRequired() bool    { return f.required }
 func (f *BaseFlag) Signature() string {
 	if f.Long() != "" && f.Short() != "" {
@@ -46,4 +48,6 @@ type Flag interface {
 	Raw() string
 	IsRequired() bool
 	Signature() string
+	HasDefault() bool
+	DefaultValue() string
 }
