@@ -1,6 +1,9 @@
 package internal
 
-import "strconv"
+import (
+	"fmt"
+	"strconv"
+)
 
 type IntPositional struct {
 	*BasePositional
@@ -22,6 +25,9 @@ func (f *IntPositional) fromString(value string) error {
 	f.BasePositional.set = true
 	val, err := strconv.Atoi(value)
 	f.Value = val
+	if err != nil {
+		err = fmt.Errorf("invalid integer value for positional argument '%s': %v", f.Name(), value)
+	}
 	return err
 }
 func (f *IntPositional) WithDefault(value int) *IntPositional {

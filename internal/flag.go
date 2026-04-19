@@ -1,5 +1,7 @@
 package internal
 
+import "fmt"
+
 type BaseFlag struct {
 	long        string
 	short       string
@@ -19,6 +21,18 @@ func (f *BaseFlag) Description() string { return f.description }
 func (f *BaseFlag) IsSet() bool         { return f.set }
 func (f *BaseFlag) Raw() string         { return f.raw }
 func (f *BaseFlag) IsRequired() bool    { return f.required }
+func (f *BaseFlag) Signature() string {
+	if f.Long() != "" && f.Short() != "" {
+		return fmt.Sprintf("--%s, -%s", f.Long(), f.Short())
+	}
+	if f.Long() != "" {
+		return fmt.Sprintf("--%s", f.Long())
+	}
+	if f.Short() != "" {
+		return fmt.Sprintf("-%s", f.Short())
+	}
+	return ""
+}
 
 type Flag interface {
 	acceptsValue() bool
@@ -31,4 +45,5 @@ type Flag interface {
 	IsSet() bool
 	Raw() string
 	IsRequired() bool
+	Signature() string
 }

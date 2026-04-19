@@ -1,6 +1,9 @@
 package internal
 
-import "strconv"
+import (
+	"fmt"
+	"strconv"
+)
 
 type Int64Flag struct {
 	*BaseFlag
@@ -23,6 +26,9 @@ func (f *Int64Flag) fromString(value string) error {
 	f.BaseFlag.set = true
 	val, err := strconv.ParseInt(value, 10, 64)
 	f.Value = val
+	if err != nil {
+		err = fmt.Errorf("invalid int64 value for flag `%s`: %v", f.Signature(), value)
+	}
 	return err
 }
 func (f *Int64Flag) WithDefault(value int64) *Int64Flag {

@@ -1,6 +1,9 @@
 package internal
 
-import "strconv"
+import (
+	"fmt"
+	"strconv"
+)
 
 type FloatFlag struct {
 	*BaseFlag
@@ -23,6 +26,9 @@ func (f *FloatFlag) fromString(value string) error {
 	f.BaseFlag.set = true
 	val, err := strconv.ParseFloat(value, 64)
 	f.Value = val
+	if err != nil {
+		err = fmt.Errorf("invalid float value for flag `%s`: %v", f.Signature(), value)
+	}
 	return err
 }
 func (f *FloatFlag) WithDefault(value float64) *FloatFlag {

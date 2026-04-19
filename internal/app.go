@@ -13,7 +13,7 @@ type App struct {
 	path        []string
 	arguments   *Arguments
 	cmd         *Command
-	restrict    bool
+	strict      bool
 	autoHelp    bool
 	printf      func(format string, a ...any)
 
@@ -21,8 +21,8 @@ type App struct {
 	parsed      bool
 }
 
-func (a *App) WithRestrict(restrict bool) *App {
-	a.restrict = restrict
+func (a *App) WithStrict(strict bool) *App {
+	a.strict = strict
 	return a
 }
 
@@ -143,7 +143,7 @@ func (a *App) Parse() {
 }
 
 func (a *App) parseArguments() {
-	args, err := parseArguments(a.currentRaw, a.cmd.positionals, a.cmd.flags, a.restrict)
+	args, err := parseArguments(a.currentRaw, a.cmd.positionals, a.cmd.flags, a.strict)
 	if args != nil && args.HasHelp && a.autoHelp {
 		a.Help()
 		os.Exit(0)

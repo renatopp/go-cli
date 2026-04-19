@@ -1,6 +1,6 @@
 package internal
 
-import "errors"
+import "fmt"
 
 type BoolFlag struct {
 	*BaseFlag
@@ -29,7 +29,7 @@ func (f *BoolFlag) fromString(value string) error {
 		f.Value = false
 		return nil
 	}
-	return errors.New("invalid boolean value")
+	return fmt.Errorf("invalid boolean value for flag `%s`: %v", f.Signature(), value)
 }
 func (f *BoolFlag) WithDefault(value bool) *BoolFlag {
 	f.Value = value

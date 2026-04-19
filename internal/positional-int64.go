@@ -1,6 +1,9 @@
 package internal
 
-import "strconv"
+import (
+	"fmt"
+	"strconv"
+)
 
 type Int64Positional struct {
 	*BasePositional
@@ -22,6 +25,9 @@ func (f *Int64Positional) fromString(value string) error {
 	f.BasePositional.set = true
 	val, err := strconv.ParseInt(value, 10, 64)
 	f.Value = val
+	if err != nil {
+		err = fmt.Errorf("invalid int64 value for positional argument '%s': %v", f.Name(), value)
+	}
 	return err
 }
 func (f *Int64Positional) WithDefault(value int64) *Int64Positional {

@@ -6,20 +6,63 @@ import (
 	"github.com/renatopp/go-cli/internal"
 )
 
-func Parse()               { internal.GetApp().Parse() }
-func Exit(code int)        { os.Exit(code) }
-func Clear()               { internal.Clear() }
-func ShowHelp()            { internal.GetApp().Help() }
-func Name(n string)        { internal.GetCmd().WithName(n) }
+// Parse processes the command-line arguments provided by the user and executes
+// the appropriate command based on the defined command structure. This function
+// should be called after all commands, flags, and positional arguments have
+// been defined.
+//
+// Subcommands are executed based on the first argument that matches a defined
+// name, interrupting the execution of code after the Parse() call on the
+// parent commands.
+func Parse() { internal.GetApp().Parse() }
+
+// Exit terminates the program with the provided exit code. An exit code of 0
+// typically indicates successful execution, while a non-zero exit code
+// indicates an error or abnormal termination.
+func Exit(code int) { os.Exit(code) }
+
+// Clear resets the state of the CLI, allowing users to define a new command
+// structure and configuration. This can be useful in scenarios where you want to
+// reuse the same CLI instance for different commands or when you want to reset
+// the CLI state after executing a command.
+func Clear() { internal.Clear() }
+
+// ShowHelp displays the help text for the current command.
+func ShowHelp() { internal.GetApp().Help() }
+
+// Name sets the name for the current command. The name is used in help text
+// to identify the command and its usage. Use only its immediate name (e.g.
+// "version" instead of "app version") since the command hierarchy is
+// automatically handled by go-cli.
+func Name(n string) { internal.GetCmd().WithName(n) }
+
+// Description sets the description for the current command. Descriptions are
+// used in help text to provide more information about the command and its
+// purpose.
 func Description(d string) { internal.GetCmd().WithDescription(d) }
-func Restricted()          { internal.GetApp().WithRestrict(true) }
-func AutoHelp()            { internal.GetApp().WithAutoHelp(true) }
+
+// Restricted enables strict mode for the current command. When enabled, go-cli
+// will return an error if the user provides any unexpected positional
+// arguments or flags that are not defined for the command.
+func Restricted() { internal.GetApp().WithStrict(true) }
+
+// AutoHelp enables automatic help generation for the current command. When
+// enabled, go-cli will automatically generate help text for the command based
+// on its configuration when the flag --help, -h are provided.
+func AutoHelp() { internal.GetApp().WithAutoHelp(true) }
+
+// PrintWith allows users to provide a custom print function for outputting
+// messages, such as help text or error messages. This can be useful for
+// redirecting output to a different destination (e.g., a file or a logger) or
+// for customizing the formatting of the output.
 func PrintWith(printf func(format string, a ...any)) {
 	internal.GetApp().WithPrintFunc(printf)
 }
 
 //
 
+// Command registers a new subcommand within current command, allowing nested
+// subcommand structures.
 func Command(name, shortDescription string, execute func()) *internal.Command {
 	cmd := internal.NewCommand().
 		WithName(name).
@@ -28,94 +71,155 @@ func Command(name, shortDescription string, execute func()) *internal.Command {
 	internal.GetCmd().WithSubcommand(cmd)
 	return cmd
 }
+
+// Cmd is an alias for Command, provided for convenience and readability.
 func Cmd(name, shortDescription string, execute func()) *internal.Command {
 	return Command(name, shortDescription, execute)
 }
 
-//
+// Flag registers a flag option for the current command. This is an alias
+// for FlagString. Flags capture user input in the form of --flag=value or -f
+// value.
+func Flag(long, short, description string) *internal.StringFlag {
+	return FlagString(long, short, description)
+}
 
+// FlagInt registers an integer flag option for the current command. Flags
+// capture user input in the form of --flag=value or -f value.
+//
+// The IntFlag will attempt to parse the provided value as an integer, and if
+// parsing fails, go-cli will handle the error appropriately.
 func FlagInt(long, short, description string) *internal.IntFlag {
 	flag := internal.NewIntFlag(long, short, description)
 	internal.GetCmd().WithFlag(flag)
 	return flag
 }
 
+// FlagInt64 registers a 64-bit integer flag option for the current command.
+// Flags capture user input in the form of --flag=value or -f value.
+//
+// The Int64Flag will attempt to parse the provided value as a 64-bit integer,
+// and if parsing fails, go-cli will handle the error appropriately.
 func FlagInt64(long, short, description string) *internal.Int64Flag {
 	flag := internal.NewInt64Flag(long, short, description)
 	internal.GetCmd().WithFlag(flag)
 	return flag
 }
 
+// FlagFloat registers a floating-point flag option for the current command.
+// Flags capture user input in the form of --flag=value or -f value.
+//
+// The FloatFlag will attempt to parse the provided value as a floating-point
+// number, and if parsing fails, go-cli will handle the error appropriately.
 func FlagFloat(long, short, description string) *internal.FloatFlag {
 	flag := internal.NewFloatFlag(long, short, description)
 	internal.GetCmd().WithFlag(flag)
 	return flag
 }
 
+// FlagBool registers a boolean flag option for the current command. Flags
+// capture user input in the form of --flag or -f. Short boolean flags DO NOT
+// ACCEPT argument but they can be  merged into a single argument (e.g., -abc
+// is equivalent to -a -b -c). Long boolean flags receive an optional argument
+// that will be parsed, possible values are "true", "false", "1", "0". If no
+// argument is provided the flag will be set to true.
 func FlagBool(long, short, description string) *internal.BoolFlag {
 	flag := internal.NewBoolFlag(long, short, description)
 	internal.GetCmd().WithFlag(flag)
 	return flag
 }
 
+// FlagStringSlice registers a string slice flag option for the current command.
+// String slices are strings split by comma so the user can provide multiple
+// values in a single flag (e.g., --flag=value1,value2,value3). Flags capture
+// user input in the form of --flag=value or -f value.
 func FlagStringSlice(long, short, description string) *internal.StringSliceFlag {
 	flag := internal.NewStringSliceFlag(long, short, description)
 	internal.GetCmd().WithFlag(flag)
 	return flag
 }
 
+// FlagString registers a string flag option for the current command. Flags
+// capture user input in the form of --flag=value or -f value.
 func FlagString(long, short, description string) *internal.StringFlag {
 	flag := internal.NewStringFlag(long, short, description)
 	internal.GetCmd().WithFlag(flag)
 	return flag
 }
 
-func Flag(long, short, description string) *internal.StringFlag {
-	return FlagString(long, short, description)
-}
-
-//
-
-func PosInt(index int, name, description string) *internal.StringPositional {
-	arg := internal.NewStringPositional(index, name, description)
-	internal.GetCmd().WithPositional(arg)
-	return arg
-}
-
-func PosInt64(index int, name, description string) *internal.Int64Positional {
-	arg := internal.NewInt64Positional(index, name, description)
-	internal.GetCmd().WithPositional(arg)
-	return arg
-}
-
-func PosFloat(index int, name, description string) *internal.FloatPositional {
-	arg := internal.NewFloatPositional(index, name, description)
-	internal.GetCmd().WithPositional(arg)
-	return arg
-}
-
-func PosString(index int, name, description string) *internal.StringPositional {
-	arg := internal.NewStringPositional(index, name, description)
-	internal.GetCmd().WithPositional(arg)
-	return arg
-}
-
+// Pos registers a string positional argument for the current command. Positional
+// arguments capture user input based on their position in the command line. For
+// example, in the command "app command arg1 arg2", "arg1" and "arg2" are
+// positional arguments.
 func Pos(index int, name, description string) *internal.StringPositional {
 	arg := internal.NewStringPositional(index, name, description)
 	internal.GetCmd().WithPositional(arg)
 	return arg
 }
 
-//
+// PosInt registers an integer positional argument for the current command.
+// Positional arguments capture user input based on their position in the
+// command line. For example, in the command "app command arg1 arg2", "arg1"
+// and "arg2" are positional arguments.
+// The PosInt positional will attempt to parse the provided value as an integer,
+// and if parsing fails, go-cli will handle the error appropriately.
+func PosInt(index int, name, description string) *internal.IntPositional {
+	arg := internal.NewIntPositional(index, name, description)
+	internal.GetCmd().WithPositional(arg)
+	return arg
+}
 
+// PosInt64 registers an integer positional argument for the current command.
+// Positional arguments capture user input based on their position in the
+// command line. For example, in the command "app command arg1 arg2", "arg1"
+// and "arg2" are positional arguments.
+// The PosInt64 positional will attempt to parse the provided value as an integer,
+// and if parsing fails, go-cli will handle the error appropriately.
+func PosInt64(index int, name, description string) *internal.Int64Positional {
+	arg := internal.NewInt64Positional(index, name, description)
+	internal.GetCmd().WithPositional(arg)
+	return arg
+}
+
+// PosFloat registers a floating-point positional argument for the current command.
+// Positional arguments capture user input based on their position in the
+// command line. For example, in the command "app command arg1 arg2", "arg1"
+// and "arg2" are positional arguments.
+// The PosFloat positional will attempt to parse the provided value as a
+// floating-point number, and if parsing fails, go-cli will handle the error
+// appropriately.
+func PosFloat(index int, name, description string) *internal.FloatPositional {
+	arg := internal.NewFloatPositional(index, name, description)
+	internal.GetCmd().WithPositional(arg)
+	return arg
+}
+
+// PosString registers a string positional argument for the current command.
+// Positional arguments capture user input based on their position in the
+// command line. For example, in the command "app command arg1 arg2", "arg1"
+// and "arg2" are positional arguments.
+func PosString(index int, name, description string) *internal.StringPositional {
+	arg := internal.NewStringPositional(index, name, description)
+	internal.GetCmd().WithPositional(arg)
+	return arg
+}
+
+// NArgs returns the number of positional arguments provided by the user.
+// Should be used only after Parse() is called, otherwise it will return 0.
 func NArgs() int {
 	return internal.GetApp().NArgs()
 }
 
+// Arg retrieves the value of a positional argument by its index.
+// Should be used only after Parse() is called, otherwise it will return an
+// empty string.
 func Arg(index int) string {
 	return internal.GetApp().Arg(index)
 }
 
+// Args retrieves all positional arguments provided by the user.
+// Should be used only after Parse() is called, otherwise it will return an
+// empty slice.
 func Args() []string {
 	return internal.GetApp().Args()
 }

@@ -1,6 +1,9 @@
 package internal
 
-import "strconv"
+import (
+	"fmt"
+	"strconv"
+)
 
 type IntFlag struct {
 	*BaseFlag
@@ -23,6 +26,9 @@ func (f *IntFlag) fromString(value string) error {
 	f.BaseFlag.set = true
 	val, err := strconv.Atoi(value)
 	f.Value = val
+	if err != nil {
+		err = fmt.Errorf("invalid integer value for flag `%s`: %v", f.Signature(), value)
+	}
 	return err
 }
 func (f *IntFlag) WithDefault(value int) *IntFlag {

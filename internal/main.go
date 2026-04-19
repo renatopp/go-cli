@@ -12,8 +12,8 @@ func init() {
 
 func Clear() {
 	app = &App{
-		cmd:      NewCommand(),
-		restrict: false,
+		cmd:    NewCommand(),
+		strict: false,
 		printf: func(format string, a ...any) {
 			fmt.Printf(format+"\n", a...)
 		},

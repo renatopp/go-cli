@@ -41,23 +41,31 @@ func parseArguments(raw []string, args []Positional, flags []Flag, strict bool) 
 	if err := arguments.parse(); err != nil {
 		return nil, err
 	}
+
+	errs := []error{}
 	for _, positional := range arguments.Positionals {
 		positional.setParsed()
 		if positional.IsRequired() && !positional.IsSet() {
-			return nil, errors.New("missing required positional argument: " + positional.Name())
+			errs = append(errs, errors.New("missing required positional argument: "+positional.Name()))
 		}
 	}
 	for _, flag := range arguments.Flags {
 		flag.setParsed()
 		if flag.IsRequired() && !flag.IsSet() {
 			if flag.Long() != "" {
-				return arguments, errors.New("missing required flag: --" + flag.Long())
+				errs = append(errs, errors.New("missing required flag: --"+flag.Long()))
+				break
 			}
 			if flag.Short() != "" {
-				return arguments, errors.New("missing required flag: -" + flag.Short())
+				errs = append(errs, errors.New("missing required flag: -"+flag.Short()))
+				break
 			}
-			return arguments, errors.New("missing required flag")
+			errs = append(errs, errors.New("missing required flag"))
 		}
+	}
+
+	if len(errs) > 0 {
+		return arguments, errors.Join(errs...)
 	}
 	return arguments, nil
 }
@@ -260,6 +268,9 @@ func (a *Arguments) parsePositional(arg string) error {
 	index := len(a.Args)
 	positional, ok := a.Positionals[index-1]
 	if !ok {
+		if a.strict {
+			return errors.New("unexpected positional argument: " + arg)
+		}
 		return nil
 	}
 	if positional.IsSet() {
