@@ -6,6 +6,13 @@ type App struct {
 	queue          []string // the queue of arguments to be parsed
 	rootCommand    *Command
 	currentCommand *Command
+	arguments      *Arguments // parsed arguments
+	stdout         func(format string, a ...any)
+	stderr         func(format string, a ...any)
+
+	allowUnknownFlags       bool
+	allowUnknownPositionals bool
+	allowRepeatedFlags      bool
 }
 
 func NewApp() *App {
@@ -18,21 +25,21 @@ func (a *App) Clear() {
 	a.queue = os.Args[1:]
 	a.rootCommand = NewCommand()
 	a.currentCommand = a.rootCommand
+	a.arguments = nil
 }
 
 func (a *App) RootCommand() *Command    { return a.rootCommand }
 func (a *App) CurrentCommand() *Command { return a.currentCommand }
-
-// func (a *App) Arguments() *Arguments    { return a.arguments }
-// func (a *App) IsParsed() bool           { return a.arguments != nil }
-func (a *App) Exit(code int) { os.Exit(code) }
+func (a *App) Arguments() *Arguments    { return a.arguments }
+func (a *App) IsParsed() bool           { return a.arguments != nil }
+func (a *App) Exit(code int)            { os.Exit(code) }
 
 // Parse is called for every command in the path.
 func (a *App) Parse() {
 	// Check if already parsed
-	// if a.IsParsed() {
-	// 	return
-	// }
+	if a.IsParsed() {
+		return
+	}
 
 	// Check new subcommand
 	if len(a.queue) > 0 {
@@ -57,6 +64,11 @@ func (a *App) Parse() {
 	}
 
 	// Parse the flags and positionals of the stack
-	// args, err := parseArguments(a.queue, a)
-	parseArguments(a)
+	args, err := parseArguments(a)
+	if err != nil {
+		// TODO: print the error in a better way, e.g., with colors and formatting
+		a.stderr("%v", err.Error())
+		os.Exit(1)
+	}
+	a.arguments = args
 }

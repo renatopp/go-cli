@@ -9,73 +9,47 @@ func init() {
 	app = v2.NewApp()
 }
 
+// Name sets the name for the current command. The name is used in help text
+// to identify the command and its usage. Use only its immediate name (e.g.
+// "version" instead of "app version") since the command hierarchy is
+// automatically handled by go-cli.
 func Name(n string) {
 	app.CurrentCommand().WithName(n)
 }
+
+// Description sets the description for the current command. Descriptions are
+// used in help text to provide more information about the command and its
+// purpose.
 func Description(d string) {
 	app.CurrentCommand().WithDescription(d)
 }
+
+// Parse processes the command-line arguments provided by the user and executes
+// the appropriate command based on the defined command structure. This function
+// should be called after all commands, flags, and positional arguments have
+// been defined.
+//
+// Subcommands are executed based on the first argument that matches a defined
+// name, interrupting the execution of code after the Parse() call on the
+// parent commands.
 func Parse() {
 	app.Parse()
 }
+
+// Clear resets the state of the CLI, allowing users to define a new command
+// structure and configuration. This can be useful in scenarios where you want to
+// reuse the same CLI instance for different commands or when you want to reset
+// the CLI state after executing a command.
+func Clear() {
+	app.Clear()
+}
+
+// Exit terminates the program with the provided exit code. An exit code of 0
+// typically indicates successful execution, while a non-zero exit code
+// indicates an error or abnormal termination.
 func Exit(code int) {
 	app.Exit(code)
 }
-
-// // Parse processes the command-line arguments provided by the user and executes
-// // the appropriate command based on the defined command structure. This function
-// // should be called after all commands, flags, and positional arguments have
-// // been defined.
-// //
-// // Subcommands are executed based on the first argument that matches a defined
-// // name, interrupting the execution of code after the Parse() call on the
-// // parent commands.
-// func Parse() { internal.GetApp().Parse() }
-
-// // Exit terminates the program with the provided exit code. An exit code of 0
-// // typically indicates successful execution, while a non-zero exit code
-// // indicates an error or abnormal termination.
-// func Exit(code int) { os.Exit(code) }
-
-// // Clear resets the state of the CLI, allowing users to define a new command
-// // structure and configuration. This can be useful in scenarios where you want to
-// // reuse the same CLI instance for different commands or when you want to reset
-// // the CLI state after executing a command.
-// func Clear() { internal.Clear() }
-
-// // ShowHelp displays the help text for the current command.
-// func ShowHelp() { internal.GetApp().Help() }
-
-// // Name sets the name for the current command. The name is used in help text
-// // to identify the command and its usage. Use only its immediate name (e.g.
-// // "version" instead of "app version") since the command hierarchy is
-// // automatically handled by go-cli.
-// func Name(n string) { internal.GetCmd().WithName(n) }
-
-// // Description sets the description for the current command. Descriptions are
-// // used in help text to provide more information about the command and its
-// // purpose.
-// func Description(d string) { internal.GetCmd().WithDescription(d) }
-
-// // Restricted enables strict mode for the current command. When enabled, go-cli
-// // will return an error if the user provides any unexpected positional
-// // arguments or flags that are not defined for the command.
-// func Restricted() { internal.GetApp().WithStrict(true) }
-
-// // AutoHelp enables automatic help generation for the current command. When
-// // enabled, go-cli will automatically generate help text for the command based
-// // on its configuration when the flag --help, -h are provided.
-// func AutoHelp() { internal.GetApp().WithAutoHelp(true) }
-
-// // PrintWith allows users to provide a custom print function for outputting
-// // messages, such as help text or error messages. This can be useful for
-// // redirecting output to a different destination (e.g., a file or a logger) or
-// // for customizing the formatting of the output.
-// func PrintWith(printf func(format string, a ...any)) {
-// 	internal.GetApp().WithPrintFunc(printf)
-// }
-
-// //
 
 // // Command registers a new subcommand within current command, allowing nested
 // // subcommand structures.

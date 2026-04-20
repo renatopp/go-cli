@@ -94,6 +94,71 @@ func ParseDuration(s string) (time.Duration, error) {
 	return time.ParseDuration(s)
 }
 
+func ParseIntSlice[T ~int | ~int8 | ~int16 | ~int32 | ~int64](s string) ([]T, error) {
+	parts := strings.Split(s, ",")
+	result := make([]T, len(parts))
+	for i, part := range parts {
+		val, err := ParseInt[T](part)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse int slice: %w", err)
+		}
+		result[i] = val
+	}
+	return result, nil
+}
+
+func ParseUintSlice[T ~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64](s string) ([]T, error) {
+	parts := strings.Split(s, ",")
+	result := make([]T, len(parts))
+	for i, part := range parts {
+		val, err := ParseUint[T](part)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse uint slice: %w", err)
+		}
+		result[i] = val
+	}
+	return result, nil
+}
+
+func ParseFloatSlice[T ~float32 | ~float64](s string) ([]T, error) {
+	parts := strings.Split(s, ",")
+	result := make([]T, len(parts))
+	for i, part := range parts {
+		val, err := ParseFloat[T](part)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse float slice: %w", err)
+		}
+		result[i] = val
+	}
+	return result, nil
+}
+
 func ParseStringSlice(s string) ([]string, error) {
 	return strings.Split(s, ","), nil
+}
+
+func ParseBoolSlice(s string) ([]bool, error) {
+	parts := strings.Split(s, ",")
+	result := make([]bool, len(parts))
+	for i, part := range parts {
+		val, err := ParseBool(part)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse bool slice: %w", err)
+		}
+		result[i] = val
+	}
+	return result, nil
+}
+
+func ParseDurationSlice(s string) ([]time.Duration, error) {
+	parts := strings.Split(s, ",")
+	result := make([]time.Duration, len(parts))
+	for i, part := range parts {
+		val, err := ParseDuration(part)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse duration slice: %w", err)
+		}
+		result[i] = val
+	}
+	return result, nil
 }
