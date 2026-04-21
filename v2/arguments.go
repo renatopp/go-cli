@@ -76,7 +76,7 @@ func parseArguments(app *App) (*Arguments, error) {
 	// check for required flags and positionals
 	for _, flag := range cmd.flags {
 		if flag.IsRequired() && !flag.IsParsed() {
-			return args, fmt.Errorf("missing required flag: --%s", flag.Long())
+			return args, fmt.Errorf("missing required flag %s", flag.Signature())
 		}
 	}
 	for i, positional := range cmd.positionals {
@@ -113,7 +113,7 @@ func (a *Arguments) isFlagToken(token string) bool {
 			return false
 		}
 	}
-	return false
+	return true
 }
 
 // isBooleanFlag checks if the flag object is a boolean flag
@@ -131,9 +131,21 @@ func (a *Arguments) tryGetFlag(name string) (Flag, error) {
 		return flag, nil
 	}
 
-	// TODO: this should be an error, but for now we just ignore unknown flags
+	if a.app.ExtraFlagsAllowed {
+		long := ""
+		short := ""
+		if len(name) == 1 {
+			short = name
+		} else {
+			long = name
+		}
 
-	return nil, nil
+		// If extra flags are allowed, we create a new generic string flag for the unknown flag and add it to the flags map. This allows users to access the value of the extra flag using the same API as regular flags.
+		extraFlag := NewGenericFlag(long, short, "", ParseString)
+		a.flags[name] = extraFlag
+		return extraFlag, nil
+	}
+	return nil, fmt.Errorf("unknown flag %s", name)
 }
 
 // parseFlag parses the flag with the given value. It checks for repeated flags
@@ -142,7 +154,13 @@ func (a *Arguments) parseFlag(name string, value string) error {
 	if flag == nil {
 		return err
 	}
-	// TODO: check for repeated flags if p.allowRepeatedFlags is false
+
+	if flag.IsParsed() {
+		if !a.app.RepeatedFlagsAllowed && !flag.IsRepeatable() {
+			return fmt.Errorf("flag %s was specified multiple times", name)
+		}
+	}
+
 	return flag.Parse(value)
 }
 
@@ -162,10 +180,10 @@ func (a *Arguments) parseLong(token string) error {
 		if a.isBooleanFlag(name) {
 			return a.parseFlag(name, "true")
 		}
+		_, hasFlag := a.flags[name]
 		value, ok := a.next()
-		if !ok {
-			// TODO: this should be an error
-			return a.parseFlag(name, "")
+		if hasFlag && !ok {
+			return fmt.Errorf("missing value for flag %s", name)
 		}
 		return a.parseFlag(name, value)
 	}
@@ -185,10 +203,10 @@ func (a *Arguments) parseShort(token string) error {
 				return a.parseFlag(name, "true")
 			}
 
+			_, hasFlag := a.flags[name]
 			value, ok := a.next()
-			if !ok {
-				// TODO: this should be an error
-				return a.parseFlag(name, "")
+			if hasFlag && !ok {
+				return fmt.Errorf("missing value for flag %s", name)
 			}
 			return a.parseFlag(name, value)
 

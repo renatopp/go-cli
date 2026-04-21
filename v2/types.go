@@ -8,8 +8,11 @@ type Flag interface {
 	Parse(value string) error
 	IsParsed() bool
 	IsRequired() bool
+	IsRepeatable() bool
+	IsRepeated() bool
 	HasDefault() bool
 	RawDefault() string
+	Signature() string
 	SetRawDefault(rawDefault string)
 }
 

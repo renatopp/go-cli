@@ -6,7 +6,8 @@ import "fmt"
 // flags of any types you want but with default behavior.
 type GenericFlag[T any] struct {
 	*BaseFlag
-	value     T                       // the parsed value of the flag, only set after parsing
+	value     T                       // the parsed value of the flag, only set after parsing. In case of repeatable flags, this will hold the last value provided by the user, and all values will be stored in the `values` field below.
+	values    []T                     // the parsed values of a repeatable flag, only set after parsing. For non-repeatable flags, this will be a slice with a single value (the one returned by Value()) or an empty slice if the flag was not provided and has no default.
 	default_  T                       // the default value of the flag
 	parser    func(string) (T, error) // base parser function to convert string input to the desired type
 	validator func(T) error           // custom validator function, provided by the user
@@ -25,11 +26,24 @@ func NewGenericFlag[T any](long, short, description string, parser func(string) 
 }
 
 // Value returns the parsed value OR the default value if there is one.
+// In case of repeatable flags, this will return the last value provided by the
+// user, and all values will be stored in the `Values`.
 func (f *GenericFlag[T]) Value() T {
 	if f.IsParsed() {
 		return f.value
 	}
 	return f.default_
+}
+
+// Values returns the parsed values for a repeatable flag. For non-repeatable flags, this will return a slice with a single value (the one returned by Value()) or an empty slice if the flag was not provided and has no default.
+func (f *GenericFlag[T]) Values() []T {
+	if f.IsParsed() {
+		return f.values
+	}
+	if f.HasDefault() {
+		return []T{f.default_}
+	}
+	return []T{}
 }
 
 // WithDefault sets the default value for the flag.
@@ -54,6 +68,15 @@ func (f *GenericFlag[T]) AsRequired() *GenericFlag[T] {
 	return f
 }
 
+// IsRepeated returns true if the flag has been specified multiple times.
+func (f *GenericFlag[T]) IsRepeated() bool { return len(f.values) > 1 }
+
+// AsRepeatable marks the flag as repeatable, meaning the user can specify it multiple times. All values provided by the user will be stored in a slice of values of type T, which can be accessed using the Values() method. For non-repeatable flags, the Values() method will return a slice with a single value (the one returned by Value()) or an empty slice if the flag was not provided and has no default.
+func (f *GenericFlag[T]) AsRepeatable() *GenericFlag[T] {
+	f.BaseFlag.repeatable = true
+	return f
+}
+
 // Parse implements the parsing logic for the generic flag.
 func (f *GenericFlag[T]) Parse(value string) error {
 	parsedValue, err := f.parser(value)
@@ -62,6 +85,7 @@ func (f *GenericFlag[T]) Parse(value string) error {
 	}
 	f.parsed = true
 	f.value = parsedValue
+	f.values = append(f.values, parsedValue)
 	if f.validator != nil {
 		if err := f.validator(parsedValue); err != nil {
 			return fmt.Errorf("invalid value for flag %s: %v", f.Signature(), value)

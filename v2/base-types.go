@@ -50,8 +50,9 @@ func (f *baseArgument) SetRawDefault(rawDefault string) {
 // (e.g., --name) and/or a short name (e.g., -n).
 type BaseFlag struct {
 	*baseArgument
-	long  string // --name
-	short string // -n
+	long       string // --name
+	short      string // -n
+	repeatable bool   // whether the flag can be specified multiple times
 }
 
 // NewBaseFlag creates a new BaseFlag with the given long name, short name,
@@ -61,8 +62,9 @@ func NewBaseFlag(long string, short string, description string) *BaseFlag {
 		baseArgument: &baseArgument{
 			description: description,
 		},
-		long:  long,
-		short: short,
+		long:       long,
+		short:      short,
+		repeatable: false,
 	}
 }
 
@@ -72,11 +74,14 @@ func (f *BaseFlag) Long() string { return f.long }
 // Short returns the short name of the flag (e.g., "n" for -n).
 func (f *BaseFlag) Short() string { return f.short }
 
+// IsRepeatable returns true if the flag can be specified multiple times.
+func (f *BaseFlag) IsRepeatable() bool { return f.repeatable }
+
 // Signature returns the flag's signature for help text, combining both long
 // and short names if available.
 func (f *BaseFlag) Signature() string {
 	if f.long != "" && f.short != "" {
-		return fmt.Sprintf("--%s, -%s", f.long, f.short)
+		return fmt.Sprintf("-%s, --%s", f.short, f.long)
 	}
 	if f.long != "" {
 		return "--" + f.long

@@ -1,6 +1,8 @@
 package cli
 
 import (
+	"time"
+
 	v2 "github.com/renatopp/go-cli/v2"
 )
 
@@ -24,6 +26,16 @@ func Name(n string) {
 // purpose.
 func Description(d string) {
 	app.CurrentCommand().WithDescription(d)
+}
+
+// ShowHelp prints the help message for the current command, including its description,
+// usage, and available flags and subcommands.
+func ShowHelp() {
+	app.ShowHelp()
+}
+
+func Help() string {
+	return app.GetHelpString()
 }
 
 // Parse processes the command-line arguments provided by the user and executes
@@ -73,187 +85,267 @@ func AllowExtraPositionals(allow bool) {
 	app.ExtraPositionalsAllowed = allow
 }
 
-// // Command registers a new subcommand within current command, allowing nested
-// // subcommand structures.
-// func Command(name, shortDescription string, execute func()) *internal.Command {
-// 	cmd := internal.NewCommand().
-// 		WithName(name).
-// 		WithShortDescription(shortDescription).
-// 		WithExecute(execute)
-// 	internal.GetCmd().WithSubcommand(cmd)
-// 	return cmd
-// }
+func AllowExtraFlags(allow bool) {
+	app.ExtraFlagsAllowed = allow
+}
 
-// // Cmd is an alias for Command, provided for convenience and readability.
-// func Cmd(name, shortDescription string, execute func()) *internal.Command {
-// 	return Command(name, shortDescription, execute)
-// }
+func AllowRepeatedFlags(allow bool) {
+	app.RepeatedFlagsAllowed = allow
+}
 
-// // Flag registers a flag option for the current command. This is an alias
-// // for FlagString. Flags capture user input in the form of --flag=value or -f
-// // value.
-// func Flag(long, short, description string) *internal.StringFlag {
-// 	return FlagString(long, short, description)
-// }
+// NArgs returns the number of positional arguments provided by the user.
+// Should be used only after Parse() is called, otherwise it will return 0.
+func NArgs() int {
+	if !app.IsParsed() {
+		return 0
+	}
+	return len(app.Arguments().Args)
+}
 
-// // FlagInt registers an integer flag option for the current command. Flags
-// // capture user input in the form of --flag=value or -f value.
-// //
-// // The IntFlag will attempt to parse the provided value as an integer, and if
-// // parsing fails, go-cli will handle the error appropriately.
-// func FlagInt(long, short, description string) *internal.IntFlag {
-// 	flag := internal.NewIntFlag(long, short, description)
-// 	internal.GetCmd().WithFlag(flag)
-// 	return flag
-// }
+// Arg retrieves the value of a positional argument by its index.
+// Should be used only after Parse() is called, otherwise it will return an
+// empty string.
+func Arg(index int) string {
+	if !app.IsParsed() {
+		return ""
+	}
+	args := app.Arguments().Args
+	if index < 0 || index >= len(args) {
+		return ""
+	}
+	return args[index]
+}
 
-// // FlagInt64 registers a 64-bit integer flag option for the current command.
-// // Flags capture user input in the form of --flag=value or -f value.
-// //
-// // The Int64Flag will attempt to parse the provided value as a 64-bit integer,
-// // and if parsing fails, go-cli will handle the error appropriately.
-// func FlagInt64(long, short, description string) *internal.Int64Flag {
-// 	flag := internal.NewInt64Flag(long, short, description)
-// 	internal.GetCmd().WithFlag(flag)
-// 	return flag
-// }
+// Args retrieves all positional arguments provided by the user.
+// Should be used only after Parse() is called, otherwise it will return an
+// empty slice.
+func Args() []string {
+	if !app.IsParsed() {
+		return []string{}
+	}
+	return app.Arguments().Args
+}
 
-// // FlagUint registers an unsigned integer flag option for the current command.
-// // Flags capture user input in the form of --flag=value or -f value.
-// //
-// // The UintFlag will attempt to parse the provided value as an unsigned integer,
-// // and if parsing fails, go-cli will handle the error appropriately.
-// func FlagUint(long, short, description string) *internal.UintFlag {
-// 	flag := internal.NewUintFlag(long, short, description)
-// 	internal.GetCmd().WithFlag(flag)
-// 	return flag
-// }
+func NExtraArgs() int {
+	if !app.IsParsed() {
+		return 0
+	}
+	return len(app.Arguments().ExtraArgs)
+}
 
-// // FlagUint64 registers a 64-bit unsigned integer flag option for the current command.
-// // Flags capture user input in the form of --flag=value or -f value.
-// //
-// // The Uint64Flag will attempt to parse the provided value as a 64-bit unsigned integer,
-// // and if parsing fails, go-cli will handle the error appropriately.
-// func FlagUint64(long, short, description string) *internal.Uint64Flag {
-// 	flag := internal.NewUint64Flag(long, short, description)
-// 	internal.GetCmd().WithFlag(flag)
-// 	return flag
-// }
+func ExtraArg(index int) string {
+	if !app.IsParsed() {
+		return ""
+	}
+	extraArgs := app.Arguments().ExtraArgs
+	if index < 0 || index >= len(extraArgs) {
+		return ""
+	}
+	return extraArgs[index]
+}
 
-// // FlagFloat registers a floating-point flag option for the current command.
-// // Flags capture user input in the form of --flag=value or -f value.
-// //
-// // The FloatFlag will attempt to parse the provided value as a floating-point
-// // number, and if parsing fails, go-cli will handle the error appropriately.
-// func FlagFloat(long, short, description string) *internal.FloatFlag {
-// 	flag := internal.NewFloatFlag(long, short, description)
-// 	internal.GetCmd().WithFlag(flag)
-// 	return flag
-// }
+// ExtraArgs retrieves all extra positional arguments provided by the user, i.e.,
+// those that are not defined in the command. Should be used only after Parse() is
+// called, otherwise it will return an empty slice.
+func ExtraArgs() []string {
+	if !app.IsParsed() {
+		return []string{}
+	}
+	return app.Arguments().ExtraArgs
+}
 
-// // FlagBool registers a boolean flag option for the current command. Flags
-// // capture user input in the form of --flag or -f. Short boolean flags DO NOT
-// // ACCEPT argument but they can be  merged into a single argument (e.g., -abc
-// // is equivalent to -a -b -c). Long boolean flags receive an optional argument
-// // that will be parsed, possible values are "true", "false", "1", "0". If no
-// // argument is provided the flag will be set to true.
-// func FlagBool(long, short, description string) *internal.BoolFlag {
-// 	flag := internal.NewBoolFlag(long, short, description)
-// 	internal.GetCmd().WithFlag(flag)
-// 	return flag
-// }
+func Command(name string, shortDescription string, execute func()) *v2.Command {
+	cmd := v2.NewCommand().WithName(name).WithShortDescription(shortDescription).WithExecute(execute)
+	app.CurrentCommand().WithSubcommand(cmd)
+	return cmd
+}
 
-// // FlagStringSlice registers a string slice flag option for the current command.
-// // String slices are strings split by comma so the user can provide multiple
-// // values in a single flag (e.g., --flag=value1,value2,value3). Flags capture
-// // user input in the form of --flag=value or -f value.
-// func FlagStringSlice(long, short, description string) *internal.StringSliceFlag {
-// 	flag := internal.NewStringSliceFlag(long, short, description)
-// 	internal.GetCmd().WithFlag(flag)
-// 	return flag
-// }
+func Cmd(name string, shortDescription string, execute func()) *v2.Command {
+	return Command(name, shortDescription, execute)
+}
 
-// // FlagString registers a string flag option for the current command. Flags
-// // capture user input in the form of --flag=value or -f value.
-// func FlagString(long, short, description string) *internal.StringFlag {
-// 	flag := internal.NewStringFlag(long, short, description)
-// 	internal.GetCmd().WithFlag(flag)
-// 	return flag
-// }
+func _addpos[T v2.Positional](a T) T {
+	app.CurrentCommand().WithPositional(a)
+	return a
+}
 
-// // Pos registers a string positional argument for the current command. Positional
-// // arguments capture user input based on their position in the command line. For
-// // example, in the command "app command arg1 arg2", "arg1" and "arg2" are
-// // positional arguments.
-// func Pos(index int, name, description string) *internal.StringPositional {
-// 	arg := internal.NewStringPositional(index, name, description)
-// 	internal.GetCmd().WithPositional(arg)
-// 	return arg
-// }
+func Pos(name, description string) *v2.GenericPositional[string] {
+	return _addpos(v2.NewGenericPositional(name, description, v2.ParseString))
+}
+func PosInt(name, description string) *v2.GenericPositional[int] {
+	return _addpos(v2.NewGenericPositional(name, description, v2.ParseInt[int]))
+}
+func PosInt8(name, description string) *v2.GenericPositional[int8] {
+	return _addpos(v2.NewGenericPositional(name, description, v2.ParseInt[int8]))
+}
+func PosInt16(name, description string) *v2.GenericPositional[int16] {
+	return _addpos(v2.NewGenericPositional(name, description, v2.ParseInt[int16]))
+}
+func PosInt32(name, description string) *v2.GenericPositional[int32] {
+	return _addpos(v2.NewGenericPositional(name, description, v2.ParseInt[int32]))
+}
+func PosInt64(name, description string) *v2.GenericPositional[int64] {
+	return _addpos(v2.NewGenericPositional(name, description, v2.ParseInt[int64]))
+}
+func PosUint(name, description string) *v2.GenericPositional[uint] {
+	return _addpos(v2.NewGenericPositional(name, description, v2.ParseUint[uint]))
+}
+func PosUint8(name, description string) *v2.GenericPositional[uint8] {
+	return _addpos(v2.NewGenericPositional(name, description, v2.ParseUint[uint8]))
+}
+func PosUint16(name, description string) *v2.GenericPositional[uint16] {
+	return _addpos(v2.NewGenericPositional(name, description, v2.ParseUint[uint16]))
+}
+func PosUint32(name, description string) *v2.GenericPositional[uint32] {
+	return _addpos(v2.NewGenericPositional(name, description, v2.ParseUint[uint32]))
+}
+func PosUint64(name, description string) *v2.GenericPositional[uint64] {
+	return _addpos(v2.NewGenericPositional(name, description, v2.ParseUint[uint64]))
+}
+func PosFloat32(name, description string) *v2.GenericPositional[float32] {
+	return _addpos(v2.NewGenericPositional(name, description, v2.ParseFloat[float32]))
+}
+func PosFloat64(name, description string) *v2.GenericPositional[float64] {
+	return _addpos(v2.NewGenericPositional(name, description, v2.ParseFloat[float64]))
+}
+func PosBool(name, description string) *v2.GenericPositional[bool] {
+	return _addpos(v2.NewGenericPositional(name, description, v2.ParseBool))
+}
+func PosDuration(name, description string) *v2.GenericPositional[time.Duration] {
+	return _addpos(v2.NewGenericPositional(name, description, v2.ParseDuration))
+}
+func PosIntSlice(name, description string) *v2.GenericPositional[[]int] {
+	return _addpos(v2.NewGenericPositional(name, description, v2.ParseIntSlice[int]))
+}
+func PosInt8Slice(name, description string) *v2.GenericPositional[[]int8] {
+	return _addpos(v2.NewGenericPositional(name, description, v2.ParseIntSlice[int8]))
+}
+func PosInt16Slice(name, description string) *v2.GenericPositional[[]int16] {
+	return _addpos(v2.NewGenericPositional(name, description, v2.ParseIntSlice[int16]))
+}
+func PosInt32Slice(name, description string) *v2.GenericPositional[[]int32] {
+	return _addpos(v2.NewGenericPositional(name, description, v2.ParseIntSlice[int32]))
+}
+func PosInt64Slice(name, description string) *v2.GenericPositional[[]int64] {
+	return _addpos(v2.NewGenericPositional(name, description, v2.ParseIntSlice[int64]))
+}
+func PosUintSlice(name, description string) *v2.GenericPositional[[]uint] {
+	return _addpos(v2.NewGenericPositional(name, description, v2.ParseUintSlice[uint]))
+}
+func PosUint8Slice(name, description string) *v2.GenericPositional[[]uint8] {
+	return _addpos(v2.NewGenericPositional(name, description, v2.ParseUintSlice[uint8]))
+}
+func PosUint16Slice(name, description string) *v2.GenericPositional[[]uint16] {
+	return _addpos(v2.NewGenericPositional(name, description, v2.ParseUintSlice[uint16]))
+}
+func PosUint32Slice(name, description string) *v2.GenericPositional[[]uint32] {
+	return _addpos(v2.NewGenericPositional(name, description, v2.ParseUintSlice[uint32]))
+}
+func PosUint64Slice(name, description string) *v2.GenericPositional[[]uint64] {
+	return _addpos(v2.NewGenericPositional(name, description, v2.ParseUintSlice[uint64]))
+}
+func PosFloat32Slice(name, description string) *v2.GenericPositional[[]float32] {
+	return _addpos(v2.NewGenericPositional(name, description, v2.ParseFloatSlice[float32]))
+}
+func PosFloat64Slice(name, description string) *v2.GenericPositional[[]float64] {
+	return _addpos(v2.NewGenericPositional(name, description, v2.ParseFloatSlice[float64]))
+}
+func PosBoolSlice(name, description string) *v2.GenericPositional[[]bool] {
+	return _addpos(v2.NewGenericPositional(name, description, v2.ParseBoolSlice))
+}
+func PosDurationSlice(name, description string) *v2.GenericPositional[[]time.Duration] {
+	return _addpos(v2.NewGenericPositional(name, description, v2.ParseDurationSlice))
+}
 
-// // PosInt registers an integer positional argument for the current command.
-// // Positional arguments capture user input based on their position in the
-// // command line. For example, in the command "app command arg1 arg2", "arg1"
-// // and "arg2" are positional arguments.
-// // The PosInt positional will attempt to parse the provided value as an integer,
-// // and if parsing fails, go-cli will handle the error appropriately.
-// func PosInt(index int, name, description string) *internal.IntPositional {
-// 	arg := internal.NewIntPositional(index, name, description)
-// 	internal.GetCmd().WithPositional(arg)
-// 	return arg
-// }
+func _addflag[T v2.Flag](a T) T {
+	app.CurrentCommand().WithFlag(a)
+	return a
+}
 
-// // PosInt64 registers an integer positional argument for the current command.
-// // Positional arguments capture user input based on their position in the
-// // command line. For example, in the command "app command arg1 arg2", "arg1"
-// // and "arg2" are positional arguments.
-// // The PosInt64 positional will attempt to parse the provided value as an integer,
-// // and if parsing fails, go-cli will handle the error appropriately.
-// func PosInt64(index int, name, description string) *internal.Int64Positional {
-// 	arg := internal.NewInt64Positional(index, name, description)
-// 	internal.GetCmd().WithPositional(arg)
-// 	return arg
-// }
-
-// // PosFloat registers a floating-point positional argument for the current command.
-// // Positional arguments capture user input based on their position in the
-// // command line. For example, in the command "app command arg1 arg2", "arg1"
-// // and "arg2" are positional arguments.
-// // The PosFloat positional will attempt to parse the provided value as a
-// // floating-point number, and if parsing fails, go-cli will handle the error
-// // appropriately.
-// func PosFloat(index int, name, description string) *internal.FloatPositional {
-// 	arg := internal.NewFloatPositional(index, name, description)
-// 	internal.GetCmd().WithPositional(arg)
-// 	return arg
-// }
-
-// // PosString registers a string positional argument for the current command.
-// // Positional arguments capture user input based on their position in the
-// // command line. For example, in the command "app command arg1 arg2", "arg1"
-// // and "arg2" are positional arguments.
-// func PosString(index int, name, description string) *internal.StringPositional {
-// 	arg := internal.NewStringPositional(index, name, description)
-// 	internal.GetCmd().WithPositional(arg)
-// 	return arg
-// }
-
-// // NArgs returns the number of positional arguments provided by the user.
-// // Should be used only after Parse() is called, otherwise it will return 0.
-// func NArgs() int {
-// 	return internal.GetApp().NArgs()
-// }
-
-// // Arg retrieves the value of a positional argument by its index.
-// // Should be used only after Parse() is called, otherwise it will return an
-// // empty string.
-// func Arg(index int) string {
-// 	return internal.GetApp().Arg(index)
-// }
-
-// // Args retrieves all positional arguments provided by the user.
-// // Should be used only after Parse() is called, otherwise it will return an
-// // empty slice.
-// func Args() []string {
-// 	return internal.GetApp().Args()
-// }
+func Flag(long, short, description string) *v2.GenericFlag[string] {
+	return _addflag(v2.NewGenericFlag(long, short, description, v2.ParseString))
+}
+func FlagInt(long, short, description string) *v2.GenericFlag[int] {
+	return _addflag(v2.NewGenericFlag(long, short, description, v2.ParseInt[int]))
+}
+func FlagInt8(long, short, description string) *v2.GenericFlag[int8] {
+	return _addflag(v2.NewGenericFlag(long, short, description, v2.ParseInt[int8]))
+}
+func FlagInt16(long, short, description string) *v2.GenericFlag[int16] {
+	return _addflag(v2.NewGenericFlag(long, short, description, v2.ParseInt[int16]))
+}
+func FlagInt32(long, short, description string) *v2.GenericFlag[int32] {
+	return _addflag(v2.NewGenericFlag(long, short, description, v2.ParseInt[int32]))
+}
+func FlagInt64(long, short, description string) *v2.GenericFlag[int64] {
+	return _addflag(v2.NewGenericFlag(long, short, description, v2.ParseInt[int64]))
+}
+func FlagUint(long, short, description string) *v2.GenericFlag[uint] {
+	return _addflag(v2.NewGenericFlag(long, short, description, v2.ParseUint[uint]))
+}
+func FlagUint8(long, short, description string) *v2.GenericFlag[uint8] {
+	return _addflag(v2.NewGenericFlag(long, short, description, v2.ParseUint[uint8]))
+}
+func FlagUint16(long, short, description string) *v2.GenericFlag[uint16] {
+	return _addflag(v2.NewGenericFlag(long, short, description, v2.ParseUint[uint16]))
+}
+func FlagUint32(long, short, description string) *v2.GenericFlag[uint32] {
+	return _addflag(v2.NewGenericFlag(long, short, description, v2.ParseUint[uint32]))
+}
+func FlagUint64(long, short, description string) *v2.GenericFlag[uint64] {
+	return _addflag(v2.NewGenericFlag(long, short, description, v2.ParseUint[uint64]))
+}
+func FlagFloat32(long, short, description string) *v2.GenericFlag[float32] {
+	return _addflag(v2.NewGenericFlag(long, short, description, v2.ParseFloat[float32]))
+}
+func FlagFloat64(long, short, description string) *v2.GenericFlag[float64] {
+	return _addflag(v2.NewGenericFlag(long, short, description, v2.ParseFloat[float64]))
+}
+func FlagBool(long, short, description string) *v2.GenericFlag[bool] {
+	return _addflag(v2.NewGenericFlag(long, short, description, v2.ParseBool))
+}
+func FlagDuration(long, short, description string) *v2.GenericFlag[time.Duration] {
+	return _addflag(v2.NewGenericFlag(long, short, description, v2.ParseDuration))
+}
+func FlagIntSlice(long, short, description string) *v2.GenericFlag[[]int] {
+	return _addflag(v2.NewGenericFlag(long, short, description, v2.ParseIntSlice[int]))
+}
+func FlagInt8Slice(long, short, description string) *v2.GenericFlag[[]int8] {
+	return _addflag(v2.NewGenericFlag(long, short, description, v2.ParseIntSlice[int8]))
+}
+func FlagInt16Slice(long, short, description string) *v2.GenericFlag[[]int16] {
+	return _addflag(v2.NewGenericFlag(long, short, description, v2.ParseIntSlice[int16]))
+}
+func FlagInt32Slice(long, short, description string) *v2.GenericFlag[[]int32] {
+	return _addflag(v2.NewGenericFlag(long, short, description, v2.ParseIntSlice[int32]))
+}
+func FlagInt64Slice(long, short, description string) *v2.GenericFlag[[]int64] {
+	return _addflag(v2.NewGenericFlag(long, short, description, v2.ParseIntSlice[int64]))
+}
+func FlagUintSlice(long, short, description string) *v2.GenericFlag[[]uint] {
+	return _addflag(v2.NewGenericFlag(long, short, description, v2.ParseUintSlice[uint]))
+}
+func FlagUint8Slice(long, short, description string) *v2.GenericFlag[[]uint8] {
+	return _addflag(v2.NewGenericFlag(long, short, description, v2.ParseUintSlice[uint8]))
+}
+func FlagUint16Slice(long, short, description string) *v2.GenericFlag[[]uint16] {
+	return _addflag(v2.NewGenericFlag(long, short, description, v2.ParseUintSlice[uint16]))
+}
+func FlagUint32Slice(long, short, description string) *v2.GenericFlag[[]uint32] {
+	return _addflag(v2.NewGenericFlag(long, short, description, v2.ParseUintSlice[uint32]))
+}
+func FlagUint64Slice(long, short, description string) *v2.GenericFlag[[]uint64] {
+	return _addflag(v2.NewGenericFlag(long, short, description, v2.ParseUintSlice[uint64]))
+}
+func FlagFloat32Slice(long, short, description string) *v2.GenericFlag[[]float32] {
+	return _addflag(v2.NewGenericFlag(long, short, description, v2.ParseFloatSlice[float32]))
+}
+func FlagFloat64Slice(long, short, description string) *v2.GenericFlag[[]float64] {
+	return _addflag(v2.NewGenericFlag(long, short, description, v2.ParseFloatSlice[float64]))
+}
+func FlagBoolSlice(long, short, description string) *v2.GenericFlag[[]bool] {
+	return _addflag(v2.NewGenericFlag(long, short, description, v2.ParseBoolSlice))
+}
+func FlagDurationSlice(long, short, description string) *v2.GenericFlag[[]time.Duration] {
+	return _addflag(v2.NewGenericFlag(long, short, description, v2.ParseDurationSlice))
+}
