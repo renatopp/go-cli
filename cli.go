@@ -1,6 +1,8 @@
 package cli
 
-import v2 "github.com/renatopp/go-cli/v2"
+import (
+	v2 "github.com/renatopp/go-cli/v2"
+)
 
 var app *v2.App
 
@@ -36,6 +38,10 @@ func Parse() {
 	app.Parse()
 }
 
+func ParseArgs(args []string) {
+	app.ParseArgs(args)
+}
+
 // Clear resets the state of the CLI, allowing users to define a new command
 // structure and configuration. This can be useful in scenarios where you want to
 // reuse the same CLI instance for different commands or when you want to reset
@@ -49,6 +55,22 @@ func Clear() {
 // indicates an error or abnormal termination.
 func Exit(code int) {
 	app.Exit(code)
+}
+
+func StdoutWith(fn func(msg string, args ...any)) {
+	app.Stdout = fn
+}
+
+func StderrWith(fn func(msg string, args ...any)) {
+	app.Stderr = fn
+}
+
+func UsePanicInsteadOfExit(usePanic bool) {
+	app.PanicInsteadOfExit = usePanic
+}
+
+func AllowExtraPositionals(allow bool) {
+	app.ExtraPositionalsAllowed = allow
 }
 
 // // Command registers a new subcommand within current command, allowing nested

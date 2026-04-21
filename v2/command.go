@@ -42,6 +42,13 @@ func (c *Command) WithExecute(execute func()) *Command {
 }
 
 func (c *Command) WithPositional(arg Positional) *Command {
+	if len(c.positionals) > 0 {
+		last := c.positionals[len(c.positionals)-1]
+		if last.IsVariadic() {
+			panic("cannot add a positional argument after a variadic positional argument")
+		}
+	}
+
 	c.positionals = append(c.positionals, arg)
 	return c
 }

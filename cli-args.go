@@ -33,6 +33,24 @@ func Args() []string {
 	return app.Arguments().Args
 }
 
+func NExtraArgs() int {
+	if !app.IsParsed() {
+		return 0
+	}
+	return len(app.Arguments().ExtraArgs)
+}
+
+func ExtraArg(index int) string {
+	if !app.IsParsed() {
+		return ""
+	}
+	extraArgs := app.Arguments().ExtraArgs
+	if index < 0 || index >= len(extraArgs) {
+		return ""
+	}
+	return extraArgs[index]
+}
+
 // ExtraArgs retrieves all extra positional arguments provided by the user, i.e.,
 // those that are not defined in the command. Should be used only after Parse() is
 // called, otherwise it will return an empty slice.

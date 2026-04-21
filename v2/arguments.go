@@ -1,40 +1,50 @@
 package v2
 
 import (
+	"fmt"
 	"strings"
 )
 
 type Arguments struct {
 	Args      []string // the list of registered and non-registered positional arguments
 	ExtraArgs []string // the list of extra positional arguments that are not defined in the command
+
+	app                   *App     // reference to the main app for accessing configuration like AllowExtraPositionals
+	queue                 []string // the queue of arguments to be parsed
+	flags                 map[string]Flag
+	positionals           []Positional
+	hasVariadicPositional bool
 }
 
 func parseArguments(app *App) (*Arguments, error) {
-	parser := &parser{
-		queue: app.queue,
+	args := &Arguments{
+		Args:        []string{},
+		ExtraArgs:   []string{},
+		app:         app,
+		queue:       app.queue,
+		flags:       map[string]Flag{},
+		positionals: []Positional{},
 	}
-	err := parser.parse()
-	if err != nil {
-		return nil, err
+
+	cmd := app.CurrentCommand()
+
+	// prepare the flags and positionals maps for easy lookup during parsing
+	for _, flag := range cmd.flags {
+		args.flags[flag.Long()] = flag
+		args.flags[flag.Short()] = flag
 	}
-	return &Arguments{
-		Args:      parser.args,
-		ExtraArgs: parser.extraArgs,
-	}, nil
-}
+	for _, positional := range cmd.positionals {
+		args.positionals = append(args.positionals, positional)
+		if positional.IsVariadic() {
+			args.hasVariadicPositional = true
+		}
+	}
 
-type parser struct {
-	queue       []string
-	args        []string // the "raw" list of positional arguments, may contains non processed positionals
-	extraArgs   []string // the list of extra positional arguments that are not defined in the command
-	flags       map[string]Flag
-	positionals []Positional
-}
-
-func (p *parser) parse() (err error) {
+	// parse the arguments
 	eoo := false // end of options, i.e., after -- is encountered
+	var err error
 	for {
-		tok, ok := p.next()
+		tok, ok := args.next()
 		if !ok {
 			break
 		}
@@ -44,37 +54,54 @@ func (p *parser) parse() (err error) {
 			eoo = true
 			err = nil
 
-		case !eoo && p.isFlagToken(tok) && strings.HasPrefix(tok, "--"):
-			err = p.parseLong(tok)
+		case !eoo && args.isFlagToken(tok) && strings.HasPrefix(tok, "--"):
+			err = args.parseLong(tok)
 
-		case !eoo && p.isFlagToken(tok) && strings.HasPrefix(tok, "-"):
-			err = p.parseShort(tok)
+		case !eoo && args.isFlagToken(tok) && strings.HasPrefix(tok, "-"):
+			err = args.parseShort(tok)
 
 		default:
-			err = p.parsePositional(tok)
+			err = args.parsePositional(tok)
 		}
 
 		if err != nil {
-			return err
+			break
 		}
 	}
-	return nil
+
+	if err != nil {
+		return args, err
+	}
+
+	// check for required flags and positionals
+	for _, flag := range cmd.flags {
+		if flag.IsRequired() && !flag.IsParsed() {
+			return args, fmt.Errorf("missing required flag: --%s", flag.Long())
+		}
+	}
+	for i, positional := range cmd.positionals {
+		if positional.IsRequired() && i >= len(args.Args) {
+			return args, fmt.Errorf("missing required positional argument: %s", positional.Name())
+		}
+	}
+
+	return args, nil
 }
 
 // next returns the next token from the queue if any. It removes the token
 // from the queue and returns it. Token if the next argument as passed from
 // os.Args.
-func (p *parser) next() (string, bool) {
-	if len(p.queue) == 0 {
+func (a *Arguments) next() (string, bool) {
+	if len(a.queue) == 0 {
 		return "", false
 	}
-	next := p.queue[0]
-	p.queue = p.queue[1:]
+	next := a.queue[0]
+	a.queue = a.queue[1:]
 	return next, true
 }
 
 // isFlagToken checks if the token follows the flag pattern: --flag or -f
-func (p *parser) isFlagToken(token string) bool {
+func (a *Arguments) isFlagToken(token string) bool {
 	if len(token) < 2 {
 		return false
 	}
@@ -90,8 +117,8 @@ func (p *parser) isFlagToken(token string) bool {
 }
 
 // isBooleanFlag checks if the flag object is a boolean flag
-func (p *parser) isBooleanFlag(name string) bool {
-	if flag, ok := p.flags[name]; ok {
+func (a *Arguments) isBooleanFlag(name string) bool {
+	if flag, ok := a.flags[name]; ok {
 		_, ok := flag.(*GenericFlag[bool])
 		return ok
 	}
@@ -99,8 +126,8 @@ func (p *parser) isBooleanFlag(name string) bool {
 }
 
 // tryGetFlag tries to get the flag from the command
-func (p *parser) tryGetFlag(name string) (Flag, error) {
-	if flag, ok := p.flags[name]; ok {
+func (a *Arguments) tryGetFlag(name string) (Flag, error) {
+	if flag, ok := a.flags[name]; ok {
 		return flag, nil
 	}
 
@@ -110,8 +137,8 @@ func (p *parser) tryGetFlag(name string) (Flag, error) {
 }
 
 // parseFlag parses the flag with the given value. It checks for repeated flags
-func (p *parser) parseFlag(name string, value string) error {
-	flag, err := p.tryGetFlag(name)
+func (a *Arguments) parseFlag(name string, value string) error {
+	flag, err := a.tryGetFlag(name)
 	if flag == nil {
 		return err
 	}
@@ -120,78 +147,87 @@ func (p *parser) parseFlag(name string, value string) error {
 }
 
 // --name=value | --name value | --name
-func (p *parser) parseLong(token string) error {
+func (a *Arguments) parseLong(token string) error {
 	switch {
 	case strings.Contains(token, "="):
 		// signed long flag, e.g., --name=value
 		index := strings.Index(token, "=")
 		name := token[2:index]
 		value := token[index+1:]
-		return p.parseFlag(name, value)
+		return a.parseFlag(name, value)
 
 	default:
 		// unsigned long flag, e.g., --name value or --name (for boolean flags)
 		name := token[2:]
-		if p.isBooleanFlag(name) {
-			return p.parseFlag(name, "true")
+		if a.isBooleanFlag(name) {
+			return a.parseFlag(name, "true")
 		}
-		value, ok := p.next()
+		value, ok := a.next()
 		if !ok {
 			// TODO: this should be an error
-			return p.parseFlag(name, "")
+			return a.parseFlag(name, "")
 		}
-		return p.parseFlag(name, value)
+		return a.parseFlag(name, value)
 	}
 }
 
 // -f value | -fvalue | -f | -abc
-func (p *parser) parseShort(token string) error {
+func (a *Arguments) parseShort(token string) error {
 	name := token[1:]
 	for {
 		size := len(name)
-		boolean := p.isBooleanFlag(name[:1])
+		boolean := a.isBooleanFlag(name[:1])
 
 		switch {
 		case size <= 1:
 			// -f or -f value
 			if boolean {
-				return p.parseFlag(name, "true")
+				return a.parseFlag(name, "true")
 			}
 
-			value, ok := p.next()
+			value, ok := a.next()
 			if !ok {
 				// TODO: this should be an error
-				return p.parseFlag(name, "")
+				return a.parseFlag(name, "")
 			}
-			return p.parseFlag(name, value)
+			return a.parseFlag(name, value)
 
 		case boolean:
 			// -abc (for boolean flags) or -abxvalue (for boolean flags followed by a non-boolean flag)
-			if err := p.parseFlag(name[:1], "true"); err != nil {
+			if err := a.parseFlag(name[:1], "true"); err != nil {
 				return err
 			}
 			name = name[1:]
 
 		default:
 			// -fvalue (for non-boolean flags)
-			return p.parseFlag(name[:1], name[1:])
+			return a.parseFlag(name[:1], name[1:])
 		}
 	}
 }
 
 // value
-func (p *parser) parsePositional(token string) error {
-	i := len(p.args)
+func (a *Arguments) parsePositional(token string) error {
+	i := len(a.Args)
 	var positional Positional
-	if i < len(p.positionals) {
-		positional = p.positionals[i]
+	if i < len(a.positionals) {
+		positional = a.positionals[i]
 	}
 
-	p.args = append(p.args, token)
+	a.Args = append(a.Args, token)
 	if positional != nil {
 		return positional.Parse(token)
 	} else {
-		p.extraArgs = append(p.extraArgs, token)
+		if a.hasVariadicPositional {
+			last := a.positionals[len(a.positionals)-1]
+			return last.Parse(token)
+		}
+
+		if !a.app.ExtraPositionalsAllowed {
+			return fmt.Errorf("unexpected extra positional argument: %s", token)
+		}
+
+		a.ExtraArgs = append(a.ExtraArgs, token)
 	}
 	return nil
 }

@@ -9,7 +9,6 @@ type baseArgument struct {
 	raw         string // the raw string value provided by the user
 	rawDefault  string // the raw default value for the argument
 	parsed      bool   // whether the argument has been parsed successfully
-	passed      bool   // whether the argument was passed by the user
 	defaulted   bool   // whether the argument has a default value
 	required    bool   // whether the argument is required
 }
@@ -32,11 +31,6 @@ func (f *baseArgument) IsParsed() bool { return f.parsed }
 
 // IsRequired returns true if the argument is required.
 func (f *baseArgument) IsRequired() bool { return f.required }
-
-// IsPassed returns true if the argument was passed by the user. This is
-// useful to distinguish between an argument that was provided and one
-// that has a default value.
-func (f *baseArgument) IsPassed() bool { return f.passed }
 
 // HasDefault returns true if the argument has a default value.
 func (f *baseArgument) HasDefault() bool { return f.defaulted }
@@ -97,8 +91,9 @@ func (f *BaseFlag) Signature() string {
 // in the command's argument list.
 type BasePositional struct {
 	*baseArgument
-	index int    // the position index of the positional argument
-	name  string // the name of the positional argument for help text
+	variadic bool   // whether this is a variadic positional argument (e.g., "files...")
+	index    int    // the position index of the positional argument
+	name     string // the name of the positional argument for help text
 }
 
 // NewBasePositional creates a new BasePositional with the given name and
@@ -118,3 +113,6 @@ func (p *BasePositional) Index() int { return p.index }
 
 // Name returns the name of the positional argument for help text.
 func (p *BasePositional) Name() string { return p.name }
+
+// IsVariadic returns true if this is a variadic positional argument (e.g., "files...").
+func (p *BasePositional) IsVariadic() bool { return p.variadic }

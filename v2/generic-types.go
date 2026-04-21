@@ -58,13 +58,13 @@ func (f *GenericFlag[T]) AsRequired() *GenericFlag[T] {
 func (f *GenericFlag[T]) Parse(value string) error {
 	parsedValue, err := f.parser(value)
 	if err != nil {
-		return fmt.Errorf("invalid value for flag `%s`: %v", f.Signature(), err)
+		return fmt.Errorf("invalid value for flag %s: %v", f.Signature(), value)
 	}
-
+	f.parsed = true
 	f.value = parsedValue
 	if f.validator != nil {
 		if err := f.validator(parsedValue); err != nil {
-			return fmt.Errorf("invalid value for flag `%s`: %v", f.Signature(), err)
+			return fmt.Errorf("invalid value for flag %s: %v", f.Signature(), value)
 		}
 	}
 
@@ -76,7 +76,8 @@ func (f *GenericFlag[T]) Parse(value string) error {
 // behavior.
 type GenericPositional[T any] struct {
 	*BasePositional
-	value     T                       // the parsed value of the positional argument, only set after parsing
+	value     T                       // the parsed value of the positional argument, only set after parsing. In case of variadic positionals, this will hold the last value provided by the user, and all values will be stored in the `values` field below.
+	values    []T                     // the parsed values of a variadic positional argument, only set after parsing
 	default_  T                       // the default value of the positional argument
 	parser    func(string) (T, error) // base parser function to convert string input to the desired type
 	validator func(T) error           // custom validator function, provided by the user
@@ -94,11 +95,26 @@ func NewGenericPositional[T any](name, description string, parser func(string) (
 }
 
 // Value returns the parsed value OR the default value if there is one.
+// In case of variadic positionals, this will return the last value provided by
+// the user, and all values will be stored in the `values` field.
 func (f *GenericPositional[T]) Value() T {
 	if f.IsParsed() {
 		return f.value
 	}
 	return f.default_
+}
+
+// Values returns the parsed values for a variadic positional argument. For
+// non-variadic positionals, this will return a slice with a single value
+// (the one returned by Value()) or an empty slice
+func (f *GenericPositional[T]) Values() []T {
+	if f.IsParsed() {
+		return f.values
+	}
+	if f.HasDefault() {
+		return []T{f.default_}
+	}
+	return []T{}
 }
 
 // WithDefault sets the default value for the positional argument.
@@ -123,17 +139,28 @@ func (f *GenericPositional[T]) AsRequired() *GenericPositional[T] {
 	return f
 }
 
+// AsVariadic marks the positional argument as variadic, meaning it can accept
+// multiple values. This should only be used for the last positional argument of
+// a command, and it will collect all remaining positional arguments provided by
+// the user into a slice of values of type T.
+func (f *GenericPositional[T]) AsVariadic() *GenericPositional[T] {
+	f.BasePositional.variadic = true
+	return f
+}
+
 // Parse implements the parsing logic for the generic positional argument.
 func (f *GenericPositional[T]) Parse(value string) error {
 	parsedValue, err := f.parser(value)
 	if err != nil {
-		return fmt.Errorf("invalid value for positional argument `%s`: %v", f.Name(), err)
+		return fmt.Errorf("invalid value for positional argument %s: %v", f.Name(), value)
 	}
 
 	f.value = parsedValue
+	f.values = append(f.values, parsedValue)
+	f.parsed = true
 	if f.validator != nil {
 		if err := f.validator(parsedValue); err != nil {
-			return fmt.Errorf("invalid value for positional argument `%s`: %v", f.Name(), err)
+			return fmt.Errorf("invalid value for positional argument %s: %v", f.Name(), value)
 		}
 	}
 
