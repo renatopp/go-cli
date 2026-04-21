@@ -1,270 +1,277 @@
 package internal
 
 import (
-	"errors"
-	"slices"
+	"fmt"
 	"strings"
 )
 
 type Arguments struct {
-	Raw         []string
-	Args        []string
-	Positionals map[int]Positional
-	Flags       map[string]Flag
-	HasHelp     bool
+	Args      []string // the list of registered and non-registered positional arguments
+	ExtraArgs []string // the list of extra positional arguments that are not defined in the command
 
-	args   []string
-	strict bool
+	app                   *App     // reference to the main app for accessing configuration like AllowExtraPositionals
+	queue                 []string // the queue of arguments to be parsed
+	flags                 map[string]Flag
+	positionals           []Positional
+	hasVariadicPositional bool
+	hasHelpFlag           bool
+	hasVersionFlag        bool
 }
 
-func parseArguments(raw []string, args []Positional, flags []Flag, strict bool) (*Arguments, error) {
-	arguments := &Arguments{
-		Raw:         raw,
-		Args:        []string{},
-		Positionals: map[int]Positional{},
-		Flags:       map[string]Flag{},
-		args:        slices.Clone(raw),
-		strict:      strict,
-	}
-	for _, arg := range args {
-		arguments.Positionals[arg.Index()] = arg
-	}
-	for _, flag := range flags {
-		if flag.Long() != "" {
-			arguments.Flags[flag.Long()] = flag
-		}
-		if flag.Short() != "" {
-			arguments.Flags[flag.Short()] = flag
-		}
+func parseArguments(app *App) (*Arguments, error) {
+	args := &Arguments{
+		Args:           []string{},
+		ExtraArgs:      []string{},
+		app:            app,
+		queue:          app.queue,
+		flags:          map[string]Flag{},
+		positionals:    []Positional{},
+		hasHelpFlag:    false,
+		hasVersionFlag: false,
 	}
 
-	if err := arguments.parse(); err != nil {
-		return nil, err
+	cmd := app.CurrentCommand()
+
+	// prepare the flags and positionals maps for easy lookup during parsing
+	for _, flag := range cmd.flags {
+		args.flags[flag.Long()] = flag
+		args.flags[flag.Short()] = flag
 	}
-	for _, positional := range arguments.Positionals {
-		positional.setParsed()
-		if positional.IsRequired() && !positional.IsSet() {
-			return nil, errors.New("missing required positional argument: " + positional.Name())
+	for _, positional := range cmd.positionals {
+		args.positionals = append(args.positionals, positional)
+		if positional.IsVariadic() {
+			args.hasVariadicPositional = true
 		}
 	}
-	for _, flag := range arguments.Flags {
-		flag.setParsed()
-		if flag.IsRequired() && !flag.IsSet() {
-			if flag.Long() != "" {
-				return arguments, errors.New("missing required flag: --" + flag.Long())
-			}
-			if flag.Short() != "" {
-				return arguments, errors.New("missing required flag: -" + flag.Short())
-			}
-			return arguments, errors.New("missing required flag")
-		}
-	}
-	return arguments, nil
-}
 
-func (a *Arguments) next() (value string, ok bool) {
-	if len(a.args) == 0 {
-		return "", false
-	}
-	next := a.args[0]
-	a.args = a.args[1:]
-	return next, true
-}
-
-func (a *Arguments) nextValue() (value string, ok bool) {
-	if len(a.args) == 0 {
-		return "", false
-	}
-	if strings.HasPrefix(a.args[0], "-") {
-		return "", false
-	}
-	next := a.args[0]
-	a.args = a.args[1:]
-	return next, true
-}
-
-func (a *Arguments) parse() error {
-
-	ignoreFlags := false
+	// parse the arguments
+	eoo := false // end of options, i.e., after -- is encountered
+	var err error
 	for {
-		arg, ok := a.next()
+		tok, ok := args.next()
 		if !ok {
 			break
 		}
 
-		if arg == "--" {
-			ignoreFlags = true
-			continue
+		switch {
+		case !eoo && tok == "--":
+			eoo = true
+			err = nil
+
+		case !eoo && args.isFlagToken(tok) && strings.HasPrefix(tok, "--"):
+			err = args.parseLong(tok)
+
+		case !eoo && args.isFlagToken(tok) && strings.HasPrefix(tok, "-"):
+			err = args.parseShort(tok)
+
+		default:
+			err = args.parsePositional(tok)
 		}
 
-		if !ignoreFlags && strings.HasPrefix(arg, "--") {
-			if err := a.parseLong(arg); err != nil {
-				return err
-			}
-		} else if !ignoreFlags && strings.HasPrefix(arg, "-") {
-			if err := a.parseShort(arg); err != nil {
-				return err
-			}
-		} else {
-			if err := a.parsePositional(arg); err != nil {
-				return err
-			}
+		if err != nil {
+			break
 		}
 	}
-	return nil
+
+	// check for auto help or auto version before performing other validations
+	if app.AutoHelp && args.hasHelpFlag {
+		app.ShowHelp()
+		app.Exit(0)
+	}
+
+	if app.Version != "" && args.hasVersionFlag && app.CurrentCommand() == app.RootCommand() {
+		app.Stdout(app.Version)
+		app.Exit(0)
+	}
+
+	// check validations
+	if err != nil {
+		return args, err
+	}
+
+	// check for required flags and positionals
+	for _, flag := range cmd.flags {
+		if flag.IsRequired() && !flag.IsParsed() {
+			return args, fmt.Errorf("missing required flag %s", flag.Signature())
+		}
+	}
+	for i, positional := range cmd.positionals {
+		if positional.IsRequired() && i >= len(args.Args) {
+			return args, fmt.Errorf("missing required positional argument: %s", positional.Name())
+		}
+	}
+
+	return args, nil
 }
 
-func (a *Arguments) getFlag(name string) (Flag, error) {
+// next returns the next token from the queue if any. It removes the token
+// from the queue and returns it. Token if the next argument as passed from
+// os.Args.
+func (a *Arguments) next() (string, bool) {
+	if len(a.queue) == 0 {
+		return "", false
+	}
+	next := a.queue[0]
+	a.queue = a.queue[1:]
+	return next, true
+}
+
+// isFlagToken checks if the token follows the flag pattern: --flag or -f
+func (a *Arguments) isFlagToken(token string) bool {
+	if len(token) < 2 {
+		return false
+	}
+	if strings.HasPrefix(token, "--") {
+		return true
+	}
+	if token[0] == '-' {
+		if token[1] >= '0' && token[1] <= '9' || token[1] == '_' {
+			return false
+		}
+	}
+	return true
+}
+
+// isBooleanFlag checks if the flag object is a boolean flag
+func (a *Arguments) isBooleanFlag(name string) bool {
+	if flag, ok := a.flags[name]; ok {
+		_, ok := flag.(*GenericFlag[bool])
+		return ok
+	}
+	return false
+}
+
+// tryGetFlag tries to get the flag from the command
+func (a *Arguments) tryGetFlag(name string) (Flag, error) {
 	if name == "help" || name == "h" {
-		a.HasHelp = true
+		a.hasHelpFlag = true
+	}
+	if name == "version" || name == "v" {
+		a.hasVersionFlag = true
 	}
 
-	flag, ok := a.Flags[name]
-	if !ok && a.strict {
-		return nil, errors.New("unknown flag: " + name)
+	if flag, ok := a.flags[name]; ok {
+		return flag, nil
 	}
-	if ok && flag.IsSet() {
-		return nil, errors.New("flag already set: " + name)
+
+	if a.app.ExtraFlagsAllowed {
+		long := ""
+		short := ""
+		if len(name) == 1 {
+			short = name
+		} else {
+			long = name
+		}
+
+		// If extra flags are allowed, we create a new generic string flag for the unknown flag and add it to the flags map. This allows users to access the value of the extra flag using the same API as regular flags.
+		extraFlag := NewGenericFlag(long, short, "", ParseString)
+		a.flags[name] = extraFlag
+		return extraFlag, nil
 	}
-	return flag, nil
+	return nil, fmt.Errorf("unknown flag %s", name)
+}
+
+// parseFlag parses the flag with the given value. It checks for repeated flags
+func (a *Arguments) parseFlag(name string, value string) error {
+	flag, err := a.tryGetFlag(name)
+	if flag == nil {
+		return err
+	}
+
+	if flag.IsParsed() {
+		if !a.app.RepeatedFlagsAllowed && !flag.IsRepeatable() {
+			return fmt.Errorf("flag %s was specified multiple times", name)
+		}
+	}
+
+	return flag.Parse(value)
 }
 
 // --name=value | --name value | --name
-func (a *Arguments) parseLong(arg string) error {
-	// Check for --name=value format
-	if equalIndex := strings.Index(arg, "="); equalIndex != -1 {
-		return a.parseCompleteLong(arg, equalIndex)
-	}
+func (a *Arguments) parseLong(token string) error {
+	switch {
+	case strings.Contains(token, "="):
+		// signed long flag, e.g., --name=value
+		index := strings.Index(token, "=")
+		name := token[2:index]
+		value := token[index+1:]
+		return a.parseFlag(name, value)
 
-	// No "=" found, just a name
-	return a.parseIncompleteLong(arg)
+	default:
+		// unsigned long flag, e.g., --name value or --name (for boolean flags)
+		name := token[2:]
+		if a.isBooleanFlag(name) {
+			return a.parseFlag(name, "true")
+		}
+		_, hasFlag := a.flags[name]
+		if hasFlag {
+			value, ok := a.next()
+			if !ok {
+				return fmt.Errorf("missing value for flag %s", name)
+			}
+			return a.parseFlag(name, value)
+		}
+		return a.parseFlag(name, "")
+	}
 }
 
-// --name=value
-func (a *Arguments) parseCompleteLong(arg string, equalIndex int) error {
-	name := arg[2:equalIndex] // Remove "--" prefix
-	value := arg[equalIndex+1:]
-	flag, err := a.getFlag(name)
-	if flag == nil {
-		return err
+// -f value | -fvalue | -f | -abc
+func (a *Arguments) parseShort(token string) error {
+	name := token[1:]
+	for {
+		size := len(name)
+		boolean := a.isBooleanFlag(name[:1])
+
+		switch {
+		case size <= 1:
+			// -f or -f value
+			if boolean {
+				return a.parseFlag(name, "true")
+			}
+
+			_, hasFlag := a.flags[name]
+			value, ok := a.next()
+			if hasFlag && !ok {
+				return fmt.Errorf("missing value for flag %s", name)
+			}
+			return a.parseFlag(name, value)
+
+		case boolean:
+			// -abc (for boolean flags) or -abxvalue (for boolean flags followed by a non-boolean flag)
+			if err := a.parseFlag(name[:1], "true"); err != nil {
+				return err
+			}
+			name = name[1:]
+
+		default:
+			// -fvalue (for non-boolean flags)
+			return a.parseFlag(name[:1], name[1:])
+		}
 	}
-	err = flag.fromString(value)
-	if err != nil {
-		return err
+}
+
+// value
+func (a *Arguments) parsePositional(token string) error {
+	i := len(a.Args)
+	var positional Positional
+	if i < len(a.positionals) {
+		positional = a.positionals[i]
+	}
+
+	a.Args = append(a.Args, token)
+	if positional != nil {
+		return positional.Parse(token)
+	} else {
+		if a.hasVariadicPositional {
+			last := a.positionals[len(a.positionals)-1]
+			return last.Parse(token)
+		}
+
+		if !a.app.ExtraPositionalsAllowed {
+			return fmt.Errorf("unexpected extra positional argument: %s", token)
+		}
+
+		a.ExtraArgs = append(a.ExtraArgs, token)
 	}
 	return nil
-}
-
-// --name | --name value
-func (a *Arguments) parseIncompleteLong(arg string) error {
-	name := arg[2:] // Remove "--" prefix
-	flag, err := a.getFlag(name)
-	if flag == nil {
-		return err
-	}
-
-	// Check if the flag expects a value
-	if flag.acceptsValue() {
-		next, ok := a.nextValue()
-		if !ok {
-			return errors.New("flag requires a value: --" + name)
-		}
-		err = flag.fromString(next)
-		if err != nil {
-			return err
-		}
-		return nil
-	}
-
-	return flag.fromString("true")
-}
-
-// -a | -o output.txt | -ooutput.txt | -abc
-func (a *Arguments) parseShort(arg string) error {
-	name := arg[1:] // Remove "-" prefix
-	if len(name) > 1 {
-		flag, err := a.getFlag(name[:1])
-		if flag == nil {
-			return err
-		}
-
-		if !flag.acceptsValue() {
-			return a.parseCombinedShort(name)
-		}
-		return a.parseValuedShort(name)
-	}
-	return a.parseFlaglessShort(name)
-}
-
-// -abc (for boolean flags)
-func (a *Arguments) parseCombinedShort(arg string) error {
-	for _, char := range arg {
-		flag, err := a.getFlag(string(char))
-		if err != nil {
-			return err
-		}
-		if flag == nil {
-			continue
-		}
-		if flag.acceptsValue() {
-			return errors.New("flag requires a value: -" + string(char))
-		}
-		if err := flag.fromString("true"); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// -ooutput.txt
-func (a *Arguments) parseValuedShort(arg string) error {
-	flag, err := a.getFlag(arg[:1])
-	if flag == nil {
-		return err
-	}
-	if !flag.acceptsValue() {
-		return errors.New("flag does not accept a value: -" + arg[:1])
-	}
-	if err := flag.fromString(arg[1:]); err != nil {
-		return err
-	}
-	return nil
-}
-
-// -v | -o output.txt
-func (a *Arguments) parseFlaglessShort(arg string) error {
-	flag, err := a.getFlag(arg)
-	if flag == nil {
-		return err
-	}
-
-	// Check if the flag expects a value
-	if flag.acceptsValue() {
-		next, ok := a.next()
-		if !ok {
-			return errors.New("flag requires a value: -" + arg)
-		}
-		err = flag.fromString(next)
-		if err != nil {
-			return err
-		}
-		return nil
-	}
-
-	return flag.fromString("true")
-}
-
-func (a *Arguments) parsePositional(arg string) error {
-	a.Args = append(a.Args, arg)
-
-	index := len(a.Args)
-	positional, ok := a.Positionals[index-1]
-	if !ok {
-		return nil
-	}
-	if positional.IsSet() {
-		return errors.New("positional argument already set: " + positional.Name())
-	}
-
-	return positional.fromString(arg)
 }
