@@ -97,7 +97,6 @@ func (f *BaseFlag) Signature() string {
 type BasePositional struct {
 	*baseArgument
 	variadic bool   // whether this is a variadic positional argument (e.g., "files...")
-	index    int    // the position index of the positional argument
 	name     string // the name of the positional argument for help text
 }
 
@@ -111,10 +110,6 @@ func NewBasePositional(name string, description string) *BasePositional {
 		name: name,
 	}
 }
-
-// Index returns the position index of the positional argument. Starting from
-// 0.
-func (p *BasePositional) Index() int { return p.index }
 
 // Name returns the name of the positional argument for help text.
 func (p *BasePositional) Name() string { return p.name }

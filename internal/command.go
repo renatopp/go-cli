@@ -1,5 +1,7 @@
 package internal
 
+import "slices"
+
 type Command struct {
 	name             string
 	description      string
@@ -54,11 +56,30 @@ func (c *Command) WithPositional(arg Positional) *Command {
 }
 
 func (c *Command) WithFlag(flag Flag) *Command {
+	if flag.Long() != "" && c.HasFlag(flag.Long()) {
+		panic("flag with the same long name already exists: " + flag.Long())
+	}
+	if flag.Short() != "" && c.HasFlag(flag.Short()) {
+		panic("flag with the same short name already exists: " + flag.Short())
+	}
+
 	c.flags = append(c.flags, flag)
 	return c
 }
 
 func (c *Command) WithSubcommand(cmd *Command) *Command {
+	if slices.IndexFunc(c.subcommands, func(sc *Command) bool { return sc.name == cmd.name }) != -1 {
+		panic("subcommand with the same name already exists: " + cmd.name)
+	}
 	c.subcommands = append(c.subcommands, cmd)
 	return c
+}
+
+func (c *Command) HasFlag(n string) bool {
+	for _, f := range c.flags {
+		if f.Long() == n || f.Short() == n {
+			return true
+		}
+	}
+	return false
 }

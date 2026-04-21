@@ -14,16 +14,20 @@ type Arguments struct {
 	flags                 map[string]Flag
 	positionals           []Positional
 	hasVariadicPositional bool
+	hasHelpFlag           bool
+	hasVersionFlag        bool
 }
 
 func parseArguments(app *App) (*Arguments, error) {
 	args := &Arguments{
-		Args:        []string{},
-		ExtraArgs:   []string{},
-		app:         app,
-		queue:       app.queue,
-		flags:       map[string]Flag{},
-		positionals: []Positional{},
+		Args:           []string{},
+		ExtraArgs:      []string{},
+		app:            app,
+		queue:          app.queue,
+		flags:          map[string]Flag{},
+		positionals:    []Positional{},
+		hasHelpFlag:    false,
+		hasVersionFlag: false,
 	}
 
 	cmd := app.CurrentCommand()
@@ -69,6 +73,18 @@ func parseArguments(app *App) (*Arguments, error) {
 		}
 	}
 
+	// check for auto help or auto version before performing other validations
+	if app.AutoHelp && args.hasHelpFlag {
+		app.ShowHelp()
+		app.Exit(0)
+	}
+
+	if app.Version != "" && args.hasVersionFlag && app.CurrentCommand() == app.RootCommand() {
+		app.Stdout(app.Version)
+		app.Exit(0)
+	}
+
+	// check validations
 	if err != nil {
 		return args, err
 	}
@@ -127,6 +143,13 @@ func (a *Arguments) isBooleanFlag(name string) bool {
 
 // tryGetFlag tries to get the flag from the command
 func (a *Arguments) tryGetFlag(name string) (Flag, error) {
+	if name == "help" || name == "h" {
+		a.hasHelpFlag = true
+	}
+	if name == "version" || name == "v" {
+		a.hasVersionFlag = true
+	}
+
 	if flag, ok := a.flags[name]; ok {
 		return flag, nil
 	}
@@ -181,11 +204,14 @@ func (a *Arguments) parseLong(token string) error {
 			return a.parseFlag(name, "true")
 		}
 		_, hasFlag := a.flags[name]
-		value, ok := a.next()
-		if hasFlag && !ok {
-			return fmt.Errorf("missing value for flag %s", name)
+		if hasFlag {
+			value, ok := a.next()
+			if !ok {
+				return fmt.Errorf("missing value for flag %s", name)
+			}
+			return a.parseFlag(name, value)
 		}
-		return a.parseFlag(name, value)
+		return a.parseFlag(name, "")
 	}
 }
 

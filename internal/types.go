@@ -17,7 +17,6 @@ type Flag interface {
 }
 
 type Positional interface {
-	Index() int
 	Name() string
 	Description() string
 	RawValue() string

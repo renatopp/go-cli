@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"strings"
 	"time"
 
 	internal "github.com/renatopp/go-cli/internal"
@@ -28,30 +29,57 @@ func Description(d string) {
 	app.CurrentCommand().WithDescription(d)
 }
 
-// ShowHelp prints the help message for the current command, including its description,
-// usage, and available flags and subcommands.
-func ShowHelp() {
-	app.ShowHelp()
+// Version sets the version for the CLI. This enables the --version flag for
+// the root command.
+func Version(v string) {
+	app.Version = v
 }
 
-func Help() string {
-	return app.GetHelpString()
+// StdoutWith allows you to specify a custom function for handling standard
+// output. This can be useful for redirecting output to a file, logging system,
+// or for testing purposes. It is used to print the help text.
+func StdoutWith(fn func(msg string, args ...any)) {
+	app.Stdout = fn
 }
 
-// Parse processes the command-line arguments provided by the user and executes
-// the appropriate command based on the defined command structure. This function
-// should be called after all commands, flags, and positional arguments have
-// been defined.
+// StderrWith allows you to specify a custom function for handling standard error
+// output. This can be useful for redirecting error messages to a file, logging
+// system, or for testing purposes. It is used to print error messages.
+func StderrWith(fn func(msg string, args ...any)) {
+	app.Stderr = fn
+}
+
+// UsePanicInsteadOfExit configures the CLI to panic instead of exiting when
+// an error  occurs or when a command finishes execution. This can be useful
+// for testing purposes or customization of the cli behavior. The panic will
+// be called with the exit code as the argument.
+func UsePanicInsteadOfExit(usePanic bool) {
+	app.PanicInsteadOfExit = usePanic
+}
+
+// AllowExtraPositionals configures the CLI to allow extra positional arguments
+// that are not defined in the command.  You may use variadic positional for
+// this purpose as well. By default, extra positional arguments are not allowed.
 //
-// Subcommands are executed based on the first argument that matches a defined
-// name, interrupting the execution of code after the Parse() call on the
-// parent commands.
-func Parse() {
-	app.Parse()
+// Extra positional arguments can be accessed using the `Arg` function or the
+// `ExtraArg` function.
+func AllowExtraPositionals(allow bool) {
+	app.ExtraPositionalsAllowed = allow
 }
 
-func ParseArgs(args []string) {
-	app.ParseArgs(args)
+// AllowExtraFlags configures the CLI to allow extra flags that are not defined
+// in the command. By default, extra flags are not allowed.
+func AllowExtraFlags(allow bool) {
+	app.ExtraFlagsAllowed = allow
+}
+
+// AllowRepeatedFlags configures the CLI to allow repeated flags. If set to true,
+// the CLI will not return an error if a flag is provided multiple times. Instead,
+// the last value provided for the flag will be used. If set to false, the CLI
+// will return an error if a flag is provided multiple times. By default, repeated
+// flags are not allowed.
+func AllowRepeatedFlags(allow bool) {
+	app.RepeatedFlagsAllowed = allow
 }
 
 // Clear resets the state of the CLI, allowing users to define a new command
@@ -69,28 +97,44 @@ func Exit(code int) {
 	app.Exit(code)
 }
 
-func StdoutWith(fn func(msg string, args ...any)) {
-	app.Stdout = fn
+// ShowHelp prints the help message for the current command, including its description,
+// usage, and available flags and subcommands. This function uses the Stdout
+// function to output the help message.
+func ShowHelp() {
+	app.ShowHelp()
 }
 
-func StderrWith(fn func(msg string, args ...any)) {
-	app.Stderr = fn
+// HelpString returns the help message for the current command as a string.
+func HelpString() string {
+	return app.GetHelpString()
 }
 
-func UsePanicInsteadOfExit(usePanic bool) {
-	app.PanicInsteadOfExit = usePanic
+// AutoHelp configures the CLI to automatically show the help message when the user
+// provides the `-h` or `--help` flag. By default, auto help is disabled.
+func AutoHelp(enabled bool) {
+	app.AutoHelp = enabled
 }
 
-func AllowExtraPositionals(allow bool) {
-	app.ExtraPositionalsAllowed = allow
+// Parse processes the command-line arguments provided by the user and executes
+// the appropriate command based on the defined command structure. This function
+// should be called after all commands, flags, and positional arguments have
+// been defined.
+//
+// Subcommands are executed based on the first argument that matches a defined
+// name, interrupting the execution of code after the Parse() call on the
+// parent commands.
+func Parse() {
+	app.Parse()
 }
 
-func AllowExtraFlags(allow bool) {
-	app.ExtraFlagsAllowed = allow
-}
-
-func AllowRepeatedFlags(allow bool) {
-	app.RepeatedFlagsAllowed = allow
+// ParseArgs is similar to Parse but allows you to specify a custom slice of
+// arguments to parse instead of using the default os.Args. This can be useful for
+// testing purposes or when you want to parse a specific set of arguments without
+// relying on the command-line input.
+//
+// DO NOT PROVIDE the program name (i.e., os.Args[0]) in the args slice.
+func ParseArgs(args []string) {
+	app.ParseArgs(args)
 }
 
 // NArgs returns the number of positional arguments provided by the user.
@@ -126,6 +170,9 @@ func Args() []string {
 	return app.Arguments().Args
 }
 
+// NExtraArgs returns the number of extra positional arguments provided by the user,
+// i.e., those that are not defined in the command. Should be used only after
+// Parse() is called, otherwise it will return 0.
 func NExtraArgs() int {
 	if !app.IsParsed() {
 		return 0
@@ -133,6 +180,9 @@ func NExtraArgs() int {
 	return len(app.Arguments().ExtraArgs)
 }
 
+// ExtraArg retrieves the value of an extra positional argument by its index, i.e.,
+// those that are not defined in the command. Should be used only after Parse() is
+// called, otherwise it will return an empty string.
 func ExtraArg(index int) string {
 	if !app.IsParsed() {
 		return ""
@@ -154,12 +204,19 @@ func ExtraArgs() []string {
 	return app.Arguments().ExtraArgs
 }
 
+// Command creates a new command with the specified name, short description, and
+// execution function. The command is added as a subcommand to the current command.
+// The execute function will be called when the command is invoked by the user.
 func Command(name string, shortDescription string, execute func()) *internal.Command {
 	cmd := internal.NewCommand().WithName(name).WithShortDescription(shortDescription).WithExecute(execute)
 	app.CurrentCommand().WithSubcommand(cmd)
 	return cmd
 }
 
+// Cmd is an alias for Command, providing a shorter name for creating commands.
+// It creates a new command with the specified name, short description, and
+// execution function. The command is added as a subcommand to the current
+// command.
 func Cmd(name string, shortDescription string, execute func()) *internal.Command {
 	return Command(name, shortDescription, execute)
 }
@@ -170,6 +227,9 @@ func _addpos[T internal.Positional](a T) T {
 }
 
 func Pos(name, description string) *internal.GenericPositional[string] {
+	return _addpos(internal.NewGenericPositional(name, description, internal.ParseString))
+}
+func PosString(name, description string) *internal.GenericPositional[string] {
 	return _addpos(internal.NewGenericPositional(name, description, internal.ParseString))
 }
 func PosInt(name, description string) *internal.GenericPositional[int] {
@@ -265,6 +325,9 @@ func _addflag[T internal.Flag](a T) T {
 func Flag(long, short, description string) *internal.GenericFlag[string] {
 	return _addflag(internal.NewGenericFlag(long, short, description, internal.ParseString))
 }
+func FlagString(long, short, description string) *internal.GenericFlag[string] {
+	return _addflag(internal.NewGenericFlag(long, short, description, internal.ParseString))
+}
 func FlagInt(long, short, description string) *internal.GenericFlag[int] {
 	return _addflag(internal.NewGenericFlag(long, short, description, internal.ParseInt[int]))
 }
@@ -348,4 +411,41 @@ func FlagBoolSlice(long, short, description string) *internal.GenericFlag[[]bool
 }
 func FlagDurationSlice(long, short, description string) *internal.GenericFlag[[]time.Duration] {
 	return _addflag(internal.NewGenericFlag(long, short, description, internal.ParseDurationSlice))
+}
+
+// CheckExclusiveFlags checks that at most one of the provided flags is passed.
+// This function should be called after Parse().
+func CheckExclusiveFlags(flags ...internal.Flag) {
+	parsedFlags := []internal.Flag{}
+	for _, flag := range flags {
+		if flag.IsParsed() {
+			parsedFlags = append(parsedFlags, flag)
+		}
+	}
+
+	if len(parsedFlags) > 1 {
+		flagNames := []string{}
+		for _, flag := range parsedFlags {
+			flagNames = append(flagNames, flag.Signature())
+		}
+		app.Stderr("mutually exclusive flags provided: %s", strings.Join(flagNames, " and "))
+		app.Exit(1)
+	}
+}
+
+// CheckAnyFlag checks that at least one of the provided flags is passed. This
+// function should be called after Parse().
+func CheckAnyFlag(flags ...internal.Flag) {
+	for _, flag := range flags {
+		if flag.IsParsed() {
+			return
+		}
+	}
+
+	flagNames := []string{}
+	for _, flag := range flags {
+		flagNames = append(flagNames, flag.Signature())
+	}
+	app.Stderr("at least one of the following flags must be provided: %s", strings.Join(flagNames, " or "))
+	app.Exit(1)
 }

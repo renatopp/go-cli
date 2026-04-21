@@ -7,8 +7,12 @@ import (
 	"strings"
 )
 
-func printf(format string, a ...any) {
+func stdoutf(format string, a ...any) {
 	fmt.Printf(format+"\n", a...)
+}
+
+func stderrf(format string, a ...any) {
+	fmt.Fprintf(os.Stderr, format+"\n", a...)
 }
 
 type App struct {
@@ -23,6 +27,8 @@ type App struct {
 	ExtraFlagsAllowed       bool
 	ExtraPositionalsAllowed bool
 	RepeatedFlagsAllowed    bool
+	AutoHelp                bool
+	Version                 string
 }
 
 func NewApp() *App {
@@ -37,12 +43,14 @@ func (a *App) Clear() {
 	a.rootCommand = NewCommand()
 	a.currentCommand = a.rootCommand
 	a.arguments = nil
-	a.Stdout = printf
-	a.Stderr = printf
+	a.Stdout = stdoutf
+	a.Stderr = stderrf
 	a.PanicInsteadOfExit = false
 	a.ExtraFlagsAllowed = false
 	a.ExtraPositionalsAllowed = false
 	a.RepeatedFlagsAllowed = false
+	a.AutoHelp = false
+	a.Version = ""
 }
 
 func (a *App) RootCommand() *Command    { return a.rootCommand }
@@ -141,6 +149,14 @@ func (a *App) GetHelpString() string {
 		writer.WriteLine("\n%s", cmd.description)
 	}
 
+	if len(cmd.subcommands) > 0 {
+		writer.WriteLine("")
+		writer.WriteLine("Commands:")
+		for _, cmd := range cmd.subcommands {
+			writer.WriteLine("  %s\t%s", cmd.name, cmd.shortDescription)
+		}
+	}
+
 	if len(cmd.flags) > 0 {
 		writer.WriteLine("")
 		writer.WriteLine("Options:")
@@ -158,22 +174,16 @@ func (a *App) GetHelpString() string {
 		}
 	}
 
-	if len(cmd.subcommands) > 0 {
-		writer.WriteLine("")
-		writer.WriteLine("Commands:")
-		for _, cmd := range cmd.subcommands {
-			writer.WriteLine("  %s\t%s", cmd.name, cmd.shortDescription)
-		}
-	}
-
 	if len(cmd.positionals) > 0 {
 		writer.WriteLine("")
-		writer.WriteLine("Positionals:")
+		writer.WriteLine("Arguments:")
 		for _, p := range cmd.positionals {
 			desc := p.Description()
 			req := ""
 			if p.IsRequired() {
 				req = "(required) "
+			} else if p.HasDefault() {
+				req = fmt.Sprintf("(default=%v) ", p.RawDefault())
 			}
 			writer.WriteLine("  %s\t%s%s", p.Name(), req, desc)
 		}
@@ -183,9 +193,22 @@ func (a *App) GetHelpString() string {
 }
 
 func (a *App) initialize() {
+	rootCmd := a.rootCommand
+	curCmd := a.currentCommand
+
+	if a.AutoHelp && (!curCmd.HasFlag("help") || !curCmd.HasFlag("h")) {
+		helpFlag := NewGenericFlag("help", "h", "Show help message", ParseBool)
+		curCmd.WithFlag(helpFlag)
+	}
+
+	if a.Version != "" && curCmd == rootCmd && (!rootCmd.HasFlag("version") || !rootCmd.HasFlag("v")) {
+		versionFlag := NewGenericFlag("version", "v", "Show version information", ParseBool)
+		rootCmd.WithFlag(versionFlag)
+	}
+
 	if len(a.path) == 0 {
-		if a.rootCommand.name != "" {
-			a.path = append(a.path, a.rootCommand.name)
+		if rootCmd.name != "" {
+			a.path = append(a.path, rootCmd.name)
 		} else {
 			exec := os.Args[0]
 			name := path.Base(exec)
