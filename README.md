@@ -167,6 +167,7 @@ By default, `cli.Flag` and `cli.Pos` are strings, but you can use other typed ve
 | `FlagUint16`        | `PosUint16`        | `100`            |
 | `FlagUint32`        | `PosUint32`        | `1000`           |
 | `FlagUint64`        | `PosUint64`        | `9999`           |
+| `FlagFloat`         | `PosFloat`         | `3.14`           |
 | `FlagFloat32`       | `PosFloat32`       | `3.14`           |
 | `FlagFloat64`       | `PosFloat64`       | `3.14159`        |
 | `FlagBool`          | `PosBool`          | `true`           |
@@ -181,6 +182,7 @@ By default, `cli.Flag` and `cli.Pos` are strings, but you can use other typed ve
 | `FlagUint16Slice`   | `PosUint16Slice`   | `1,2,3`          |
 | `FlagUint32Slice`   | `PosUint32Slice`   | `1,2,3`          |
 | `FlagUint64Slice`   | `PosUint64Slice`   | `1,2,3`          |
+| `FlagFloatSlice`    | `PosFloatSlice`    | `1.1,2.2`        |
 | `FlagFloat32Slice`  | `PosFloat32Slice`  | `1.1,2.2`        |
 | `FlagFloat64Slice`  | `PosFloat64Slice`  | `1.1,2.2`        |
 | `FlagBoolSlice`     | `PosBoolSlice`     | `1,0,true,false` |

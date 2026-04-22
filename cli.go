@@ -262,6 +262,9 @@ func PosUint32(name, description string) *internal.GenericPositional[uint32] {
 func PosUint64(name, description string) *internal.GenericPositional[uint64] {
 	return _addpos(internal.NewGenericPositional(name, description, internal.ParseUint[uint64]))
 }
+func PosFloat(name, description string) *internal.GenericPositional[float64] {
+	return _addpos(internal.NewGenericPositional(name, description, internal.ParseFloat[float64]))
+}
 func PosFloat32(name, description string) *internal.GenericPositional[float32] {
 	return _addpos(internal.NewGenericPositional(name, description, internal.ParseFloat[float32]))
 }
@@ -303,6 +306,9 @@ func PosUint32Slice(name, description string) *internal.GenericPositional[[]uint
 }
 func PosUint64Slice(name, description string) *internal.GenericPositional[[]uint64] {
 	return _addpos(internal.NewGenericPositional(name, description, internal.ParseUintSlice[uint64]))
+}
+func PosFloatSlice(name, description string) *internal.GenericPositional[[]float64] {
+	return _addpos(internal.NewGenericPositional(name, description, internal.ParseFloatSlice[float64]))
 }
 func PosFloat32Slice(name, description string) *internal.GenericPositional[[]float32] {
 	return _addpos(internal.NewGenericPositional(name, description, internal.ParseFloatSlice[float32]))
@@ -358,6 +364,9 @@ func FlagUint32(long, short, description string) *internal.GenericFlag[uint32] {
 func FlagUint64(long, short, description string) *internal.GenericFlag[uint64] {
 	return _addflag(internal.NewGenericFlag(long, short, description, internal.ParseUint[uint64]))
 }
+func FlagFloat(long, short, description string) *internal.GenericFlag[float64] {
+	return _addflag(internal.NewGenericFlag(long, short, description, internal.ParseFloat[float64]))
+}
 func FlagFloat32(long, short, description string) *internal.GenericFlag[float32] {
 	return _addflag(internal.NewGenericFlag(long, short, description, internal.ParseFloat[float32]))
 }
@@ -399,6 +408,9 @@ func FlagUint32Slice(long, short, description string) *internal.GenericFlag[[]ui
 }
 func FlagUint64Slice(long, short, description string) *internal.GenericFlag[[]uint64] {
 	return _addflag(internal.NewGenericFlag(long, short, description, internal.ParseUintSlice[uint64]))
+}
+func FlagFloatSlice(long, short, description string) *internal.GenericFlag[[]float64] {
+	return _addflag(internal.NewGenericFlag(long, short, description, internal.ParseFloatSlice[float64]))
 }
 func FlagFloat32Slice(long, short, description string) *internal.GenericFlag[[]float32] {
 	return _addflag(internal.NewGenericFlag(long, short, description, internal.ParseFloatSlice[float32]))

@@ -1,3 +1,7 @@
+# 0.1.1 (2026-04-22)
+
+- Re-adding FlagFloat and PosFloat
+
 # 0.1.0 (2026-04-21)
 
 - Improving API ergonomics.
