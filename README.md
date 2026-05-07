@@ -4,7 +4,7 @@ This is a simple, minimalist, intuitive CLI library that works as a state machin
 
 **Why?**
 
-I created this library because other existing CLI libs for Golang are complex or require too much boilerplate that requires checking documentation everytime I use it. This library is intuitive, configuration are explicit and does not require any additional structure but functions for subcommands.
+I created this library because other existing CLI libs for Golang are complex or require too much boilerplate that requires checking documentation every time I use it. This library is intuitive, configuration are explicit and does not require any additional structure but functions for subcommands.
 
 ## Install
 

@@ -49,6 +49,18 @@ func StderrWith(fn func(msg string, args ...any)) {
 	app.Stderr = fn
 }
 
+// Print
+func Print(format string, v ...any) { app.Print(format, v...) }
+
+// Println
+func Println(format string, v ...any) { app.Println(format, v...) }
+
+// Error
+func Error(format string, v ...any) { app.Error(format, v...) }
+
+// Errorln
+func Errorln(format string, v ...any) { app.Errorln(format, v...) }
+
 // UsePanicInsteadOfExit configures the CLI to panic instead of exiting when
 // an error  occurs or when a command finishes execution. This can be useful
 // for testing purposes or customization of the cli behavior. The panic will

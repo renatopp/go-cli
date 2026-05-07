@@ -64,6 +64,11 @@ func (a *App) Exit(code int) {
 	os.Exit(code)
 }
 
+func (a *App) Print(format string, v ...any)   { a.Stdout(format, v...) }
+func (a *App) Println(format string, v ...any) { a.Stdout(format+"\n", v...) }
+func (a *App) Error(format string, v ...any)   { a.Stderr(format, v...) }
+func (a *App) Errorln(format string, v ...any) { a.Stderr(format+"\n", v...) }
+
 // Parse is called for every command in the path.
 func (a *App) Parse() {
 	// Check if already parsed
