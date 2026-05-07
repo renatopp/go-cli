@@ -3,6 +3,7 @@ package internal
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path"
 	"strings"
 )
@@ -68,6 +69,24 @@ func (a *App) Print(format string, v ...any)   { a.Stdout(format, v...) }
 func (a *App) Println(format string, v ...any) { a.Stdout(format+"\n", v...) }
 func (a *App) Error(format string, v ...any)   { a.Stderr(format, v...) }
 func (a *App) Errorln(format string, v ...any) { a.Stderr(format+"\n", v...) }
+
+func (a *App) Shell(dir string, name string, args ...string) *exec.Cmd {
+	cmd := exec.Command(name, args...)
+	cmd.Stdout = &StdWriter{fn: func(format string, v ...any) {
+		a.Stdout(format, v...)
+	}}
+	cmd.Stderr = &StdWriter{fn: func(format string, v ...any) {
+		a.Stderr(format, v...)
+	}}
+	cmd.Stdin = os.Stdin
+	return cmd
+}
+
+func (a *App) Exec(dir string, name string, args ...string) error {
+	cmd := a.Shell(dir, name, args...)
+	cmd.Dir = dir
+	return cmd.Run()
+}
 
 // Parse is called for every command in the path.
 func (a *App) Parse() {
