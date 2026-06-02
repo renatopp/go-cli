@@ -18,6 +18,9 @@ After that, just import the package and use the `cli` name:
 import "github.com/renatopp/go-cli"
 
 func main() {
+  cli.Name("hello-world")
+  cli.Description("This is a sample hello world.")
+  cli.AutoHelp(true)
   cli.Parse()
 }
 ```
@@ -63,6 +66,7 @@ You can check all examples in `examples/` directory:
 | [list](./examples/list/list.go)          | Simple sub command usage                        |
 | [verbose](./examples/verbose/verbose.go) | Flag repetition and counter `-vvv`              |
 | [format](./examples/format/format.go)    | Mutually exclusive options `--json` or `--yaml` |
+| [hidden](./examples/hidden/hidden.go)    | Hidden subcommands, flags and positionals       |
 
 
 ### Hello, World

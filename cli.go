@@ -35,17 +35,9 @@ func Version(v string) {
 	app.Version = v
 }
 
-// Shell executes the specified command with the given arguments and returns
-// its standard output as a string. The command is executed in the current working
-// directory.
-func Shell(name string, args ...string) (string, error) {
-	return app.Shell("", name, args...)
-}
-
-// ShellAt executes the specified command with the given arguments in the
-// specified directory. It returns the standard output of the command as a string.
-func ShellAt(dir string, name string, args ...string) (string, error) {
-	return app.Shell(dir, name, args...)
+// Shell creates a new shell command to be executed.
+func Shell(name string, args ...string) *internal.Shell {
+	return internal.NewShell(name, args...)
 }
 
 // StdoutWith allows you to specify a custom function for handling standard
@@ -62,17 +54,11 @@ func StderrWith(fn func(msg string, args ...any)) {
 	app.Stderr = fn
 }
 
-// Print prints a formatted message using the stdout function.
-func Print(format string, v ...any) { app.Print(format, v...) }
+// Log prints a formatted message using the stdout function.
+func Log(format string, v ...any) { app.Log(format, v...) }
 
-// Println prints a formatted message with a newline using the stdout function.
-func Println(format string, v ...any) { app.Println(format, v...) }
-
-// PrintError prints a formatted error message using the stderr function.
-func PrintError(format string, v ...any) { app.Error(format, v...) }
-
-// PrintErrorln prints a formatted error message with a newline using the stderr.
-func PrintErrorln(format string, v ...any) { app.Errorln(format, v...) }
+// Error prints a formatted error message using the stderr function.
+func Error(format string, v ...any) { app.Error(format, v...) }
 
 // UsePanicInsteadOfExit configures the CLI to panic instead of exiting when
 // an error  occurs or when a command finishes execution. This can be useful
