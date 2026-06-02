@@ -4,7 +4,13 @@ This is a simple, minimalist, intuitive CLI library that works as a state machin
 
 **Why?**
 
-I created this library because other existing CLI libs for Golang are complex or require too much boilerplate that requires checking documentation everytime I use it. This library is intuitive, configuration are explicit and does not require any additional structure but functions for subcommands.
+I created this library because other existing CLI libs for Golang are complex or require too much boilerplate that requires checking documentation every time I use it. This library is intuitive, configuration are explicit and does not require any additional structure but functions for subcommands.
+
+- [Install](#install)
+- [Overview](#overview)
+- [Usage and Cookbook](#usage-and-cookbook)
+  - [Flags and Positional Arguments](#flags-and-positional-arguments)
+  - [Sub Commands](#sub-commands)
 
 ## Install
 
@@ -18,7 +24,13 @@ After that, just import the package and use the `cli` name:
 import "github.com/renatopp/go-cli"
 
 func main() {
+  cli.Name("hello")
+  cli.Description("Prints a classical message.")
+  cli.AutoHelp(true)
   cli.Parse()
+[]
+  cli.Print("Hello, World!")
+
 }
 ```
 
@@ -58,42 +70,13 @@ You can check all examples in `examples/` directory:
 
 | Example                                  | What does it shows?                             |
 |------------------------------------------|-------------------------------------------------|
-| [basic](./examples/basic/basic.go)       | Minimal example                                 |
+| [hello](./examples/hello/hello.go)       | Minimal example                                 |
 | [repeat](./examples/repeat/repeat.go)    | Basic flags and positionals                     |
 | [list](./examples/list/list.go)          | Simple sub command usage                        |
 | [verbose](./examples/verbose/verbose.go) | Flag repetition and counter `-vvv`              |
 | [format](./examples/format/format.go)    | Mutually exclusive options `--json` or `--yaml` |
+| [hidden](./examples/hidden/hidden.go)    | Hidden subcommands, flags and positionals       |
 
-
-### Hello, World
-
-```go
-package main
-
-import "github.com/renatopp/go-cli"
-
-func main() {
-  cli.Name("hello")
-  cli.Description("Prints a classical message.")
-  cli.AutoHelp(true)
-  cli.Parse()
-
-  println("Hello, World!")
-}
-```
-
-```
-$ hello
-Hello, World!
-
-$ hello --help
-Usage: hello [options]
-
-Prints a classical message.
-
-Options:
-  -h, --help        Show help message
-``` 
 
 ### Flags and Positional Arguments
 

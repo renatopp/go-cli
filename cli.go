@@ -35,6 +35,11 @@ func Version(v string) {
 	app.Version = v
 }
 
+// Shell creates a new shell command to be executed.
+func Shell(name string, args ...string) *internal.Shell {
+	return internal.NewShell(name, args...)
+}
+
 // StdoutWith allows you to specify a custom function for handling standard
 // output. This can be useful for redirecting output to a file, logging system,
 // or for testing purposes. It is used to print the help text.
@@ -48,6 +53,12 @@ func StdoutWith(fn func(msg string, args ...any)) {
 func StderrWith(fn func(msg string, args ...any)) {
 	app.Stderr = fn
 }
+
+// Print prints a formatted message using the stdout function.
+func Print(format string, v ...any) { app.Print(format, v...) }
+
+// Error prints a formatted error message using the stderr function.
+func Error(format string, v ...any) { app.Error(format, v...) }
 
 // UsePanicInsteadOfExit configures the CLI to panic instead of exiting when
 // an error  occurs or when a command finishes execution. This can be useful

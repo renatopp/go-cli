@@ -8,6 +8,7 @@ type Flag interface {
 	Parse(value string) error
 	IsParsed() bool
 	IsRequired() bool
+	IsHidden() bool
 	IsRepeatable() bool
 	IsRepeated() bool
 	HasDefault() bool
@@ -23,6 +24,7 @@ type Positional interface {
 	Parse(value string) error
 	IsParsed() bool
 	IsRequired() bool
+	IsHidden() bool
 	IsVariadic() bool
 	HasDefault() bool
 	RawDefault() string

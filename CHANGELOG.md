@@ -1,6 +1,12 @@
+# 0.2.0 ()
+
+- Adding Print and Error functions to use stdout and stderr.
+- Adding Shell as convenience wrapper to exec.Command.
+- Adding AsHidden options on commands, flags and positionals.
+
 # 0.1.1 (2026-04-22)
 
-- Re-adding FlagFloat and PosFloat
+- Re-adding FlagFloat and PosFloat.
 
 # 0.1.0 (2026-04-21)
 
@@ -21,5 +27,5 @@ Notice that this version is still in the development releases (0.x.x) and it's A
 
 # 0.0.0 (2025-10-14)
 
-- First version
+- First version.
 

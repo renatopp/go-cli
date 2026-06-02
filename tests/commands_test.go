@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/renatopp/go-cli"
@@ -20,4 +21,32 @@ func TestCommand(t *testing.T) {
 	expectPanicWith(t, func() {
 		cli.ParseArgs(args)
 	}, 0)
+}
+
+func TestHiddenSubcommandNotInHelp(t *testing.T) {
+	defer cli.Clear()
+
+	cli.Name("app")
+	cli.Command("public", "public command", func() {}).AsHidden()
+
+	help := cli.HelpString()
+	assertFalse(t, strings.Contains(help, "Commands:"))
+	assertFalse(t, strings.Contains(help, "public"))
+	assertFalse(t, strings.Contains(help, "<command>"))
+}
+
+func TestHiddenSubcommandStillExecutes(t *testing.T) {
+	defer cli.Clear()
+
+	executed := false
+	cli.UsePanicInsteadOfExit(true)
+	cli.Command("internal", "internal command", func() {
+		executed = true
+		cli.ParseArgs(make_args())
+	}).AsHidden()
+
+	expectPanicWith(t, func() {
+		cli.ParseArgs(make_args("internal"))
+	}, 0)
+	assertTrue(t, executed)
 }

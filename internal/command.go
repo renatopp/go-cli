@@ -6,6 +6,7 @@ type Command struct {
 	name             string
 	description      string
 	shortDescription string
+	hidden           bool
 	execute          func()
 	positionals      []Positional
 	flags            []Flag
@@ -26,6 +27,15 @@ func NewCommand() *Command {
 func (c *Command) WithName(name string) *Command {
 	c.name = name
 	return c
+}
+
+func (c *Command) AsHidden() *Command {
+	c.hidden = true
+	return c
+}
+
+func (c *Command) IsHidden() bool {
+	return c.hidden
 }
 
 func (c *Command) WithDescription(description string) *Command {

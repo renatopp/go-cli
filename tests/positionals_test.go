@@ -2,6 +2,7 @@ package tests
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/renatopp/go-cli"
@@ -163,4 +164,32 @@ func TestPositionalWithNumber(t *testing.T) {
 	a := cli.Pos("a", "desc")
 	cli.ParseArgs(make_args("-1"))
 	assertEqual(t, a.Value(), "-1")
+}
+
+func TestPositionalHiddenNotInHelpButParses(t *testing.T) {
+	defer cli.Clear()
+
+	hidden := cli.Pos("secret", "hidden positional").AsHidden().AsRequired()
+	visible := cli.Pos("name", "visible positional").AsRequired()
+
+	help := cli.HelpString()
+	assertFalse(t, strings.Contains(help, "<secret>"))
+	assertFalse(t, strings.Contains(help, "hidden positional"))
+	assertTrue(t, strings.Contains(help, "<name>"))
+
+	cli.ParseArgs(make_args("token", "john"))
+	assertEqual(t, hidden.Value(), "token")
+	assertEqual(t, visible.Value(), "john")
+}
+
+func TestPositionalHiddenRequiredStillValidated(t *testing.T) {
+	defer cli.Clear()
+
+	cli.UsePanicInsteadOfExit(true)
+	cli.StderrWith(printfContains(t, "missing required positional argument"))
+	cli.Pos("secret", "hidden required positional").AsHidden().AsRequired()
+
+	expectPanicWith(t, func() {
+		cli.ParseArgs(make_args())
+	}, 1)
 }
