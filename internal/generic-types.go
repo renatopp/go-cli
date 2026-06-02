@@ -77,6 +77,12 @@ func (f *GenericFlag[T]) AsRepeatable() *GenericFlag[T] {
 	return f
 }
 
+// AsHidden marks the flag as hidden, so it is omitted from help output.
+func (f *GenericFlag[T]) AsHidden() *GenericFlag[T] {
+	f.BaseFlag.hidden = true
+	return f
+}
+
 // Parse implements the parsing logic for the generic flag.
 func (f *GenericFlag[T]) Parse(value string) error {
 	parsedValue, err := f.parser(value)
@@ -169,6 +175,12 @@ func (f *GenericPositional[T]) AsRequired() *GenericPositional[T] {
 // the user into a slice of values of type T.
 func (f *GenericPositional[T]) AsVariadic() *GenericPositional[T] {
 	f.BasePositional.variadic = true
+	return f
+}
+
+// AsHidden marks the positional argument as hidden, so it is omitted from help output.
+func (f *GenericPositional[T]) AsHidden() *GenericPositional[T] {
+	f.BasePositional.hidden = true
 	return f
 }
 

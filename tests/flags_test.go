@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/renatopp/go-cli"
@@ -222,4 +223,32 @@ func TestFlagOptionalWithValue(t *testing.T) {
 	a := cli.Flag("a", "", "").WithDefault("defaulted")
 	cli.ParseArgs(make_args("--a", "1"))
 	assertEqual(t, a.Value(), "1")
+}
+
+func TestFlagHiddenNotInHelpButParses(t *testing.T) {
+	defer cli.Clear()
+
+	hidden := cli.Flag("secret", "s", "hidden flag").AsHidden()
+	visible := cli.Flag("name", "n", "visible flag")
+
+	help := cli.HelpString()
+	assertFalse(t, strings.Contains(help, "--secret"))
+	assertFalse(t, strings.Contains(help, "hidden flag"))
+	assertTrue(t, strings.Contains(help, "--name"))
+
+	cli.ParseArgs(make_args("--secret", "token", "--name", "john"))
+	assertEqual(t, hidden.Value(), "token")
+	assertEqual(t, visible.Value(), "john")
+}
+
+func TestFlagHiddenRequiredStillValidated(t *testing.T) {
+	defer cli.Clear()
+
+	cli.UsePanicInsteadOfExit(true)
+	cli.StderrWith(printfContains(t, "missing required flag"))
+	cli.Flag("secret", "s", "hidden required flag").AsHidden().AsRequired()
+
+	expectPanicWith(t, func() {
+		cli.ParseArgs(make_args())
+	}, 1)
 }

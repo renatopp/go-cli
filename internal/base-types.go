@@ -11,6 +11,7 @@ type baseArgument struct {
 	parsed      bool   // whether the argument has been parsed successfully
 	defaulted   bool   // whether the argument has a default value
 	required    bool   // whether the argument is required
+	hidden      bool   // whether the argument should be hidden from help output
 }
 
 // newBaseArgument creates a new baseArgument with the given description.
@@ -31,6 +32,9 @@ func (f *baseArgument) IsParsed() bool { return f.parsed }
 
 // IsRequired returns true if the argument is required.
 func (f *baseArgument) IsRequired() bool { return f.required }
+
+// IsHidden returns true if the argument should be hidden from help output.
+func (f *baseArgument) IsHidden() bool { return f.hidden }
 
 // HasDefault returns true if the argument has a default value.
 func (f *baseArgument) HasDefault() bool { return f.defaulted }

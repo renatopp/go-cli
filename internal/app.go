@@ -135,20 +135,48 @@ func (a *App) ShowHelp() {
 func (a *App) GetHelpString() string {
 	a.initialize()
 	name := strings.Join(a.path, " ")
+	cmd := a.CurrentCommand()
+
+	hasVisibleSubcommands := false
+	for _, sub := range cmd.subcommands {
+		if !sub.IsHidden() {
+			hasVisibleSubcommands = true
+			break
+		}
+	}
+
+	hasVisibleFlags := false
+	for _, f := range cmd.flags {
+		if !f.IsHidden() {
+			hasVisibleFlags = true
+			break
+		}
+	}
+
+	hasVisiblePositionals := false
+	for _, p := range cmd.positionals {
+		if !p.IsHidden() {
+			hasVisiblePositionals = true
+			break
+		}
+	}
 
 	cmds := ""
-	cmd := a.CurrentCommand()
-	if len(cmd.subcommands) > 0 {
+	if hasVisibleSubcommands {
 		cmds = " <command>"
 	}
 
 	opts := ""
-	if len(cmd.flags) > 0 {
+	if hasVisibleFlags {
 		opts = " [options]"
 	}
 
 	positionals := ""
 	for _, p := range cmd.positionals {
+		if p.IsHidden() {
+			continue
+		}
+
 		if p.IsRequired() {
 			positionals += " <" + p.Name() + ">"
 			continue
@@ -162,18 +190,25 @@ func (a *App) GetHelpString() string {
 		writer.WriteLine("\n%s", cmd.description)
 	}
 
-	if len(cmd.subcommands) > 0 {
+	if hasVisibleSubcommands {
 		writer.WriteLine("")
 		writer.WriteLine("Commands:")
-		for _, cmd := range cmd.subcommands {
-			writer.WriteLine("  %s\t%s", cmd.name, cmd.shortDescription)
+		for _, sub := range cmd.subcommands {
+			if sub.IsHidden() {
+				continue
+			}
+			writer.WriteLine("  %s\t%s", sub.name, sub.shortDescription)
 		}
 	}
 
-	if len(cmd.flags) > 0 {
+	if hasVisibleFlags {
 		writer.WriteLine("")
 		writer.WriteLine("Options:")
 		for _, f := range cmd.flags {
+			if f.IsHidden() {
+				continue
+			}
+
 			opts := f.Signature()
 			desc := f.Description()
 			req := ""
@@ -187,10 +222,14 @@ func (a *App) GetHelpString() string {
 		}
 	}
 
-	if len(cmd.positionals) > 0 {
+	if hasVisiblePositionals {
 		writer.WriteLine("")
 		writer.WriteLine("Arguments:")
 		for _, p := range cmd.positionals {
+			if p.IsHidden() {
+				continue
+			}
+
 			desc := p.Description()
 			req := ""
 			if p.IsRequired() {
