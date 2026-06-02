@@ -1,6 +1,6 @@
 # 0.2.0 ()
 
-- Adding Log and Error functions to use stdout and stderr.
+- Adding Print and Error functions to use stdout and stderr.
 - Adding Shell as convenience wrapper to exec.Command.
 - Adding AsHidden options on commands, flags and positionals.
 
