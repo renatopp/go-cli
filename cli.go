@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"os/exec"
 	"strings"
 	"time"
 
@@ -36,34 +35,17 @@ func Version(v string) {
 	app.Version = v
 }
 
-// Shell is a shortcut for exec.Command that configures the shell command to
-// use the CLI's Stdout and Stderr functions for output. It returns an
-// *exec.Cmd and you should run it manually.
-// If you want to execute the command and wait for it to finish, use Exec or
-// ExecAt instead for convenience.
-func Shell(name string, args ...string) *exec.Cmd {
+// Shell executes the specified command with the given arguments and returns
+// its standard output as a string. The command is executed in the current working
+// directory.
+func Shell(name string, args ...string) (string, error) {
 	return app.Shell("", name, args...)
 }
 
-// Exec executes a shell command with the given name and arguments. It returns
-// an error if the command fails to execute. The standard output and standard
-// error of the executed command are redirected to the CLI's Stdout and Stderr
-// functions, respectively. This allows you to capture and handle the output of
-// the executed command within your CLI application.
-func Exec(name string, args ...string) error {
-	return app.Exec("", name, args...)
-}
-
-// ExecAt executes a shell command with the given name and arguments in the
-// specified directory. It returns an error if the command fails to execute.
-// The standard output and standard error of the executed command are
-// redirected to the CLI's Stdout and Stderr functions, respectively. This
-// allows you to capture and handle the output of the executed command within
-// your CLI application. The dir parameter specifies the working directory for
-// the command. If dir is an empty string, the command will be executed in the
-// current working directory.
-func ExecAt(dir string, name string, args ...string) error {
-	return app.Exec(dir, name, args...)
+// ShellAt executes the specified command with the given arguments in the
+// specified directory. It returns the standard output of the command as a string.
+func ShellAt(dir string, name string, args ...string) (string, error) {
+	return app.Shell(dir, name, args...)
 }
 
 // StdoutWith allows you to specify a custom function for handling standard
@@ -80,11 +62,17 @@ func StderrWith(fn func(msg string, args ...any)) {
 	app.Stderr = fn
 }
 
-// Log prints a formatted message using the stdout function.
-func Log(format string, v ...any) { app.Print(format, v...) }
+// Print prints a formatted message using the stdout function.
+func Print(format string, v ...any) { app.Print(format, v...) }
 
-// LogError prints a formatted error message using the stderr function.
-func LogError(format string, v ...any) { app.Error(format, v...) }
+// Println prints a formatted message with a newline using the stdout function.
+func Println(format string, v ...any) { app.Println(format, v...) }
+
+// PrintError prints a formatted error message using the stderr function.
+func PrintError(format string, v ...any) { app.Error(format, v...) }
+
+// PrintErrorln prints a formatted error message with a newline using the stderr.
+func PrintErrorln(format string, v ...any) { app.Errorln(format, v...) }
 
 // UsePanicInsteadOfExit configures the CLI to panic instead of exiting when
 // an error  occurs or when a command finishes execution. This can be useful

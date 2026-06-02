@@ -1,7 +1,7 @@
 # 0.2.0 ()
 
-- Adding Log and LogError functions to use stdout and stderr.
-- Adding Shell, Exec and ExecAt as shortcuts to exec.Command and run.
+- Adding Print, Println, PrintError and PrintErrorln functions to use stdout and stderr.
+- Adding Shell, ShellAt, Exec and ExecAt as shortcuts to exec.Command and run.
 
 # 0.1.1 (2026-04-22)
 
