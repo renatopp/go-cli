@@ -10,7 +10,7 @@ func main() {
 	cli.Command("private", "an internal command", func() {}).AsHidden()
 	cli.Command("public", "a public command", func() {})
 
-	cli.Flag("secret", "s", "a secrect flag").AsHidden()
+	cli.Flag("secret", "s", "a secret flag").AsHidden()
 	cli.Flag("public", "p", "a public flag")
 
 	cli.Pos("hidden", "a hidden positional").AsHidden()

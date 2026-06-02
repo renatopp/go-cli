@@ -37,6 +37,11 @@ func NewApp() *App {
 	return s
 }
 
+// Clear resets the state of the CLI, allowing you to define a new set of
+// commands and flags. This is useful for testing or if you want to reuse the
+// same App instance for different command configurations. It clears the command
+// path, argument queue, root command, current command, and parsed arguments,
+// and resets the output functions and configuration options to their default values.
 func (a *App) Clear() {
 	a.path = []string{}
 	a.queue = os.Args[1:]
@@ -53,10 +58,26 @@ func (a *App) Clear() {
 	a.Version = ""
 }
 
-func (a *App) RootCommand() *Command    { return a.rootCommand }
+// RootCommand returns the root command of the CLI, which is the top-level
+// command that all other subcommands are attached to. You can use this to define your commands and flags.
+func (a *App) RootCommand() *Command { return a.rootCommand }
+
+// CurrentCommand returns the current command being executed, which is the last
+// command in the path. It will be the root command if no subcommand has been
+// executed yet.
 func (a *App) CurrentCommand() *Command { return a.currentCommand }
-func (a *App) Arguments() *Arguments    { return a.arguments }
-func (a *App) IsParsed() bool           { return a.arguments != nil }
+
+// Arguments returns the parsed arguments for the current command. It will be
+// nil if the arguments have not been parsed yet.
+func (a *App) Arguments() *Arguments { return a.arguments }
+
+// IsParsed returns true if the arguments have been parsed
+// successfully.
+func (a *App) IsParsed() bool { return a.arguments != nil }
+
+// Exit terminates the program with the given exit code. If
+// PanicInsteadOfExit is true, it panics with the exit code instead of exiting,
+// which can be useful for testing.
 func (a *App) Exit(code int) {
 	if a.PanicInsteadOfExit {
 		panic(code)
@@ -64,7 +85,10 @@ func (a *App) Exit(code int) {
 	os.Exit(code)
 }
 
-func (a *App) Log(format string, v ...any)   { a.Stdout(format, v...) }
+// Log prints a formatted message using the stdout function.
+func (a *App) Log(format string, v ...any) { a.Stdout(format, v...) }
+
+// Error prints a formatted error message using the stderr function.
 func (a *App) Error(format string, v ...any) { a.Stderr(format, v...) }
 
 // Parse is called for every command in the path.
@@ -122,6 +146,8 @@ func (a *App) ShowHelp() {
 	a.Stdout(s)
 }
 
+// GetHelpString generates and returns the help message string for the current
+// command, including its description,
 func (a *App) GetHelpString() string {
 	a.initialize()
 	name := strings.Join(a.path, " ")
