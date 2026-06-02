@@ -1,7 +1,8 @@
 # 0.2.0 ()
 
-- Adding Print, Println, PrintError and PrintErrorln functions to use stdout and stderr.
-- Adding Shell, ShellAt, Exec and ExecAt as shortcuts to exec.Command and run.
+- Adding Log and Error functions to use stdout and stderr.
+- Adding Shell as convenience wrapper to exec.Command.
+- Adding AsHidden options on commands, flags and positionals.
 
 # 0.1.1 (2026-04-22)
 

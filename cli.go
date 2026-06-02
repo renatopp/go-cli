@@ -54,8 +54,8 @@ func StderrWith(fn func(msg string, args ...any)) {
 	app.Stderr = fn
 }
 
-// Log prints a formatted message using the stdout function.
-func Log(format string, v ...any) { app.Log(format, v...) }
+// Print prints a formatted message using the stdout function.
+func Print(format string, v ...any) { app.Print(format, v...) }
 
 // Error prints a formatted error message using the stderr function.
 func Error(format string, v ...any) { app.Error(format, v...) }

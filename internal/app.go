@@ -85,8 +85,8 @@ func (a *App) Exit(code int) {
 	os.Exit(code)
 }
 
-// Log prints a formatted message using the stdout function.
-func (a *App) Log(format string, v ...any) { a.Stdout(format, v...) }
+// Print prints a formatted message using the stdout function.
+func (a *App) Print(format string, v ...any) { a.Stdout(format, v...) }
 
 // Error prints a formatted error message using the stderr function.
 func (a *App) Error(format string, v ...any) { a.Stderr(format, v...) }
