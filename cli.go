@@ -60,6 +60,22 @@ func Print(format string, v ...any) { app.Print(format, v...) }
 // Error prints a formatted error message using the stderr function.
 func Error(format string, v ...any) { app.Error(format, v...) }
 
+// Fatal prints a formatted error message using the stderr function and then
+// exits with code 1.
+func Fatal(format string, v ...any) {
+	app.Error("Error: "+format, v...)
+	app.Exit(1)
+}
+
+// FatalIf checks if the provided error is not nil, and if so, it prints the error
+// message using the stderr function and then exits with code 1.
+func FatalIf(err error) {
+	if err != nil {
+		app.Error("Error: %v", err)
+		app.Exit(1)
+	}
+}
+
 // UsePanicInsteadOfExit configures the CLI to panic instead of exiting when
 // an error  occurs or when a command finishes execution. This can be useful
 // for testing purposes or customization of the cli behavior. The panic will

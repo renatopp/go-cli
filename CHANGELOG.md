@@ -1,4 +1,7 @@
-# 0.2.0 ()
+# 0.3.0 (2026-06-04)
+- Adding Fatal and FatalIf functions.
+
+# 0.2.0 (2026-06-01)
 
 - Adding Print and Error functions to use stdout and stderr.
 - Adding Shell as convenience wrapper to exec.Command.
