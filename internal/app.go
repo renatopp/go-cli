@@ -91,6 +91,11 @@ func (a *App) Print(format string, v ...any) { a.Stdout(format, v...) }
 // Error prints a formatted error message using the stderr function.
 func (a *App) Error(format string, v ...any) { a.Stderr(format, v...) }
 
+// SetArgs sets the arguments for the app.
+func (a *App) SetArgs(args []string) {
+	a.queue = args
+}
+
 // Parse is called for every command in the path.
 func (a *App) Parse() {
 	// Check if already parsed

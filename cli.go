@@ -76,6 +76,10 @@ func FatalIf(err error) {
 	}
 }
 
+func SetArgs(args []string) {
+	app.SetArgs(args)
+}
+
 // UsePanicInsteadOfExit configures the CLI to panic instead of exiting when
 // an error  occurs or when a command finishes execution. This can be useful
 // for testing purposes or customization of the cli behavior. The panic will
