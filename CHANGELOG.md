@@ -1,3 +1,7 @@
+# 0.4.0 (2026-06-14)
+- Adding SetArgs().
+- App now reflects the CLI interface and can be instantiated.
+
 # 0.3.0 (2026-06-04)
 - Adding Fatal and FatalIf functions.
 
@@ -31,4 +35,3 @@ Notice that this version is still in the development releases (0.x.x) and it's A
 # 0.0.0 (2025-10-14)
 
 - First version.
-
