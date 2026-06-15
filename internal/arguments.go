@@ -74,13 +74,13 @@ func parseArguments(app *App) (*Arguments, error) {
 	}
 
 	// check for auto help or auto version before performing other validations
-	if app.AutoHelp && args.hasHelpFlag {
+	if app.autoHelp && args.hasHelpFlag {
 		app.ShowHelp()
 		app.Exit(0)
 	}
 
-	if app.Version != "" && args.hasVersionFlag && app.CurrentCommand() == app.RootCommand() {
-		app.Stdout(app.Version)
+	if app.version != "" && args.hasVersionFlag && app.CurrentCommand() == app.RootCommand() {
+		app.Print(app.version)
 		app.Exit(0)
 	}
 
@@ -154,7 +154,7 @@ func (a *Arguments) tryGetFlag(name string) (Flag, error) {
 		return flag, nil
 	}
 
-	if a.app.ExtraFlagsAllowed {
+	if a.app.extraFlagsAllowed {
 		long := ""
 		short := ""
 		if len(name) == 1 {
@@ -179,7 +179,7 @@ func (a *Arguments) parseFlag(name string, value string) error {
 	}
 
 	if flag.IsParsed() {
-		if !a.app.RepeatedFlagsAllowed && !flag.IsRepeatable() {
+		if !a.app.repeatedFlagsAllowed && !flag.IsRepeatable() {
 			return fmt.Errorf("flag %s was specified multiple times", name)
 		}
 	}
@@ -267,7 +267,7 @@ func (a *Arguments) parsePositional(token string) error {
 			return last.Parse(token)
 		}
 
-		if !a.app.ExtraPositionalsAllowed {
+		if !a.app.extraPositionalsAllowed {
 			return fmt.Errorf("unexpected extra positional argument: %s", token)
 		}
 

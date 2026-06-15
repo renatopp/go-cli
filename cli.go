@@ -14,44 +14,51 @@ func init() {
 	app = internal.NewApp()
 }
 
+// New creates a new App instance with default settings.
+func New() *internal.App {
+	return internal.NewApp()
+}
+
+// Clear resets the state of the CLI, allowing users to define a new command
+// structure and configuration. This can be useful in scenarios where you want to
+// reuse the same CLI instance for different commands or when you want to reset
+// the CLI state after executing a command.
+func Clear() {
+	app.Clear()
+}
+
 // Name sets the name for the current command. The name is used in help text
 // to identify the command and its usage. Use only its immediate name (e.g.
 // "version" instead of "app version") since the command hierarchy is
 // automatically handled by go-cli.
-func Name(n string) {
-	app.CurrentCommand().WithName(n)
-}
+func Name(n string) { app.Name(n) }
 
 // Description sets the description for the current command. Descriptions are
 // used in help text to provide more information about the command and its
 // purpose.
-func Description(d string) {
-	app.CurrentCommand().WithDescription(d)
-}
+func Description(d string) { app.Description(d) }
 
 // Version sets the version for the CLI. This enables the --version flag for
 // the root command.
-func Version(v string) {
-	app.Version = v
-}
+func Version(v string) { app.Version(v) }
 
 // Shell creates a new shell command to be executed.
 func Shell(name string, args ...string) *internal.Shell {
-	return internal.NewShell(name, args...)
+	return app.Shell(name, args...)
 }
 
 // StdoutWith allows you to specify a custom function for handling standard
 // output. This can be useful for redirecting output to a file, logging system,
 // or for testing purposes. It is used to print the help text.
 func StdoutWith(fn func(msg string, args ...any)) {
-	app.Stdout = fn
+	app.StdoutWith(fn)
 }
 
 // StderrWith allows you to specify a custom function for handling standard error
 // output. This can be useful for redirecting error messages to a file, logging
 // system, or for testing purposes. It is used to print error messages.
 func StderrWith(fn func(msg string, args ...any)) {
-	app.Stderr = fn
+	app.StderrWith(fn)
 }
 
 // Print prints a formatted message using the stdout function.
@@ -62,30 +69,66 @@ func Error(format string, v ...any) { app.Error(format, v...) }
 
 // Fatal prints a formatted error message using the stderr function and then
 // exits with code 1.
-func Fatal(format string, v ...any) {
-	app.Error("Error: "+format, v...)
-	app.Exit(1)
-}
+func Fatal(format string, v ...any) { app.Fatal(format, v...) }
 
 // FatalIf checks if the provided error is not nil, and if so, it prints the error
 // message using the stderr function and then exits with code 1.
-func FatalIf(err error) {
-	if err != nil {
-		app.Error("Error: %v", err)
-		app.Exit(1)
-	}
+func FatalIf(err error) { app.FatalIf(err) }
+
+// Arguments returns the parsed arguments for the current command. It will be
+// nil if the arguments have not been parsed yet.
+func Arguments() *internal.Arguments { return app.Arguments() }
+
+// NArgs returns the number of positional arguments provided by the user.
+// Should be used only after Parse() is called, otherwise it will return 0.
+func NArgs() int {
+	return app.NArgs()
 }
 
-func SetArgs(args []string) {
-	app.SetArgs(args)
+// Arg retrieves the value of a positional argument by its index.
+// Should be used only after Parse() is called, otherwise it will return an
+// empty string.
+func Arg(index int) string {
+	return app.Arg(index)
 }
+
+// Args retrieves all positional arguments provided by the user.
+// Should be used only after Parse() is called, otherwise it will return an
+// empty slice.
+func Args() []string {
+	return app.Args()
+}
+
+// NExtraArgs returns the number of extra positional arguments provided by the user,
+// i.e., those that are not defined in the command. Should be used only after
+// Parse() is called, otherwise it will return 0.
+func NExtraArgs() int {
+	return app.NExtraArgs()
+}
+
+// ExtraArg retrieves the value of an extra positional argument by its index, i.e.,
+// those that are not defined in the command. Should be used only after Parse() is
+// called, otherwise it will return an empty string.
+func ExtraArg(index int) string {
+	return app.ExtraArg(index)
+}
+
+// ExtraArgs retrieves all extra positional arguments provided by the user, i.e.,
+// those that are not defined in the command. Should be used only after Parse() is
+// called, otherwise it will return an empty slice.
+func ExtraArgs() []string {
+	return app.ExtraArgs()
+}
+
+// SetArgs sets the arguments for the app.
+func SetArgs(args []string) { app.SetArgs(args) }
 
 // UsePanicInsteadOfExit configures the CLI to panic instead of exiting when
 // an error  occurs or when a command finishes execution. This can be useful
 // for testing purposes or customization of the cli behavior. The panic will
 // be called with the exit code as the argument.
 func UsePanicInsteadOfExit(usePanic bool) {
-	app.PanicInsteadOfExit = usePanic
+	app.UsePanicInsteadOfExit(usePanic)
 }
 
 // AllowExtraPositionals configures the CLI to allow extra positional arguments
@@ -95,13 +138,13 @@ func UsePanicInsteadOfExit(usePanic bool) {
 // Extra positional arguments can be accessed using the `Arg` function or the
 // `ExtraArg` function.
 func AllowExtraPositionals(allow bool) {
-	app.ExtraPositionalsAllowed = allow
+	app.AllowExtraPositionals(allow)
 }
 
 // AllowExtraFlags configures the CLI to allow extra flags that are not defined
 // in the command. By default, extra flags are not allowed.
 func AllowExtraFlags(allow bool) {
-	app.ExtraFlagsAllowed = allow
+	app.AllowExtraFlags(allow)
 }
 
 // AllowRepeatedFlags configures the CLI to allow repeated flags. If set to true,
@@ -110,15 +153,7 @@ func AllowExtraFlags(allow bool) {
 // will return an error if a flag is provided multiple times. By default, repeated
 // flags are not allowed.
 func AllowRepeatedFlags(allow bool) {
-	app.RepeatedFlagsAllowed = allow
-}
-
-// Clear resets the state of the CLI, allowing users to define a new command
-// structure and configuration. This can be useful in scenarios where you want to
-// reuse the same CLI instance for different commands or when you want to reset
-// the CLI state after executing a command.
-func Clear() {
-	app.Clear()
+	app.AllowRepeatedFlags(allow)
 }
 
 // Exit terminates the program with the provided exit code. An exit code of 0
@@ -137,13 +172,19 @@ func ShowHelp() {
 
 // HelpString returns the help message for the current command as a string.
 func HelpString() string {
-	return app.GetHelpString()
+	return app.HelpString()
 }
 
 // AutoHelp configures the CLI to automatically show the help message when the user
 // provides the `-h` or `--help` flag. By default, auto help is disabled.
 func AutoHelp(enabled bool) {
-	app.AutoHelp = enabled
+	app.AutoHelp(enabled)
+}
+
+// IsParsed returns true if the arguments have been parsed
+// successfully.
+func IsParsed() bool {
+	return app.IsParsed()
 }
 
 // Parse processes the command-line arguments provided by the user and executes
@@ -168,80 +209,11 @@ func ParseArgs(args []string) {
 	app.ParseArgs(args)
 }
 
-// NArgs returns the number of positional arguments provided by the user.
-// Should be used only after Parse() is called, otherwise it will return 0.
-func NArgs() int {
-	if !app.IsParsed() {
-		return 0
-	}
-	return len(app.Arguments().Args)
-}
-
-// Arg retrieves the value of a positional argument by its index.
-// Should be used only after Parse() is called, otherwise it will return an
-// empty string.
-func Arg(index int) string {
-	if !app.IsParsed() {
-		return ""
-	}
-	args := app.Arguments().Args
-	if index < 0 || index >= len(args) {
-		return ""
-	}
-	return args[index]
-}
-
-// Args retrieves all positional arguments provided by the user.
-// Should be used only after Parse() is called, otherwise it will return an
-// empty slice.
-func Args() []string {
-	if !app.IsParsed() {
-		return []string{}
-	}
-	return app.Arguments().Args
-}
-
-// NExtraArgs returns the number of extra positional arguments provided by the user,
-// i.e., those that are not defined in the command. Should be used only after
-// Parse() is called, otherwise it will return 0.
-func NExtraArgs() int {
-	if !app.IsParsed() {
-		return 0
-	}
-	return len(app.Arguments().ExtraArgs)
-}
-
-// ExtraArg retrieves the value of an extra positional argument by its index, i.e.,
-// those that are not defined in the command. Should be used only after Parse() is
-// called, otherwise it will return an empty string.
-func ExtraArg(index int) string {
-	if !app.IsParsed() {
-		return ""
-	}
-	extraArgs := app.Arguments().ExtraArgs
-	if index < 0 || index >= len(extraArgs) {
-		return ""
-	}
-	return extraArgs[index]
-}
-
-// ExtraArgs retrieves all extra positional arguments provided by the user, i.e.,
-// those that are not defined in the command. Should be used only after Parse() is
-// called, otherwise it will return an empty slice.
-func ExtraArgs() []string {
-	if !app.IsParsed() {
-		return []string{}
-	}
-	return app.Arguments().ExtraArgs
-}
-
 // Command creates a new command with the specified name, short description, and
 // execution function. The command is added as a subcommand to the current command.
 // The execute function will be called when the command is invoked by the user.
 func Command(name string, shortDescription string, execute func()) *internal.Command {
-	cmd := internal.NewCommand().WithName(name).WithShortDescription(shortDescription).WithExecute(execute)
-	app.CurrentCommand().WithSubcommand(cmd)
-	return cmd
+	return app.Command(name, shortDescription, execute)
 }
 
 // Cmd is an alias for Command, providing a shorter name for creating commands.
@@ -249,211 +221,201 @@ func Command(name string, shortDescription string, execute func()) *internal.Com
 // execution function. The command is added as a subcommand to the current
 // command.
 func Cmd(name string, shortDescription string, execute func()) *internal.Command {
-	return Command(name, shortDescription, execute)
-}
-
-func _addpos[T internal.Positional](a T) T {
-	app.CurrentCommand().WithPositional(a)
-	return a
+	return app.Cmd(name, shortDescription, execute)
 }
 
 func Pos(name, description string) *internal.GenericPositional[string] {
-	return _addpos(internal.NewGenericPositional(name, description, internal.ParseString))
+	return app.Pos(name, description)
 }
 func PosString(name, description string) *internal.GenericPositional[string] {
-	return _addpos(internal.NewGenericPositional(name, description, internal.ParseString))
+	return app.PosString(name, description)
 }
 func PosInt(name, description string) *internal.GenericPositional[int] {
-	return _addpos(internal.NewGenericPositional(name, description, internal.ParseInt[int]))
+	return app.PosInt(name, description)
 }
 func PosInt8(name, description string) *internal.GenericPositional[int8] {
-	return _addpos(internal.NewGenericPositional(name, description, internal.ParseInt[int8]))
+	return app.PosInt8(name, description)
 }
 func PosInt16(name, description string) *internal.GenericPositional[int16] {
-	return _addpos(internal.NewGenericPositional(name, description, internal.ParseInt[int16]))
+	return app.PosInt16(name, description)
 }
 func PosInt32(name, description string) *internal.GenericPositional[int32] {
-	return _addpos(internal.NewGenericPositional(name, description, internal.ParseInt[int32]))
+	return app.PosInt32(name, description)
 }
 func PosInt64(name, description string) *internal.GenericPositional[int64] {
-	return _addpos(internal.NewGenericPositional(name, description, internal.ParseInt[int64]))
+	return app.PosInt64(name, description)
 }
 func PosUint(name, description string) *internal.GenericPositional[uint] {
-	return _addpos(internal.NewGenericPositional(name, description, internal.ParseUint[uint]))
+	return app.PosUint(name, description)
 }
 func PosUint8(name, description string) *internal.GenericPositional[uint8] {
-	return _addpos(internal.NewGenericPositional(name, description, internal.ParseUint[uint8]))
+	return app.PosUint8(name, description)
 }
 func PosUint16(name, description string) *internal.GenericPositional[uint16] {
-	return _addpos(internal.NewGenericPositional(name, description, internal.ParseUint[uint16]))
+	return app.PosUint16(name, description)
 }
 func PosUint32(name, description string) *internal.GenericPositional[uint32] {
-	return _addpos(internal.NewGenericPositional(name, description, internal.ParseUint[uint32]))
+	return app.PosUint32(name, description)
 }
 func PosUint64(name, description string) *internal.GenericPositional[uint64] {
-	return _addpos(internal.NewGenericPositional(name, description, internal.ParseUint[uint64]))
+	return app.PosUint64(name, description)
 }
 func PosFloat(name, description string) *internal.GenericPositional[float64] {
-	return _addpos(internal.NewGenericPositional(name, description, internal.ParseFloat[float64]))
+	return app.PosFloat(name, description)
 }
 func PosFloat32(name, description string) *internal.GenericPositional[float32] {
-	return _addpos(internal.NewGenericPositional(name, description, internal.ParseFloat[float32]))
+	return app.PosFloat32(name, description)
 }
 func PosFloat64(name, description string) *internal.GenericPositional[float64] {
-	return _addpos(internal.NewGenericPositional(name, description, internal.ParseFloat[float64]))
+	return app.PosFloat64(name, description)
 }
 func PosBool(name, description string) *internal.GenericPositional[bool] {
-	return _addpos(internal.NewGenericPositional(name, description, internal.ParseBool))
+	return app.PosBool(name, description)
 }
 func PosDuration(name, description string) *internal.GenericPositional[time.Duration] {
-	return _addpos(internal.NewGenericPositional(name, description, internal.ParseDuration))
+	return app.PosDuration(name, description)
 }
 func PosIntSlice(name, description string) *internal.GenericPositional[[]int] {
-	return _addpos(internal.NewGenericPositional(name, description, internal.ParseIntSlice[int]))
+	return app.PosIntSlice(name, description)
 }
 func PosInt8Slice(name, description string) *internal.GenericPositional[[]int8] {
-	return _addpos(internal.NewGenericPositional(name, description, internal.ParseIntSlice[int8]))
+	return app.PosInt8Slice(name, description)
 }
 func PosInt16Slice(name, description string) *internal.GenericPositional[[]int16] {
-	return _addpos(internal.NewGenericPositional(name, description, internal.ParseIntSlice[int16]))
+	return app.PosInt16Slice(name, description)
 }
 func PosInt32Slice(name, description string) *internal.GenericPositional[[]int32] {
-	return _addpos(internal.NewGenericPositional(name, description, internal.ParseIntSlice[int32]))
+	return app.PosInt32Slice(name, description)
 }
 func PosInt64Slice(name, description string) *internal.GenericPositional[[]int64] {
-	return _addpos(internal.NewGenericPositional(name, description, internal.ParseIntSlice[int64]))
+	return app.PosInt64Slice(name, description)
 }
 func PosUintSlice(name, description string) *internal.GenericPositional[[]uint] {
-	return _addpos(internal.NewGenericPositional(name, description, internal.ParseUintSlice[uint]))
+	return app.PosUintSlice(name, description)
 }
 func PosUint8Slice(name, description string) *internal.GenericPositional[[]uint8] {
-	return _addpos(internal.NewGenericPositional(name, description, internal.ParseUintSlice[uint8]))
+	return app.PosUint8Slice(name, description)
 }
 func PosUint16Slice(name, description string) *internal.GenericPositional[[]uint16] {
-	return _addpos(internal.NewGenericPositional(name, description, internal.ParseUintSlice[uint16]))
+	return app.PosUint16Slice(name, description)
 }
 func PosUint32Slice(name, description string) *internal.GenericPositional[[]uint32] {
-	return _addpos(internal.NewGenericPositional(name, description, internal.ParseUintSlice[uint32]))
+	return app.PosUint32Slice(name, description)
 }
 func PosUint64Slice(name, description string) *internal.GenericPositional[[]uint64] {
-	return _addpos(internal.NewGenericPositional(name, description, internal.ParseUintSlice[uint64]))
+	return app.PosUint64Slice(name, description)
 }
 func PosFloatSlice(name, description string) *internal.GenericPositional[[]float64] {
-	return _addpos(internal.NewGenericPositional(name, description, internal.ParseFloatSlice[float64]))
+	return app.PosFloatSlice(name, description)
 }
 func PosFloat32Slice(name, description string) *internal.GenericPositional[[]float32] {
-	return _addpos(internal.NewGenericPositional(name, description, internal.ParseFloatSlice[float32]))
+	return app.PosFloat32Slice(name, description)
 }
 func PosFloat64Slice(name, description string) *internal.GenericPositional[[]float64] {
-	return _addpos(internal.NewGenericPositional(name, description, internal.ParseFloatSlice[float64]))
+	return app.PosFloat64Slice(name, description)
 }
 func PosBoolSlice(name, description string) *internal.GenericPositional[[]bool] {
-	return _addpos(internal.NewGenericPositional(name, description, internal.ParseBoolSlice))
+	return app.PosBoolSlice(name, description)
 }
 func PosDurationSlice(name, description string) *internal.GenericPositional[[]time.Duration] {
-	return _addpos(internal.NewGenericPositional(name, description, internal.ParseDurationSlice))
-}
-
-func _addflag[T internal.Flag](a T) T {
-	app.CurrentCommand().WithFlag(a)
-	return a
+	return app.PosDurationSlice(name, description)
 }
 
 func Flag(long, short, description string) *internal.GenericFlag[string] {
-	return _addflag(internal.NewGenericFlag(long, short, description, internal.ParseString))
+	return app.Flag(long, short, description)
 }
 func FlagString(long, short, description string) *internal.GenericFlag[string] {
-	return _addflag(internal.NewGenericFlag(long, short, description, internal.ParseString))
+	return app.FlagString(long, short, description)
 }
 func FlagInt(long, short, description string) *internal.GenericFlag[int] {
-	return _addflag(internal.NewGenericFlag(long, short, description, internal.ParseInt[int]))
+	return app.FlagInt(long, short, description)
 }
 func FlagInt8(long, short, description string) *internal.GenericFlag[int8] {
-	return _addflag(internal.NewGenericFlag(long, short, description, internal.ParseInt[int8]))
+	return app.FlagInt8(long, short, description)
 }
 func FlagInt16(long, short, description string) *internal.GenericFlag[int16] {
-	return _addflag(internal.NewGenericFlag(long, short, description, internal.ParseInt[int16]))
+	return app.FlagInt16(long, short, description)
 }
 func FlagInt32(long, short, description string) *internal.GenericFlag[int32] {
-	return _addflag(internal.NewGenericFlag(long, short, description, internal.ParseInt[int32]))
+	return app.FlagInt32(long, short, description)
 }
 func FlagInt64(long, short, description string) *internal.GenericFlag[int64] {
-	return _addflag(internal.NewGenericFlag(long, short, description, internal.ParseInt[int64]))
+	return app.FlagInt64(long, short, description)
 }
 func FlagUint(long, short, description string) *internal.GenericFlag[uint] {
-	return _addflag(internal.NewGenericFlag(long, short, description, internal.ParseUint[uint]))
+	return app.FlagUint(long, short, description)
 }
 func FlagUint8(long, short, description string) *internal.GenericFlag[uint8] {
-	return _addflag(internal.NewGenericFlag(long, short, description, internal.ParseUint[uint8]))
+	return app.FlagUint8(long, short, description)
 }
 func FlagUint16(long, short, description string) *internal.GenericFlag[uint16] {
-	return _addflag(internal.NewGenericFlag(long, short, description, internal.ParseUint[uint16]))
+	return app.FlagUint16(long, short, description)
 }
 func FlagUint32(long, short, description string) *internal.GenericFlag[uint32] {
-	return _addflag(internal.NewGenericFlag(long, short, description, internal.ParseUint[uint32]))
+	return app.FlagUint32(long, short, description)
 }
 func FlagUint64(long, short, description string) *internal.GenericFlag[uint64] {
-	return _addflag(internal.NewGenericFlag(long, short, description, internal.ParseUint[uint64]))
+	return app.FlagUint64(long, short, description)
 }
 func FlagFloat(long, short, description string) *internal.GenericFlag[float64] {
-	return _addflag(internal.NewGenericFlag(long, short, description, internal.ParseFloat[float64]))
+	return app.FlagFloat(long, short, description)
 }
 func FlagFloat32(long, short, description string) *internal.GenericFlag[float32] {
-	return _addflag(internal.NewGenericFlag(long, short, description, internal.ParseFloat[float32]))
+	return app.FlagFloat32(long, short, description)
 }
 func FlagFloat64(long, short, description string) *internal.GenericFlag[float64] {
-	return _addflag(internal.NewGenericFlag(long, short, description, internal.ParseFloat[float64]))
+	return app.FlagFloat64(long, short, description)
 }
 func FlagBool(long, short, description string) *internal.GenericFlag[bool] {
-	return _addflag(internal.NewGenericFlag(long, short, description, internal.ParseBool))
+	return app.FlagBool(long, short, description)
 }
 func FlagDuration(long, short, description string) *internal.GenericFlag[time.Duration] {
-	return _addflag(internal.NewGenericFlag(long, short, description, internal.ParseDuration))
+	return app.FlagDuration(long, short, description)
 }
 func FlagIntSlice(long, short, description string) *internal.GenericFlag[[]int] {
-	return _addflag(internal.NewGenericFlag(long, short, description, internal.ParseIntSlice[int]))
+	return app.FlagIntSlice(long, short, description)
 }
 func FlagInt8Slice(long, short, description string) *internal.GenericFlag[[]int8] {
-	return _addflag(internal.NewGenericFlag(long, short, description, internal.ParseIntSlice[int8]))
+	return app.FlagInt8Slice(long, short, description)
 }
 func FlagInt16Slice(long, short, description string) *internal.GenericFlag[[]int16] {
-	return _addflag(internal.NewGenericFlag(long, short, description, internal.ParseIntSlice[int16]))
+	return app.FlagInt16Slice(long, short, description)
 }
 func FlagInt32Slice(long, short, description string) *internal.GenericFlag[[]int32] {
-	return _addflag(internal.NewGenericFlag(long, short, description, internal.ParseIntSlice[int32]))
+	return app.FlagInt32Slice(long, short, description)
 }
 func FlagInt64Slice(long, short, description string) *internal.GenericFlag[[]int64] {
-	return _addflag(internal.NewGenericFlag(long, short, description, internal.ParseIntSlice[int64]))
+	return app.FlagInt64Slice(long, short, description)
 }
 func FlagUintSlice(long, short, description string) *internal.GenericFlag[[]uint] {
-	return _addflag(internal.NewGenericFlag(long, short, description, internal.ParseUintSlice[uint]))
+	return app.FlagUintSlice(long, short, description)
 }
 func FlagUint8Slice(long, short, description string) *internal.GenericFlag[[]uint8] {
-	return _addflag(internal.NewGenericFlag(long, short, description, internal.ParseUintSlice[uint8]))
+	return app.FlagUint8Slice(long, short, description)
 }
 func FlagUint16Slice(long, short, description string) *internal.GenericFlag[[]uint16] {
-	return _addflag(internal.NewGenericFlag(long, short, description, internal.ParseUintSlice[uint16]))
+	return app.FlagUint16Slice(long, short, description)
 }
 func FlagUint32Slice(long, short, description string) *internal.GenericFlag[[]uint32] {
-	return _addflag(internal.NewGenericFlag(long, short, description, internal.ParseUintSlice[uint32]))
+	return app.FlagUint32Slice(long, short, description)
 }
 func FlagUint64Slice(long, short, description string) *internal.GenericFlag[[]uint64] {
-	return _addflag(internal.NewGenericFlag(long, short, description, internal.ParseUintSlice[uint64]))
+	return app.FlagUint64Slice(long, short, description)
 }
 func FlagFloatSlice(long, short, description string) *internal.GenericFlag[[]float64] {
-	return _addflag(internal.NewGenericFlag(long, short, description, internal.ParseFloatSlice[float64]))
+	return app.FlagFloatSlice(long, short, description)
 }
 func FlagFloat32Slice(long, short, description string) *internal.GenericFlag[[]float32] {
-	return _addflag(internal.NewGenericFlag(long, short, description, internal.ParseFloatSlice[float32]))
+	return app.FlagFloat32Slice(long, short, description)
 }
 func FlagFloat64Slice(long, short, description string) *internal.GenericFlag[[]float64] {
-	return _addflag(internal.NewGenericFlag(long, short, description, internal.ParseFloatSlice[float64]))
+	return app.FlagFloat64Slice(long, short, description)
 }
 func FlagBoolSlice(long, short, description string) *internal.GenericFlag[[]bool] {
-	return _addflag(internal.NewGenericFlag(long, short, description, internal.ParseBoolSlice))
+	return app.FlagBoolSlice(long, short, description)
 }
 func FlagDurationSlice(long, short, description string) *internal.GenericFlag[[]time.Duration] {
-	return _addflag(internal.NewGenericFlag(long, short, description, internal.ParseDurationSlice))
+	return app.FlagDurationSlice(long, short, description)
 }
 
 // CheckExclusiveFlags checks that at most one of the provided flags is passed.
