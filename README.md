@@ -57,12 +57,14 @@ Go-cli uses some traditional conventions for flags and positional arguments, sup
 Additionally, there are other interesting features:
 
 - **Strict by default**.
+- Optional **global flags**, applying to all subcommands.
 - Optional **auto help** and **auto version**.
 - Optional **positional variadic**, collecting all positional arguments in the list.
 - Support for nested **subcommands**.
 - Optional **repeated flags**, collecting all values.
 - **Required, default value** and **custom validation** for flags and positional arguments.
 - Support for **extra flags** and **extra positional arguments**.
+- **Locale** support.
 
 ## Usage and Cookbook
 
