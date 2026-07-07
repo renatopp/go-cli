@@ -96,6 +96,15 @@ func (c *Command) HasFlag(n string) bool {
 	return false
 }
 
+func (c *Command) GetFlag(n string) (Flag, error) {
+	for _, f := range c.flags {
+		if f.Long() == n || f.Short() == n {
+			return f, nil
+		}
+	}
+	return nil, ErrFlagNotFound
+}
+
 func (c *Command) inheritFlags() {
 	if c.parent == nil {
 		return

@@ -499,6 +499,24 @@ func FlagDurationSlice(long, short, description string) T_FlagDurationSlice {
 	return app.FlagDurationSlice(long, short, description)
 }
 
+// GetFlag retrieves a flag by its long or short name and attempts to cast it to the specified type T.
+// If the flag is not found or cannot be cast to the desired type, an error is returned.
+func GetFlag[T internal.Flag](longOrShort string) (T, error) {
+	f, err := app.GetFlag(longOrShort)
+	if err != nil {
+		var zero T
+		return zero, err
+	}
+
+	typed, ok := f.(T)
+	if !ok {
+		var zero T
+		return zero, internal.ErrFlagNotType
+	}
+
+	return typed, nil
+}
+
 // CheckExclusiveFlags checks that at most one of the provided flags is passed.
 // This function should be called after Parse().
 func CheckExclusiveFlags(flags ...internal.Flag) {

@@ -19,6 +19,9 @@ func cmd1() {
 	cli.Command("cmd3", "", cmd3)
 	cli.Parse()
 	cli.ShowHelp()
+
+	verbose, _ := cli.GetFlag[cli.T_FlagBool]("verbose")
+	println("verbose:", verbose.Value())
 }
 
 func cmd2() {

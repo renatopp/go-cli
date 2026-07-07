@@ -652,6 +652,10 @@ func (a *App) FlagDurationSlice(long, short, description string) *GenericFlag[[]
 	return _addflag(a, NewGenericFlag(long, short, description, ParseDurationSlice))
 }
 
+func (a *App) GetFlag(longOrShort string) (Flag, error) {
+	return a.CurrentCommand().GetFlag(longOrShort)
+}
+
 func (a *App) initialize() {
 	rootCmd := a.rootCommand
 	curCmd := a.currentCommand
