@@ -2,6 +2,7 @@ package tests
 
 import (
 	"fmt"
+	"io"
 	"strings"
 	"testing"
 )
@@ -14,9 +15,13 @@ func make_args(v ...any) []string {
 	return s
 }
 
-func printfContains(t *testing.T, expected string, message ...string) func(msg string, args ...any) {
-	return func(msg string, args ...any) {
-		msg = fmt.Sprintf(msg, args...)
+type writerFunc func(p []byte) (int, error)
+
+func (f writerFunc) Write(p []byte) (int, error) { return f(p) }
+
+func printfContains(t *testing.T, expected string, message ...string) io.Writer {
+	return writerFunc(func(p []byte) (int, error) {
+		msg := string(p)
 		if !strings.Contains(msg, expected) {
 			if len(message) > 0 {
 				t.Fatalf("expected print to contain %q but got %q. %s", expected, msg, message[0])
@@ -24,7 +29,8 @@ func printfContains(t *testing.T, expected string, message ...string) func(msg s
 				t.Fatalf("expected print to contain %q but got %q", expected, msg)
 			}
 		}
-	}
+		return len(p), nil
+	})
 }
 
 func expectPanicWith(t *testing.T, f func(), v any, message ...string) {

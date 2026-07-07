@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"io"
 	"strings"
 	"time"
 
@@ -47,18 +48,18 @@ func Shell(name string, args ...string) *internal.Shell {
 	return app.Shell(name, args...)
 }
 
-// StdoutWith allows you to specify a custom function for handling standard
+// StdoutWith allows you to specify a custom io.Writer for handling standard
 // output. This can be useful for redirecting output to a file, logging system,
 // or for testing purposes. It is used to print the help text.
-func StdoutWith(fn func(msg string, args ...any)) {
-	app.StdoutWith(fn)
+func StdoutWith(w io.Writer) {
+	app.StdoutWith(w)
 }
 
-// StderrWith allows you to specify a custom function for handling standard error
+// StderrWith allows you to specify a custom io.Writer for handling standard error
 // output. This can be useful for redirecting error messages to a file, logging
 // system, or for testing purposes. It is used to print error messages.
-func StderrWith(fn func(msg string, args ...any)) {
-	app.StderrWith(fn)
+func StderrWith(w io.Writer) {
+	app.StderrWith(w)
 }
 
 // Print prints a formatted message using the stdout function.
@@ -433,7 +434,7 @@ func CheckExclusiveFlags(flags ...internal.Flag) {
 		for _, flag := range parsedFlags {
 			flagNames = append(flagNames, flag.Signature())
 		}
-		app.Stderr("mutually exclusive flags provided: %s", strings.Join(flagNames, " and "))
+		app.Error("mutually exclusive flags provided: %s", strings.Join(flagNames, " and "))
 		app.Exit(1)
 	}
 }
@@ -451,6 +452,6 @@ func CheckAnyFlag(flags ...internal.Flag) {
 	for _, flag := range flags {
 		flagNames = append(flagNames, flag.Signature())
 	}
-	app.Stderr("at least one of the following flags must be provided: %s", strings.Join(flagNames, " or "))
+	app.Error("at least one of the following flags must be provided: %s", strings.Join(flagNames, " or "))
 	app.Exit(1)
 }
