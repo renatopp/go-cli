@@ -4,7 +4,6 @@
 - Colored outputs
 - Examples
 - OnParsed callbacks on flags and positionals
-- 
 - Add license file
 - Add WithEnv() binding on flags and positionals
 - Add WithChoices() to replace CheckExclusiveFlags
