@@ -26,6 +26,7 @@ type T_PosFloat32 = *internal.GenericPositional[float32]
 type T_PosFloat64 = *internal.GenericPositional[float64]
 type T_PosBool = *internal.GenericPositional[bool]
 type T_PosDuration = *internal.GenericPositional[time.Duration]
+type T_PosStringSlice = *internal.GenericPositional[[]string]
 type T_PosIntSlice = *internal.GenericPositional[[]int]
 type T_PosInt8Slice = *internal.GenericPositional[[]int8]
 type T_PosInt16Slice = *internal.GenericPositional[[]int16]
@@ -57,6 +58,7 @@ type T_FlagFloat32 = *internal.GenericFlag[float32]
 type T_FlagFloat64 = *internal.GenericFlag[float64]
 type T_FlagBool = *internal.GenericFlag[bool]
 type T_FlagDuration = *internal.GenericFlag[time.Duration]
+type T_FlagStringSlice = *internal.GenericFlag[[]string]
 type T_FlagIntSlice = *internal.GenericFlag[[]int]
 type T_FlagInt8Slice = *internal.GenericFlag[[]int8]
 type T_FlagInt16Slice = *internal.GenericFlag[[]int16]
@@ -356,6 +358,9 @@ func PosBool(name, description string) T_PosBool {
 func PosDuration(name, description string) T_PosDuration {
 	return app.PosDuration(name, description)
 }
+func PosStringSlice(name, description string) T_PosStringSlice {
+	return app.PosStringSlice(name, description)
+}
 func PosIntSlice(name, description string) T_PosIntSlice {
 	return app.PosIntSlice(name, description)
 }
@@ -452,6 +457,9 @@ func FlagBool(long, short, description string) T_FlagBool {
 }
 func FlagDuration(long, short, description string) T_FlagDuration {
 	return app.FlagDuration(long, short, description)
+}
+func FlagStringSlice(long, short, description string) T_FlagStringSlice {
+	return app.FlagStringSlice(long, short, description)
 }
 func FlagIntSlice(long, short, description string) T_FlagIntSlice {
 	return app.FlagIntSlice(long, short, description)

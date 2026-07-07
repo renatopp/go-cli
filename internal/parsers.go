@@ -85,6 +85,10 @@ func ParseDuration(s string) (time.Duration, error) {
 	return time.ParseDuration(s)
 }
 
+func ParseStringSlice(s string) ([]string, error) {
+	return strings.Split(s, ","), nil
+}
+
 func ParseIntSlice[T ~int | ~int8 | ~int16 | ~int32 | ~int64](s string) ([]T, error) {
 	parts := strings.Split(s, ",")
 	result := make([]T, len(parts))
@@ -122,10 +126,6 @@ func ParseFloatSlice[T ~float32 | ~float64](s string) ([]T, error) {
 		result[i] = val
 	}
 	return result, nil
-}
-
-func ParseStringSlice(s string) ([]string, error) {
-	return strings.Split(s, ","), nil
 }
 
 func ParseBoolSlice(s string) ([]bool, error) {

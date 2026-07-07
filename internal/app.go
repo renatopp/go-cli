@@ -512,6 +512,9 @@ func (a *App) PosDuration(name, description string) *GenericPositional[time.Dura
 func (a *App) PosIntSlice(name, description string) *GenericPositional[[]int] {
 	return _addpos(a, NewGenericPositional(name, description, ParseIntSlice[int]))
 }
+func (a *App) PosStringSlice(name, description string) *GenericPositional[[]string] {
+	return _addpos(a, NewGenericPositional(name, description, ParseStringSlice))
+}
 func (a *App) PosInt8Slice(name, description string) *GenericPositional[[]int8] {
 	return _addpos(a, NewGenericPositional(name, description, ParseIntSlice[int8]))
 }
@@ -605,6 +608,9 @@ func (a *App) FlagBool(long, short, description string) *GenericFlag[bool] {
 }
 func (a *App) FlagDuration(long, short, description string) *GenericFlag[time.Duration] {
 	return _addflag(a, NewGenericFlag(long, short, description, ParseDuration))
+}
+func (a *App) FlagStringSlice(long, short, description string) *GenericFlag[[]string] {
+	return _addflag(a, NewGenericFlag(long, short, description, ParseStringSlice))
 }
 func (a *App) FlagIntSlice(long, short, description string) *GenericFlag[[]int] {
 	return _addflag(a, NewGenericFlag(long, short, description, ParseIntSlice[int]))

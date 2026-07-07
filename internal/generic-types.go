@@ -100,7 +100,7 @@ func (f *GenericFlag[T]) Parse(value string) error {
 	f.values = append(f.values, parsedValue)
 	if f.validator != nil {
 		if err := f.validator(parsedValue); err != nil {
-			return fmt.Errorf(GetLocale().ErrInvalidFlagValue, f.Signature(), value)
+			return fmt.Errorf(GetLocale().ErrInvalidFlagValue, f.Signature(), err.Error())
 		}
 	}
 
@@ -202,7 +202,7 @@ func (f *GenericPositional[T]) Parse(value string) error {
 	f.parsed = true
 	if f.validator != nil {
 		if err := f.validator(parsedValue); err != nil {
-			return fmt.Errorf(GetLocale().ErrInvalidPositionalValue, f.Name(), value)
+			return fmt.Errorf(GetLocale().ErrInvalidPositionalValue, f.Name(), err.Error())
 		}
 	}
 

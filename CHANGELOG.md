@@ -3,6 +3,9 @@
 - Adding global flags with initial typing exposure.
 - Adding locale support.
 - Replacing stdout and stderr by io.Writers.
+- Fixing validation error feedback.
+- Fixing shell timeout.
+- Fixing exposure of string slices.
 
 # 0.4.0 (2026-06-14)
 
