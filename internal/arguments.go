@@ -92,12 +92,12 @@ func parseArguments(app *App) (*Arguments, error) {
 	// check for required flags and positionals
 	for _, flag := range cmd.flags {
 		if flag.IsRequired() && !flag.IsParsed() {
-			return args, fmt.Errorf("missing required flag %s", flag.Signature())
+			return args, fmt.Errorf(GetLocale().ErrMissingRequiredFlag, flag.Signature())
 		}
 	}
 	for i, positional := range cmd.positionals {
 		if positional.IsRequired() && i >= len(args.Args) {
-			return args, fmt.Errorf("missing required positional argument: %s", positional.Name())
+			return args, fmt.Errorf(GetLocale().ErrMissingRequiredPositional, positional.Name())
 		}
 	}
 
@@ -168,7 +168,7 @@ func (a *Arguments) tryGetFlag(name string) (Flag, error) {
 		a.flags[name] = extraFlag
 		return extraFlag, nil
 	}
-	return nil, fmt.Errorf("unknown flag %s", name)
+	return nil, fmt.Errorf(GetLocale().ErrUnknownFlag, name)
 }
 
 // parseFlag parses the flag with the given value. It checks for repeated flags
@@ -180,7 +180,7 @@ func (a *Arguments) parseFlag(name string, value string) error {
 
 	if flag.IsParsed() {
 		if !a.app.repeatedFlagsAllowed && !flag.IsRepeatable() {
-			return fmt.Errorf("flag %s was specified multiple times", name)
+			return fmt.Errorf(GetLocale().ErrFlagSpecifiedMultiple, name)
 		}
 	}
 
@@ -207,7 +207,7 @@ func (a *Arguments) parseLong(token string) error {
 		if hasFlag {
 			value, ok := a.next()
 			if !ok {
-				return fmt.Errorf("missing value for flag %s", name)
+				return fmt.Errorf(GetLocale().ErrMissingValueForFlag, name)
 			}
 			return a.parseFlag(name, value)
 		}
@@ -232,7 +232,7 @@ func (a *Arguments) parseShort(token string) error {
 			_, hasFlag := a.flags[name]
 			value, ok := a.next()
 			if hasFlag && !ok {
-				return fmt.Errorf("missing value for flag %s", name)
+				return fmt.Errorf(GetLocale().ErrMissingValueForFlag, name)
 			}
 			return a.parseFlag(name, value)
 
@@ -268,7 +268,7 @@ func (a *Arguments) parsePositional(token string) error {
 		}
 
 		if !a.app.extraPositionalsAllowed {
-			return fmt.Errorf("unexpected extra positional argument: %s", token)
+			return fmt.Errorf(GetLocale().ErrUnexpectedExtraPositional, token)
 		}
 
 		a.ExtraArgs = append(a.ExtraArgs, token)

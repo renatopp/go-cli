@@ -87,14 +87,14 @@ func (f *GenericFlag[T]) AsHidden() *GenericFlag[T] {
 func (f *GenericFlag[T]) Parse(value string) error {
 	parsedValue, err := f.parser(value)
 	if err != nil {
-		return fmt.Errorf("invalid value for flag %s: %v", f.Signature(), value)
+		return fmt.Errorf(GetLocale().ErrInvalidFlagValue, f.Signature(), value)
 	}
 	f.parsed = true
 	f.value = parsedValue
 	f.values = append(f.values, parsedValue)
 	if f.validator != nil {
 		if err := f.validator(parsedValue); err != nil {
-			return fmt.Errorf("invalid value for flag %s: %v", f.Signature(), value)
+			return fmt.Errorf(GetLocale().ErrInvalidFlagValue, f.Signature(), value)
 		}
 	}
 
@@ -188,7 +188,7 @@ func (f *GenericPositional[T]) AsHidden() *GenericPositional[T] {
 func (f *GenericPositional[T]) Parse(value string) error {
 	parsedValue, err := f.parser(value)
 	if err != nil {
-		return fmt.Errorf("invalid value for positional argument %s: %v", f.Name(), value)
+		return fmt.Errorf(GetLocale().ErrInvalidPositionalValue, f.Name(), value)
 	}
 
 	f.value = parsedValue
@@ -196,7 +196,7 @@ func (f *GenericPositional[T]) Parse(value string) error {
 	f.parsed = true
 	if f.validator != nil {
 		if err := f.validator(parsedValue); err != nil {
-			return fmt.Errorf("invalid value for positional argument %s: %v", f.Name(), value)
+			return fmt.Errorf(GetLocale().ErrInvalidPositionalValue, f.Name(), value)
 		}
 	}
 

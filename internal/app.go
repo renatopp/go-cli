@@ -298,15 +298,17 @@ func (a *App) HelpString() string {
 		positionals += " [<" + p.Name() + ">]"
 	}
 
+	loc := GetLocale()
+
 	writer := NewDefaultTypewriter()
-	writer.WriteLine("Usage: %s%s%s%s", name, cmds, opts, positionals)
+	writer.WriteLine("%s: %s%s%s%s", loc.UsageLabel, name, cmds, opts, positionals)
 	if cmd.description != "" {
 		writer.WriteLine("\n%s", cmd.description)
 	}
 
 	if hasVisibleSubcommands {
 		writer.WriteLine("")
-		writer.WriteLine("Commands:")
+		writer.WriteLine("%s:", loc.CommandsLabel)
 		for _, sub := range cmd.subcommands {
 			if sub.IsHidden() {
 				continue
@@ -317,7 +319,7 @@ func (a *App) HelpString() string {
 
 	if hasVisibleFlags {
 		writer.WriteLine("")
-		writer.WriteLine("Options:")
+		writer.WriteLine("%s:", loc.OptionsLabel)
 		for _, f := range cmd.flags {
 			if f.IsHidden() {
 				continue
@@ -327,9 +329,9 @@ func (a *App) HelpString() string {
 			desc := f.Description()
 			req := ""
 			if f.IsRequired() {
-				req = "(required) "
+				req = loc.RequiredLabel
 			} else if f.HasDefault() {
-				req = fmt.Sprintf("(default=%v) ", f.RawDefault())
+				req = fmt.Sprintf(loc.DefaultLabel, f.RawDefault())
 			}
 
 			writer.WriteLine("  %s\t%s%s", opts, req, desc)
@@ -338,7 +340,7 @@ func (a *App) HelpString() string {
 
 	if hasVisiblePositionals {
 		writer.WriteLine("")
-		writer.WriteLine("Arguments:")
+		writer.WriteLine("%s:", loc.ArgumentsLabel)
 		for _, p := range cmd.positionals {
 			if p.IsHidden() {
 				continue
@@ -347,9 +349,9 @@ func (a *App) HelpString() string {
 			desc := p.Description()
 			req := ""
 			if p.IsRequired() {
-				req = "(required) "
+				req = loc.RequiredLabel
 			} else if p.HasDefault() {
-				req = fmt.Sprintf("(default=%v) ", p.RawDefault())
+				req = fmt.Sprintf(loc.DefaultLabel, p.RawDefault())
 			}
 			writer.WriteLine("  %s\t%s%s", p.Name(), req, desc)
 		}
@@ -632,12 +634,12 @@ func (a *App) initialize() {
 	curCmd := a.currentCommand
 
 	if a.autoHelp && (!curCmd.HasFlag("help") || !curCmd.HasFlag("h")) {
-		helpFlag := NewGenericFlag("help", "h", "Show help message", ParseBool)
+		helpFlag := NewGenericFlag("help", "h", GetLocale().HelpFlagDescription, ParseBool)
 		curCmd.WithFlag(helpFlag)
 	}
 
 	if a.version != "" && curCmd == rootCmd && (!rootCmd.HasFlag("version") || !rootCmd.HasFlag("v")) {
-		versionFlag := NewGenericFlag("version", "v", "Show version information", ParseBool)
+		versionFlag := NewGenericFlag("version", "v", GetLocale().VersionFlagDescription, ParseBool)
 		rootCmd.WithFlag(versionFlag)
 	}
 
