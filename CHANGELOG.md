@@ -1,4 +1,4 @@
-# 0.5.0 (TBD)
+# 0.5.0 (2026-07-07)
 
 - Replacing stdout and stderr by io.Writers.
 - Adding global flags with initial typing exposure.
