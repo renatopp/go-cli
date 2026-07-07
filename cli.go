@@ -10,6 +10,69 @@ import (
 
 var app *internal.App
 
+type T_PosString = *internal.GenericPositional[string]
+type T_PosInt = *internal.GenericPositional[int]
+type T_PosInt8 = *internal.GenericPositional[int8]
+type T_PosInt16 = *internal.GenericPositional[int16]
+type T_PosInt32 = *internal.GenericPositional[int32]
+type T_PosInt64 = *internal.GenericPositional[int64]
+type T_PosUint = *internal.GenericPositional[uint]
+type T_PosUint8 = *internal.GenericPositional[uint8]
+type T_PosUint16 = *internal.GenericPositional[uint16]
+type T_PosUint32 = *internal.GenericPositional[uint32]
+type T_PosUint64 = *internal.GenericPositional[uint64]
+type T_PosFloat = *internal.GenericPositional[float64]
+type T_PosFloat32 = *internal.GenericPositional[float32]
+type T_PosFloat64 = *internal.GenericPositional[float64]
+type T_PosBool = *internal.GenericPositional[bool]
+type T_PosDuration = *internal.GenericPositional[time.Duration]
+type T_PosIntSlice = *internal.GenericPositional[[]int]
+type T_PosInt8Slice = *internal.GenericPositional[[]int8]
+type T_PosInt16Slice = *internal.GenericPositional[[]int16]
+type T_PosInt32Slice = *internal.GenericPositional[[]int32]
+type T_PosInt64Slice = *internal.GenericPositional[[]int64]
+type T_PosUintSlice = *internal.GenericPositional[[]uint]
+type T_PosUint8Slice = *internal.GenericPositional[[]uint8]
+type T_PosUint16Slice = *internal.GenericPositional[[]uint16]
+type T_PosUint32Slice = *internal.GenericPositional[[]uint32]
+type T_PosUint64Slice = *internal.GenericPositional[[]uint64]
+type T_PosFloatSlice = *internal.GenericPositional[[]float64]
+type T_PosFloat32Slice = *internal.GenericPositional[[]float32]
+type T_PosFloat64Slice = *internal.GenericPositional[[]float64]
+type T_PosBoolSlice = *internal.GenericPositional[[]bool]
+type T_PosDurationSlice = *internal.GenericPositional[[]time.Duration]
+type T_FlagString = *internal.GenericFlag[string]
+type T_FlagInt = *internal.GenericFlag[int]
+type T_FlagInt8 = *internal.GenericFlag[int8]
+type T_FlagInt16 = *internal.GenericFlag[int16]
+type T_FlagInt32 = *internal.GenericFlag[int32]
+type T_FlagInt64 = *internal.GenericFlag[int64]
+type T_FlagUint = *internal.GenericFlag[uint]
+type T_FlagUint8 = *internal.GenericFlag[uint8]
+type T_FlagUint16 = *internal.GenericFlag[uint16]
+type T_FlagUint32 = *internal.GenericFlag[uint32]
+type T_FlagUint64 = *internal.GenericFlag[uint64]
+type T_FlagFloat = *internal.GenericFlag[float64]
+type T_FlagFloat32 = *internal.GenericFlag[float32]
+type T_FlagFloat64 = *internal.GenericFlag[float64]
+type T_FlagBool = *internal.GenericFlag[bool]
+type T_FlagDuration = *internal.GenericFlag[time.Duration]
+type T_FlagIntSlice = *internal.GenericFlag[[]int]
+type T_FlagInt8Slice = *internal.GenericFlag[[]int8]
+type T_FlagInt16Slice = *internal.GenericFlag[[]int16]
+type T_FlagInt32Slice = *internal.GenericFlag[[]int32]
+type T_FlagInt64Slice = *internal.GenericFlag[[]int64]
+type T_FlagUintSlice = *internal.GenericFlag[[]uint]
+type T_FlagUint8Slice = *internal.GenericFlag[[]uint8]
+type T_FlagUint16Slice = *internal.GenericFlag[[]uint16]
+type T_FlagUint32Slice = *internal.GenericFlag[[]uint32]
+type T_FlagUint64Slice = *internal.GenericFlag[[]uint64]
+type T_FlagFloatSlice = *internal.GenericFlag[[]float64]
+type T_FlagFloat32Slice = *internal.GenericFlag[[]float32]
+type T_FlagFloat64Slice = *internal.GenericFlag[[]float64]
+type T_FlagBoolSlice = *internal.GenericFlag[[]bool]
+type T_FlagDurationSlice = *internal.GenericFlag[[]time.Duration]
+
 // Initialize global state
 func init() {
 	app = internal.NewApp()
@@ -242,197 +305,197 @@ func Cmd(name string, shortDescription string, execute func()) *internal.Command
 	return app.Cmd(name, shortDescription, execute)
 }
 
-func Pos(name, description string) *internal.GenericPositional[string] {
+func Pos(name, description string) T_PosString {
 	return app.Pos(name, description)
 }
-func PosString(name, description string) *internal.GenericPositional[string] {
+func PosString(name, description string) T_PosString {
 	return app.PosString(name, description)
 }
-func PosInt(name, description string) *internal.GenericPositional[int] {
+func PosInt(name, description string) T_PosInt {
 	return app.PosInt(name, description)
 }
-func PosInt8(name, description string) *internal.GenericPositional[int8] {
+func PosInt8(name, description string) T_PosInt8 {
 	return app.PosInt8(name, description)
 }
-func PosInt16(name, description string) *internal.GenericPositional[int16] {
+func PosInt16(name, description string) T_PosInt16 {
 	return app.PosInt16(name, description)
 }
-func PosInt32(name, description string) *internal.GenericPositional[int32] {
+func PosInt32(name, description string) T_PosInt32 {
 	return app.PosInt32(name, description)
 }
-func PosInt64(name, description string) *internal.GenericPositional[int64] {
+func PosInt64(name, description string) T_PosInt64 {
 	return app.PosInt64(name, description)
 }
-func PosUint(name, description string) *internal.GenericPositional[uint] {
+func PosUint(name, description string) T_PosUint {
 	return app.PosUint(name, description)
 }
-func PosUint8(name, description string) *internal.GenericPositional[uint8] {
+func PosUint8(name, description string) T_PosUint8 {
 	return app.PosUint8(name, description)
 }
-func PosUint16(name, description string) *internal.GenericPositional[uint16] {
+func PosUint16(name, description string) T_PosUint16 {
 	return app.PosUint16(name, description)
 }
-func PosUint32(name, description string) *internal.GenericPositional[uint32] {
+func PosUint32(name, description string) T_PosUint32 {
 	return app.PosUint32(name, description)
 }
-func PosUint64(name, description string) *internal.GenericPositional[uint64] {
+func PosUint64(name, description string) T_PosUint64 {
 	return app.PosUint64(name, description)
 }
-func PosFloat(name, description string) *internal.GenericPositional[float64] {
+func PosFloat(name, description string) T_PosFloat {
 	return app.PosFloat(name, description)
 }
-func PosFloat32(name, description string) *internal.GenericPositional[float32] {
+func PosFloat32(name, description string) T_PosFloat32 {
 	return app.PosFloat32(name, description)
 }
-func PosFloat64(name, description string) *internal.GenericPositional[float64] {
+func PosFloat64(name, description string) T_PosFloat64 {
 	return app.PosFloat64(name, description)
 }
-func PosBool(name, description string) *internal.GenericPositional[bool] {
+func PosBool(name, description string) T_PosBool {
 	return app.PosBool(name, description)
 }
-func PosDuration(name, description string) *internal.GenericPositional[time.Duration] {
+func PosDuration(name, description string) T_PosDuration {
 	return app.PosDuration(name, description)
 }
-func PosIntSlice(name, description string) *internal.GenericPositional[[]int] {
+func PosIntSlice(name, description string) T_PosIntSlice {
 	return app.PosIntSlice(name, description)
 }
-func PosInt8Slice(name, description string) *internal.GenericPositional[[]int8] {
+func PosInt8Slice(name, description string) T_PosInt8Slice {
 	return app.PosInt8Slice(name, description)
 }
-func PosInt16Slice(name, description string) *internal.GenericPositional[[]int16] {
+func PosInt16Slice(name, description string) T_PosInt16Slice {
 	return app.PosInt16Slice(name, description)
 }
-func PosInt32Slice(name, description string) *internal.GenericPositional[[]int32] {
+func PosInt32Slice(name, description string) T_PosInt32Slice {
 	return app.PosInt32Slice(name, description)
 }
-func PosInt64Slice(name, description string) *internal.GenericPositional[[]int64] {
+func PosInt64Slice(name, description string) T_PosInt64Slice {
 	return app.PosInt64Slice(name, description)
 }
-func PosUintSlice(name, description string) *internal.GenericPositional[[]uint] {
+func PosUintSlice(name, description string) T_PosUintSlice {
 	return app.PosUintSlice(name, description)
 }
-func PosUint8Slice(name, description string) *internal.GenericPositional[[]uint8] {
+func PosUint8Slice(name, description string) T_PosUint8Slice {
 	return app.PosUint8Slice(name, description)
 }
-func PosUint16Slice(name, description string) *internal.GenericPositional[[]uint16] {
+func PosUint16Slice(name, description string) T_PosUint16Slice {
 	return app.PosUint16Slice(name, description)
 }
-func PosUint32Slice(name, description string) *internal.GenericPositional[[]uint32] {
+func PosUint32Slice(name, description string) T_PosUint32Slice {
 	return app.PosUint32Slice(name, description)
 }
-func PosUint64Slice(name, description string) *internal.GenericPositional[[]uint64] {
+func PosUint64Slice(name, description string) T_PosUint64Slice {
 	return app.PosUint64Slice(name, description)
 }
-func PosFloatSlice(name, description string) *internal.GenericPositional[[]float64] {
+func PosFloatSlice(name, description string) T_PosFloatSlice {
 	return app.PosFloatSlice(name, description)
 }
-func PosFloat32Slice(name, description string) *internal.GenericPositional[[]float32] {
+func PosFloat32Slice(name, description string) T_PosFloat32Slice {
 	return app.PosFloat32Slice(name, description)
 }
-func PosFloat64Slice(name, description string) *internal.GenericPositional[[]float64] {
+func PosFloat64Slice(name, description string) T_PosFloat64Slice {
 	return app.PosFloat64Slice(name, description)
 }
-func PosBoolSlice(name, description string) *internal.GenericPositional[[]bool] {
+func PosBoolSlice(name, description string) T_PosBoolSlice {
 	return app.PosBoolSlice(name, description)
 }
-func PosDurationSlice(name, description string) *internal.GenericPositional[[]time.Duration] {
+func PosDurationSlice(name, description string) T_PosDurationSlice {
 	return app.PosDurationSlice(name, description)
 }
 
-func Flag(long, short, description string) *internal.GenericFlag[string] {
+func Flag(long, short, description string) T_FlagString {
 	return app.Flag(long, short, description)
 }
-func FlagString(long, short, description string) *internal.GenericFlag[string] {
+func FlagString(long, short, description string) T_FlagString {
 	return app.FlagString(long, short, description)
 }
-func FlagInt(long, short, description string) *internal.GenericFlag[int] {
+func FlagInt(long, short, description string) T_FlagInt {
 	return app.FlagInt(long, short, description)
 }
-func FlagInt8(long, short, description string) *internal.GenericFlag[int8] {
+func FlagInt8(long, short, description string) T_FlagInt8 {
 	return app.FlagInt8(long, short, description)
 }
-func FlagInt16(long, short, description string) *internal.GenericFlag[int16] {
+func FlagInt16(long, short, description string) T_FlagInt16 {
 	return app.FlagInt16(long, short, description)
 }
-func FlagInt32(long, short, description string) *internal.GenericFlag[int32] {
+func FlagInt32(long, short, description string) T_FlagInt32 {
 	return app.FlagInt32(long, short, description)
 }
-func FlagInt64(long, short, description string) *internal.GenericFlag[int64] {
+func FlagInt64(long, short, description string) T_FlagInt64 {
 	return app.FlagInt64(long, short, description)
 }
-func FlagUint(long, short, description string) *internal.GenericFlag[uint] {
+func FlagUint(long, short, description string) T_FlagUint {
 	return app.FlagUint(long, short, description)
 }
-func FlagUint8(long, short, description string) *internal.GenericFlag[uint8] {
+func FlagUint8(long, short, description string) T_FlagUint8 {
 	return app.FlagUint8(long, short, description)
 }
-func FlagUint16(long, short, description string) *internal.GenericFlag[uint16] {
+func FlagUint16(long, short, description string) T_FlagUint16 {
 	return app.FlagUint16(long, short, description)
 }
-func FlagUint32(long, short, description string) *internal.GenericFlag[uint32] {
+func FlagUint32(long, short, description string) T_FlagUint32 {
 	return app.FlagUint32(long, short, description)
 }
-func FlagUint64(long, short, description string) *internal.GenericFlag[uint64] {
+func FlagUint64(long, short, description string) T_FlagUint64 {
 	return app.FlagUint64(long, short, description)
 }
-func FlagFloat(long, short, description string) *internal.GenericFlag[float64] {
+func FlagFloat(long, short, description string) T_FlagFloat {
 	return app.FlagFloat(long, short, description)
 }
-func FlagFloat32(long, short, description string) *internal.GenericFlag[float32] {
+func FlagFloat32(long, short, description string) T_FlagFloat32 {
 	return app.FlagFloat32(long, short, description)
 }
-func FlagFloat64(long, short, description string) *internal.GenericFlag[float64] {
+func FlagFloat64(long, short, description string) T_FlagFloat64 {
 	return app.FlagFloat64(long, short, description)
 }
-func FlagBool(long, short, description string) *internal.GenericFlag[bool] {
+func FlagBool(long, short, description string) T_FlagBool {
 	return app.FlagBool(long, short, description)
 }
-func FlagDuration(long, short, description string) *internal.GenericFlag[time.Duration] {
+func FlagDuration(long, short, description string) T_FlagDuration {
 	return app.FlagDuration(long, short, description)
 }
-func FlagIntSlice(long, short, description string) *internal.GenericFlag[[]int] {
+func FlagIntSlice(long, short, description string) T_FlagIntSlice {
 	return app.FlagIntSlice(long, short, description)
 }
-func FlagInt8Slice(long, short, description string) *internal.GenericFlag[[]int8] {
+func FlagInt8Slice(long, short, description string) T_FlagInt8Slice {
 	return app.FlagInt8Slice(long, short, description)
 }
-func FlagInt16Slice(long, short, description string) *internal.GenericFlag[[]int16] {
+func FlagInt16Slice(long, short, description string) T_FlagInt16Slice {
 	return app.FlagInt16Slice(long, short, description)
 }
-func FlagInt32Slice(long, short, description string) *internal.GenericFlag[[]int32] {
+func FlagInt32Slice(long, short, description string) T_FlagInt32Slice {
 	return app.FlagInt32Slice(long, short, description)
 }
-func FlagInt64Slice(long, short, description string) *internal.GenericFlag[[]int64] {
+func FlagInt64Slice(long, short, description string) T_FlagInt64Slice {
 	return app.FlagInt64Slice(long, short, description)
 }
-func FlagUintSlice(long, short, description string) *internal.GenericFlag[[]uint] {
+func FlagUintSlice(long, short, description string) T_FlagUintSlice {
 	return app.FlagUintSlice(long, short, description)
 }
-func FlagUint8Slice(long, short, description string) *internal.GenericFlag[[]uint8] {
+func FlagUint8Slice(long, short, description string) T_FlagUint8Slice {
 	return app.FlagUint8Slice(long, short, description)
 }
-func FlagUint16Slice(long, short, description string) *internal.GenericFlag[[]uint16] {
+func FlagUint16Slice(long, short, description string) T_FlagUint16Slice {
 	return app.FlagUint16Slice(long, short, description)
 }
-func FlagUint32Slice(long, short, description string) *internal.GenericFlag[[]uint32] {
+func FlagUint32Slice(long, short, description string) T_FlagUint32Slice {
 	return app.FlagUint32Slice(long, short, description)
 }
-func FlagUint64Slice(long, short, description string) *internal.GenericFlag[[]uint64] {
+func FlagUint64Slice(long, short, description string) T_FlagUint64Slice {
 	return app.FlagUint64Slice(long, short, description)
 }
-func FlagFloatSlice(long, short, description string) *internal.GenericFlag[[]float64] {
+func FlagFloatSlice(long, short, description string) T_FlagFloatSlice {
 	return app.FlagFloatSlice(long, short, description)
 }
-func FlagFloat32Slice(long, short, description string) *internal.GenericFlag[[]float32] {
+func FlagFloat32Slice(long, short, description string) T_FlagFloat32Slice {
 	return app.FlagFloat32Slice(long, short, description)
 }
-func FlagFloat64Slice(long, short, description string) *internal.GenericFlag[[]float64] {
+func FlagFloat64Slice(long, short, description string) T_FlagFloat64Slice {
 	return app.FlagFloat64Slice(long, short, description)
 }
-func FlagBoolSlice(long, short, description string) *internal.GenericFlag[[]bool] {
+func FlagBoolSlice(long, short, description string) T_FlagBoolSlice {
 	return app.FlagBoolSlice(long, short, description)
 }
-func FlagDurationSlice(long, short, description string) *internal.GenericFlag[[]time.Duration] {
+func FlagDurationSlice(long, short, description string) T_FlagDurationSlice {
 	return app.FlagDurationSlice(long, short, description)
 }
 

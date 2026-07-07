@@ -7,12 +7,15 @@ package internal
 // when translating.
 type Locale struct {
 	// Help text labels
-	UsageLabel     string // e.g. "Usage"
-	CommandsLabel  string // e.g. "Commands"
-	OptionsLabel   string // e.g. "Options"
-	ArgumentsLabel string // e.g. "Arguments"
-	RequiredLabel  string // e.g. "(required) "
-	DefaultLabel   string // e.g. "(default=%v) ", receives the default value
+	UsageLabel        string // e.g. "Usage"
+	UsageCommandLabel string // e.g. "as in <command>"
+	UsageOptionsLabel string // e.g. "as in [options]"
+	CommandsLabel     string // e.g. "Commands"
+	OptionsLabel      string // e.g. "Options"
+	ArgumentsLabel    string // e.g. "Arguments"
+	FlagGlobalLabel   string // e.g. "as in (global)"
+	FlagRequiredLabel string // e.g. "as in (required)"
+	FlagDefaultLabel  string // e.g. "as in (default=%v)", receives the default value
 
 	// Auto-generated flag descriptions
 	HelpFlagDescription    string // description for the automatic --help/-h flag
@@ -32,12 +35,15 @@ type Locale struct {
 // DefaultLocale returns the built-in English locale used by go-cli.
 func DefaultLocale() Locale {
 	return Locale{
-		UsageLabel:     "Usage",
-		CommandsLabel:  "Commands",
-		OptionsLabel:   "Options",
-		ArgumentsLabel: "Arguments",
-		RequiredLabel:  "(required) ",
-		DefaultLabel:   "(default=%v) ",
+		UsageLabel:        "Usage",
+		UsageCommandLabel: "command",
+		UsageOptionsLabel: "options",
+		CommandsLabel:     "Commands",
+		OptionsLabel:      "Options",
+		ArgumentsLabel:    "Arguments",
+		FlagGlobalLabel:   "global",
+		FlagRequiredLabel: "required",
+		FlagDefaultLabel:  "default=%v",
 
 		HelpFlagDescription:    "Show help message",
 		VersionFlagDescription: "Show version information",
@@ -55,12 +61,15 @@ func DefaultLocale() Locale {
 
 func PTBRLocale() Locale {
 	return Locale{
-		UsageLabel:     "Uso",
-		CommandsLabel:  "Comandos",
-		OptionsLabel:   "Opções",
-		ArgumentsLabel: "Argumentos",
-		RequiredLabel:  "(obrigatório) ",
-		DefaultLabel:   "(padrão=%v) ",
+		UsageLabel:        "Uso",
+		UsageCommandLabel: "comando",
+		UsageOptionsLabel: "opções",
+		CommandsLabel:     "Comandos",
+		OptionsLabel:      "Opções",
+		ArgumentsLabel:    "Argumentos",
+		FlagGlobalLabel:   "global",
+		FlagRequiredLabel: "obrigatório",
+		FlagDefaultLabel:  "padrão=%v",
 
 		HelpFlagDescription:    "Exibir mensagem de ajuda",
 		VersionFlagDescription: "Exibir informações da versão",
@@ -98,11 +107,11 @@ func SetLocale(l Locale) {
 	if l.ArgumentsLabel == "" {
 		l.ArgumentsLabel = d.ArgumentsLabel
 	}
-	if l.RequiredLabel == "" {
-		l.RequiredLabel = d.RequiredLabel
+	if l.FlagRequiredLabel == "" {
+		l.FlagRequiredLabel = d.FlagRequiredLabel
 	}
-	if l.DefaultLabel == "" {
-		l.DefaultLabel = d.DefaultLabel
+	if l.FlagDefaultLabel == "" {
+		l.FlagDefaultLabel = d.FlagDefaultLabel
 	}
 	if l.HelpFlagDescription == "" {
 		l.HelpFlagDescription = d.HelpFlagDescription

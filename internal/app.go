@@ -40,7 +40,7 @@ func NewApp() *App {
 func (a *App) Clear() {
 	a.path = []string{}
 	a.queue = os.Args[1:]
-	a.rootCommand = NewCommand()
+	a.rootCommand = NewCommand(nil)
 	a.currentCommand = a.rootCommand
 	a.arguments = nil
 	a.stdout = os.Stdout
@@ -250,6 +250,7 @@ func (a *App) HelpString() string {
 	a.initialize()
 	name := strings.Join(a.path, " ")
 	cmd := a.CurrentCommand()
+	loc := GetLocale()
 
 	hasVisibleSubcommands := false
 	for _, sub := range cmd.subcommands {
@@ -277,33 +278,35 @@ func (a *App) HelpString() string {
 
 	cmds := ""
 	if hasVisibleSubcommands {
-		cmds = " <command>"
+		cmds = fmt.Sprintf(" <%s>", loc.UsageCommandLabel)
 	}
 
 	opts := ""
 	if hasVisibleFlags {
-		opts = " [options]"
+		opts = fmt.Sprintf(" [%s]", loc.UsageOptionsLabel)
 	}
 
-	positionals := ""
+	var positionals strings.Builder
 	for _, p := range cmd.positionals {
 		if p.IsHidden() {
 			continue
 		}
 
 		if p.IsRequired() {
-			positionals += " <" + p.Name() + ">"
+			positionals.WriteString(" <")
+			positionals.WriteString(p.Name())
+			positionals.WriteString(">")
 			continue
 		}
-		positionals += " [<" + p.Name() + ">]"
+		positionals.WriteString(" [<")
+		positionals.WriteString(p.Name())
+		positionals.WriteString(">]")
 	}
 
-	loc := GetLocale()
-
 	writer := NewDefaultTypewriter()
-	writer.WriteLine("%s: %s%s%s%s", loc.UsageLabel, name, cmds, opts, positionals)
+	writer.WriteLine("%s: %s%s%s%s", loc.UsageLabel, name, cmds, opts, positionals.String())
 	if cmd.description != "" {
-		writer.WriteLine("\n%s", cmd.description)
+		writer.WriteLine("\n%s", strings.TrimSpace(cmd.description))
 	}
 
 	if hasVisibleSubcommands {
@@ -327,14 +330,21 @@ func (a *App) HelpString() string {
 
 			opts := f.Signature()
 			desc := f.Description()
-			req := ""
-			if f.IsRequired() {
-				req = loc.RequiredLabel
-			} else if f.HasDefault() {
-				req = fmt.Sprintf(loc.DefaultLabel, f.RawDefault())
+			labels := make([]string, 0, 3)
+			if f.IsGlobal() {
+				labels = append(labels, loc.FlagGlobalLabel)
 			}
-
-			writer.WriteLine("  %s\t%s%s", opts, req, desc)
+			if f.IsRequired() {
+				labels = append(labels, loc.FlagRequiredLabel)
+			}
+			if f.HasDefault() {
+				labels = append(labels, fmt.Sprintf(loc.FlagDefaultLabel, f.RawDefault()))
+			}
+			label := ""
+			if len(labels) > 0 {
+				label = fmt.Sprintf("(%s) ", strings.Join(labels, ", "))
+			}
+			writer.WriteLine("  %s\t%s%s", opts, label, desc)
 		}
 	}
 
@@ -347,13 +357,18 @@ func (a *App) HelpString() string {
 			}
 
 			desc := p.Description()
-			req := ""
+			labels := make([]string, 0, 3)
 			if p.IsRequired() {
-				req = loc.RequiredLabel
-			} else if p.HasDefault() {
-				req = fmt.Sprintf(loc.DefaultLabel, p.RawDefault())
+				labels = append(labels, loc.FlagRequiredLabel)
 			}
-			writer.WriteLine("  %s\t%s%s", p.Name(), req, desc)
+			if p.HasDefault() {
+				labels = append(labels, fmt.Sprintf(loc.FlagDefaultLabel, p.RawDefault()))
+			}
+			label := ""
+			if len(labels) > 0 {
+				label = fmt.Sprintf("(%s) ", strings.Join(labels, ", "))
+			}
+			writer.WriteLine("  %s\t%s%s", p.Name(), label, desc)
 		}
 	}
 
@@ -392,6 +407,7 @@ func (a *App) Parse() {
 				a.path = append(a.path, cmd.name)
 
 				// Pass the execution to the subcommand
+				cmd.inheritFlags()
 				cmd.execute()
 
 				// Exit as the first command fully executes, interrupting the flow of
@@ -422,8 +438,15 @@ func (a *App) ParseArgs(args []string) {
 // execution function. The command is added as a subcommand to the current command.
 // The execute function will be called when the command is invoked by the user.
 func (a *App) Command(name string, shortDescription string, execute func()) *Command {
-	cmd := NewCommand().WithName(name).WithShortDescription(shortDescription).WithExecute(execute)
-	a.CurrentCommand().WithSubcommand(cmd)
+	cmd := NewCommand(a.CurrentCommand()).
+		WithName(name).
+		WithShortDescription(shortDescription).
+		WithDescription(shortDescription).
+		WithExecute(execute)
+
+	a.CurrentCommand().
+		WithSubcommand(cmd)
+
 	return cmd
 }
 

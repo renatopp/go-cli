@@ -77,6 +77,12 @@ func (f *GenericFlag[T]) AsRepeatable() *GenericFlag[T] {
 	return f
 }
 
+// AsGlobal marks the flag as global, meaning it can be used in any subcommand.
+func (f *GenericFlag[T]) AsGlobal() *GenericFlag[T] {
+	f.BaseFlag.global = true
+	return f
+}
+
 // AsHidden marks the flag as hidden, so it is omitted from help output.
 func (f *GenericFlag[T]) AsHidden() *GenericFlag[T] {
 	f.BaseFlag.hidden = true

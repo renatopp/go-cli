@@ -11,6 +11,7 @@ type Flag interface {
 	IsHidden() bool
 	IsRepeatable() bool
 	IsRepeated() bool
+	IsGlobal() bool
 	HasDefault() bool
 	RawDefault() string
 	Signature() string
