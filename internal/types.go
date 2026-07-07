@@ -6,6 +6,7 @@ type Flag interface {
 	Description() string
 	RawValue() string
 	Parse(value string) error
+	Count() int
 	IsParsed() bool
 	IsRequired() bool
 	IsHidden() bool

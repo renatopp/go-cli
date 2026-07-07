@@ -1,8 +1,9 @@
 # 0.5.0 (TBD)
 
+- Replacing stdout and stderr by io.Writers.
 - Adding global flags with initial typing exposure.
 - Adding locale support.
-- Replacing stdout and stderr by io.Writers.
+- Adding Count() on flags and positionals.
 - Fixing validation error feedback.
 - Fixing shell timeout.
 - Fixing exposure of string slices.

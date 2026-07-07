@@ -20,7 +20,7 @@ func cmd1() {
 	cli.Parse()
 	cli.ShowHelp()
 
-	verbose, _ := cli.GetFlag[cli.T_FlagBool]("verbose")
+	verbose, _ := cli.GetFlag[cli.TFlag[bool]]("verbose")
 	println("verbose:", verbose.Value())
 }
 

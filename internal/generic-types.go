@@ -46,6 +46,10 @@ func (f *GenericFlag[T]) Values() []T {
 	return []T{}
 }
 
+// Count returns the number of times the flag was specified by the user.
+// For non-repeatable flags, this will be either 0 or 1.
+func (f *GenericFlag[T]) Count() int { return len(f.values) }
+
 // WithDefault sets the default value for the flag.
 func (f *GenericFlag[T]) WithDefault(value T) *GenericFlag[T] {
 	f.default_ = value
@@ -152,6 +156,10 @@ func (f *GenericPositional[T]) Values() []T {
 	}
 	return []T{}
 }
+
+// Count returns the number of times the positional argument was specified by
+// the user. For non-variadic positionals, this will be either 0 or 1.
+func (f *GenericPositional[T]) Count() int { return len(f.values) }
 
 // WithDefault sets the default value for the positional argument.
 func (f *GenericPositional[T]) WithDefault(value T) *GenericPositional[T] {
