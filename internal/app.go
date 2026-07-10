@@ -2,19 +2,12 @@ package internal
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"path"
 	"strings"
 	"time"
 )
-
-func stdoutf(format string, a ...any) {
-	fmt.Printf(format+"\n", a...)
-}
-
-func stderrf(format string, a ...any) {
-	fmt.Fprintf(os.Stderr, format+"\n", a...)
-}
 
 type App struct {
 	path                    []string // the path of commands leading to the current command, e.g., ["git", "commit"]
@@ -22,8 +15,8 @@ type App struct {
 	rootCommand             *Command
 	currentCommand          *Command
 	arguments               *Arguments // parsed arguments
-	stdout                  func(format string, a ...any)
-	Stderr                  func(format string, a ...any)
+	stdout                  io.Writer
+	stderr                  io.Writer
 	panicInsteadOfExit      bool
 	extraFlagsAllowed       bool
 	extraPositionalsAllowed bool
@@ -47,11 +40,11 @@ func NewApp() *App {
 func (a *App) Clear() {
 	a.path = []string{}
 	a.queue = os.Args[1:]
-	a.rootCommand = NewCommand()
+	a.rootCommand = NewCommand(nil)
 	a.currentCommand = a.rootCommand
 	a.arguments = nil
-	a.stdout = stdoutf
-	a.Stderr = stderrf
+	a.stdout = os.Stdout
+	a.stderr = os.Stderr
 	a.panicInsteadOfExit = false
 	a.extraFlagsAllowed = false
 	a.extraPositionalsAllowed = false
@@ -89,25 +82,25 @@ func (a *App) Shell(name string, args ...string) *Shell {
 	return NewShell(name, args...)
 }
 
-// StdoutWith allows you to specify a custom function for handling standard
+// StdoutWith allows you to specify a custom io.Writer for handling standard
 // output. This can be useful for redirecting output to a file, logging system,
 // or for testing purposes. It is used to print the help text.
-func (a *App) StdoutWith(fn func(msg string, args ...any)) {
-	a.stdout = fn
+func (a *App) StdoutWith(w io.Writer) {
+	a.stdout = w
 }
 
-// StderrWith allows you to specify a custom function for handling standard error
+// StderrWith allows you to specify a custom io.Writer for handling standard error
 // output. This can be useful for redirecting error messages to a file, logging
 // system, or for testing purposes. It is used to print error messages.
-func (a *App) StderrWith(fn func(msg string, args ...any)) {
-	a.Stderr = fn
+func (a *App) StderrWith(w io.Writer) {
+	a.stderr = w
 }
 
-// Print prints a formatted message using the stdout function.
-func (a *App) Print(format string, v ...any) { a.stdout(format, v...) }
+// Print prints a formatted message using the stdout writer.
+func (a *App) Print(format string, v ...any) { fmt.Fprintf(a.stdout, format+"\n", v...) }
 
-// Error prints a formatted error message using the stderr function.
-func (a *App) Error(format string, v ...any) { a.Stderr(format, v...) }
+// Error prints a formatted error message using the stderr writer.
+func (a *App) Error(format string, v ...any) { fmt.Fprintf(a.stderr, format+"\n", v...) }
 
 // Fatal prints a formatted error message using the stderr function and then
 // exits with code 1.
@@ -248,7 +241,7 @@ func (a *App) Exit(code int) {
 // usage, and available flags and subcommands.
 func (a *App) ShowHelp() {
 	s := a.HelpString()
-	a.stdout(s)
+	a.Print("%s", s)
 }
 
 // HelpString generates and returns the help message string for the current
@@ -257,6 +250,7 @@ func (a *App) HelpString() string {
 	a.initialize()
 	name := strings.Join(a.path, " ")
 	cmd := a.CurrentCommand()
+	loc := GetLocale()
 
 	hasVisibleSubcommands := false
 	for _, sub := range cmd.subcommands {
@@ -284,36 +278,40 @@ func (a *App) HelpString() string {
 
 	cmds := ""
 	if hasVisibleSubcommands {
-		cmds = " <command>"
+		cmds = fmt.Sprintf(" <%s>", loc.UsageCommandLabel)
 	}
 
 	opts := ""
 	if hasVisibleFlags {
-		opts = " [options]"
+		opts = fmt.Sprintf(" [%s]", loc.UsageOptionsLabel)
 	}
 
-	positionals := ""
+	var positionals strings.Builder
 	for _, p := range cmd.positionals {
 		if p.IsHidden() {
 			continue
 		}
 
 		if p.IsRequired() {
-			positionals += " <" + p.Name() + ">"
+			positionals.WriteString(" <")
+			positionals.WriteString(p.Name())
+			positionals.WriteString(">")
 			continue
 		}
-		positionals += " [<" + p.Name() + ">]"
+		positionals.WriteString(" [<")
+		positionals.WriteString(p.Name())
+		positionals.WriteString(">]")
 	}
 
 	writer := NewDefaultTypewriter()
-	writer.WriteLine("Usage: %s%s%s%s", name, cmds, opts, positionals)
+	writer.WriteLine("%s: %s%s%s%s", loc.UsageLabel, name, cmds, opts, positionals.String())
 	if cmd.description != "" {
-		writer.WriteLine("\n%s", cmd.description)
+		writer.WriteLine("\n%s", strings.TrimSpace(cmd.description))
 	}
 
 	if hasVisibleSubcommands {
 		writer.WriteLine("")
-		writer.WriteLine("Commands:")
+		writer.WriteLine("%s:", loc.CommandsLabel)
 		for _, sub := range cmd.subcommands {
 			if sub.IsHidden() {
 				continue
@@ -324,7 +322,7 @@ func (a *App) HelpString() string {
 
 	if hasVisibleFlags {
 		writer.WriteLine("")
-		writer.WriteLine("Options:")
+		writer.WriteLine("%s:", loc.OptionsLabel)
 		for _, f := range cmd.flags {
 			if f.IsHidden() {
 				continue
@@ -332,33 +330,45 @@ func (a *App) HelpString() string {
 
 			opts := f.Signature()
 			desc := f.Description()
-			req := ""
-			if f.IsRequired() {
-				req = "(required) "
-			} else if f.HasDefault() {
-				req = fmt.Sprintf("(default=%v) ", f.RawDefault())
+			labels := make([]string, 0, 3)
+			if f.IsGlobal() {
+				labels = append(labels, loc.FlagGlobalLabel)
 			}
-
-			writer.WriteLine("  %s\t%s%s", opts, req, desc)
+			if f.IsRequired() {
+				labels = append(labels, loc.FlagRequiredLabel)
+			}
+			if f.HasDefault() {
+				labels = append(labels, fmt.Sprintf(loc.FlagDefaultLabel, f.RawDefault()))
+			}
+			label := ""
+			if len(labels) > 0 {
+				label = fmt.Sprintf("(%s) ", strings.Join(labels, ", "))
+			}
+			writer.WriteLine("  %s\t%s%s", opts, label, desc)
 		}
 	}
 
 	if hasVisiblePositionals {
 		writer.WriteLine("")
-		writer.WriteLine("Arguments:")
+		writer.WriteLine("%s:", loc.ArgumentsLabel)
 		for _, p := range cmd.positionals {
 			if p.IsHidden() {
 				continue
 			}
 
 			desc := p.Description()
-			req := ""
+			labels := make([]string, 0, 3)
 			if p.IsRequired() {
-				req = "(required) "
-			} else if p.HasDefault() {
-				req = fmt.Sprintf("(default=%v) ", p.RawDefault())
+				labels = append(labels, loc.FlagRequiredLabel)
 			}
-			writer.WriteLine("  %s\t%s%s", p.Name(), req, desc)
+			if p.HasDefault() {
+				labels = append(labels, fmt.Sprintf(loc.FlagDefaultLabel, p.RawDefault()))
+			}
+			label := ""
+			if len(labels) > 0 {
+				label = fmt.Sprintf("(%s) ", strings.Join(labels, ", "))
+			}
+			writer.WriteLine("  %s\t%s%s", p.Name(), label, desc)
 		}
 	}
 
@@ -397,6 +407,7 @@ func (a *App) Parse() {
 				a.path = append(a.path, cmd.name)
 
 				// Pass the execution to the subcommand
+				cmd.inheritFlags()
 				cmd.execute()
 
 				// Exit as the first command fully executes, interrupting the flow of
@@ -410,7 +421,7 @@ func (a *App) Parse() {
 	// Parse the flags and positionals of the stack
 	args, err := parseArguments(a)
 	if err != nil {
-		a.Stderr(err.Error())
+		a.Error("%s", err.Error())
 		a.Exit(1)
 	}
 	a.arguments = args
@@ -427,8 +438,15 @@ func (a *App) ParseArgs(args []string) {
 // execution function. The command is added as a subcommand to the current command.
 // The execute function will be called when the command is invoked by the user.
 func (a *App) Command(name string, shortDescription string, execute func()) *Command {
-	cmd := NewCommand().WithName(name).WithShortDescription(shortDescription).WithExecute(execute)
-	a.CurrentCommand().WithSubcommand(cmd)
+	cmd := NewCommand(a.CurrentCommand()).
+		WithName(name).
+		WithShortDescription(shortDescription).
+		WithDescription(shortDescription).
+		WithExecute(execute)
+
+	a.CurrentCommand().
+		WithSubcommand(cmd)
+
 	return cmd
 }
 
@@ -493,6 +511,9 @@ func (a *App) PosDuration(name, description string) *GenericPositional[time.Dura
 }
 func (a *App) PosIntSlice(name, description string) *GenericPositional[[]int] {
 	return _addpos(a, NewGenericPositional(name, description, ParseIntSlice[int]))
+}
+func (a *App) PosStringSlice(name, description string) *GenericPositional[[]string] {
+	return _addpos(a, NewGenericPositional(name, description, ParseStringSlice))
 }
 func (a *App) PosInt8Slice(name, description string) *GenericPositional[[]int8] {
 	return _addpos(a, NewGenericPositional(name, description, ParseIntSlice[int8]))
@@ -588,6 +609,9 @@ func (a *App) FlagBool(long, short, description string) *GenericFlag[bool] {
 func (a *App) FlagDuration(long, short, description string) *GenericFlag[time.Duration] {
 	return _addflag(a, NewGenericFlag(long, short, description, ParseDuration))
 }
+func (a *App) FlagStringSlice(long, short, description string) *GenericFlag[[]string] {
+	return _addflag(a, NewGenericFlag(long, short, description, ParseStringSlice))
+}
 func (a *App) FlagIntSlice(long, short, description string) *GenericFlag[[]int] {
 	return _addflag(a, NewGenericFlag(long, short, description, ParseIntSlice[int]))
 }
@@ -634,17 +658,21 @@ func (a *App) FlagDurationSlice(long, short, description string) *GenericFlag[[]
 	return _addflag(a, NewGenericFlag(long, short, description, ParseDurationSlice))
 }
 
+func (a *App) GetFlag(longOrShort string) (Flag, error) {
+	return a.CurrentCommand().GetFlag(longOrShort)
+}
+
 func (a *App) initialize() {
 	rootCmd := a.rootCommand
 	curCmd := a.currentCommand
 
 	if a.autoHelp && (!curCmd.HasFlag("help") || !curCmd.HasFlag("h")) {
-		helpFlag := NewGenericFlag("help", "h", "Show help message", ParseBool)
+		helpFlag := NewGenericFlag("help", "h", GetLocale().HelpFlagDescription, ParseBool)
 		curCmd.WithFlag(helpFlag)
 	}
 
 	if a.version != "" && curCmd == rootCmd && (!rootCmd.HasFlag("version") || !rootCmd.HasFlag("v")) {
-		versionFlag := NewGenericFlag("version", "v", "Show version information", ParseBool)
+		versionFlag := NewGenericFlag("version", "v", GetLocale().VersionFlagDescription, ParseBool)
 		rootCmd.WithFlag(versionFlag)
 	}
 

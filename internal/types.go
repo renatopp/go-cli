@@ -6,11 +6,13 @@ type Flag interface {
 	Description() string
 	RawValue() string
 	Parse(value string) error
+	Count() int
 	IsParsed() bool
 	IsRequired() bool
 	IsHidden() bool
 	IsRepeatable() bool
 	IsRepeated() bool
+	IsGlobal() bool
 	HasDefault() bool
 	RawDefault() string
 	Signature() string

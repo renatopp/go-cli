@@ -8,7 +8,7 @@ type baseArgument struct {
 	description string // description of the argument for help text
 	raw         string // the raw string value provided by the user
 	rawDefault  string // the raw default value for the argument
-	parsed      bool   // whether the argument has been parsed successfully
+	parsed      bool   // whether the argument has been provided by the user and parsed successfully
 	defaulted   bool   // whether the argument has a default value
 	required    bool   // whether the argument is required
 	hidden      bool   // whether the argument should be hidden from help output
@@ -27,7 +27,7 @@ func (f *baseArgument) Description() string { return f.description }
 // RawValue returns the raw string value provided by the user for this argument.
 func (f *baseArgument) RawValue() string { return f.raw }
 
-// IsParsed returns true if the argument has been parsed successfully.
+// IsParsed returns true if the argument has been provided by the user and parsed successfully.
 func (f *baseArgument) IsParsed() bool { return f.parsed }
 
 // IsRequired returns true if the argument is required.
@@ -57,6 +57,7 @@ type BaseFlag struct {
 	long       string // --name
 	short      string // -n
 	repeatable bool   // whether the flag can be specified multiple times
+	global     bool   // whether the flag is global
 }
 
 // NewBaseFlag creates a new BaseFlag with the given long name, short name,
@@ -69,6 +70,7 @@ func NewBaseFlag(long string, short string, description string) *BaseFlag {
 		long:       long,
 		short:      short,
 		repeatable: false,
+		global:     false,
 	}
 }
 
@@ -80,6 +82,9 @@ func (f *BaseFlag) Short() string { return f.short }
 
 // IsRepeatable returns true if the flag can be specified multiple times.
 func (f *BaseFlag) IsRepeatable() bool { return f.repeatable }
+
+// IsGlobal returns true if the flag is global, meaning it can be used in any subcommand.
+func (f *BaseFlag) IsGlobal() bool { return f.global }
 
 // Signature returns the flag's signature for help text, combining both long
 // and short names if available.

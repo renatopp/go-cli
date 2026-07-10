@@ -1,8 +1,20 @@
+# 0.5.0 (2026-07-07)
+
+- Replacing stdout and stderr by io.Writers.
+- Adding global flags with initial typing exposure.
+- Adding locale support.
+- Adding Count() on flags and positionals.
+- Fixing validation error feedback.
+- Fixing shell timeout.
+- Fixing exposure of string slices.
+
 # 0.4.0 (2026-06-14)
+
 - Adding SetArgs().
 - App now reflects the CLI interface and can be instantiated.
 
 # 0.3.0 (2026-06-04)
+
 - Adding Fatal and FatalIf functions.
 
 # 0.2.0 (2026-06-01)

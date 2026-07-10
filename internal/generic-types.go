@@ -46,6 +46,10 @@ func (f *GenericFlag[T]) Values() []T {
 	return []T{}
 }
 
+// Count returns the number of times the flag was specified by the user.
+// For non-repeatable flags, this will be either 0 or 1.
+func (f *GenericFlag[T]) Count() int { return len(f.values) }
+
 // WithDefault sets the default value for the flag.
 func (f *GenericFlag[T]) WithDefault(value T) *GenericFlag[T] {
 	f.default_ = value
@@ -77,6 +81,12 @@ func (f *GenericFlag[T]) AsRepeatable() *GenericFlag[T] {
 	return f
 }
 
+// AsGlobal marks the flag as global, meaning it can be used in any subcommand.
+func (f *GenericFlag[T]) AsGlobal() *GenericFlag[T] {
+	f.BaseFlag.global = true
+	return f
+}
+
 // AsHidden marks the flag as hidden, so it is omitted from help output.
 func (f *GenericFlag[T]) AsHidden() *GenericFlag[T] {
 	f.BaseFlag.hidden = true
@@ -87,14 +97,14 @@ func (f *GenericFlag[T]) AsHidden() *GenericFlag[T] {
 func (f *GenericFlag[T]) Parse(value string) error {
 	parsedValue, err := f.parser(value)
 	if err != nil {
-		return fmt.Errorf("invalid value for flag %s: %v", f.Signature(), value)
+		return fmt.Errorf(GetLocale().ErrInvalidFlagValue, f.Signature(), value)
 	}
 	f.parsed = true
 	f.value = parsedValue
 	f.values = append(f.values, parsedValue)
 	if f.validator != nil {
 		if err := f.validator(parsedValue); err != nil {
-			return fmt.Errorf("invalid value for flag %s: %v", f.Signature(), value)
+			return fmt.Errorf(GetLocale().ErrInvalidFlagValue, f.Signature(), err.Error())
 		}
 	}
 
@@ -147,6 +157,10 @@ func (f *GenericPositional[T]) Values() []T {
 	return []T{}
 }
 
+// Count returns the number of times the positional argument was specified by
+// the user. For non-variadic positionals, this will be either 0 or 1.
+func (f *GenericPositional[T]) Count() int { return len(f.values) }
+
 // WithDefault sets the default value for the positional argument.
 func (f *GenericPositional[T]) WithDefault(value T) *GenericPositional[T] {
 	f.default_ = value
@@ -188,7 +202,7 @@ func (f *GenericPositional[T]) AsHidden() *GenericPositional[T] {
 func (f *GenericPositional[T]) Parse(value string) error {
 	parsedValue, err := f.parser(value)
 	if err != nil {
-		return fmt.Errorf("invalid value for positional argument %s: %v", f.Name(), value)
+		return fmt.Errorf(GetLocale().ErrInvalidPositionalValue, f.Name(), value)
 	}
 
 	f.value = parsedValue
@@ -196,7 +210,7 @@ func (f *GenericPositional[T]) Parse(value string) error {
 	f.parsed = true
 	if f.validator != nil {
 		if err := f.validator(parsedValue); err != nil {
-			return fmt.Errorf("invalid value for positional argument %s: %v", f.Name(), value)
+			return fmt.Errorf(GetLocale().ErrInvalidPositionalValue, f.Name(), err.Error())
 		}
 	}
 

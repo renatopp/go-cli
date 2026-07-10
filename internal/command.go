@@ -3,6 +3,7 @@ package internal
 import "slices"
 
 type Command struct {
+	parent           *Command
 	name             string
 	description      string
 	shortDescription string
@@ -13,8 +14,9 @@ type Command struct {
 	subcommands      []*Command
 }
 
-func NewCommand() *Command {
+func NewCommand(parent *Command) *Command {
 	return &Command{
+		parent:      parent,
 		name:        "",
 		description: "",
 		execute:     nil,
@@ -92,4 +94,24 @@ func (c *Command) HasFlag(n string) bool {
 		}
 	}
 	return false
+}
+
+func (c *Command) GetFlag(n string) (Flag, error) {
+	for _, f := range c.flags {
+		if f.Long() == n || f.Short() == n {
+			return f, nil
+		}
+	}
+	return nil, ErrFlagNotFound
+}
+
+func (c *Command) inheritFlags() {
+	if c.parent == nil {
+		return
+	}
+	for _, f := range c.parent.flags {
+		if f.IsGlobal() {
+			c.flags = append(c.flags, f)
+		}
+	}
 }

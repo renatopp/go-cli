@@ -83,16 +83,16 @@ func (s *Shell) WithStderr(stderr io.Writer) *Shell {
 }
 
 // Cmd creates an exec.Cmd instance based on the Shell configuration.
-func (s *Shell) Cmd() *exec.Cmd {
-	cmd := exec.Command(s.command, s.args...)
+func (s *Shell) Cmd() (*exec.Cmd, context.CancelFunc) {
+	ctx := context.Background()
+	var cancel context.CancelFunc = func() {}
+	if s.timeout > 0 {
+		ctx, cancel = context.WithTimeout(context.Background(), s.timeout)
+	}
+	cmd := exec.CommandContext(ctx, s.command, s.args...)
 	cmd.Dir = s.dir
 	for k, v := range s.envs {
 		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", k, v))
-	}
-	if s.timeout > 0 {
-		ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
-		defer cancel()
-		cmd = exec.CommandContext(ctx, s.command, s.args...)
 	}
 	if s.stdout != nil {
 		cmd.Stdout = s.stdout
@@ -100,7 +100,7 @@ func (s *Shell) Cmd() *exec.Cmd {
 	if s.stderr != nil {
 		cmd.Stderr = s.stderr
 	}
-	return cmd
+	return cmd, cancel
 }
 
 // Run executes the shell command and returns its combined output and any
@@ -108,7 +108,8 @@ func (s *Shell) Cmd() *exec.Cmd {
 // will return an empty string for the output and the error from cmd.Run()
 // instead.
 func (s *Shell) Run() (string, error) {
-	cmd := s.Cmd()
+	cmd, cancel := s.Cmd()
+	defer cancel()
 	if s.stdout == nil && s.stderr == nil {
 		output, err := cmd.CombinedOutput()
 		return string(output), err

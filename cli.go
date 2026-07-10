@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"io"
 	"strings"
 	"time"
 
@@ -8,6 +9,9 @@ import (
 )
 
 var app *internal.App
+
+type TFlag[T any] = *internal.GenericFlag[T]
+type TPositional[T any] = *internal.GenericPositional[T]
 
 // Initialize global state
 func init() {
@@ -26,6 +30,23 @@ func New() *internal.App {
 func Clear() {
 	app.Clear()
 }
+
+// Locale is a struct containing the user-facing strings used by go-cli, such
+// as help text labels ("Usage", "Commands", "Options", ...) and error
+// messages (unknown flag, missing required flag, etc). Any field left as the
+// zero value falls back to the built-in English text, so you only need to
+// override the strings you want to translate.
+type Locale = internal.Locale
+
+// SetLocale replaces the strings used for help text and error messages
+// across the CLI, allowing you to localize go-cli's built-in output. It
+// applies globally, independent of which App instance is used.
+func SetLocale(locale Locale) {
+	internal.SetLocale(locale)
+}
+
+var EN = internal.DefaultLocale()
+var PTBR = internal.PTBRLocale()
 
 // Name sets the name for the current command. The name is used in help text
 // to identify the command and its usage. Use only its immediate name (e.g.
@@ -47,18 +68,18 @@ func Shell(name string, args ...string) *internal.Shell {
 	return app.Shell(name, args...)
 }
 
-// StdoutWith allows you to specify a custom function for handling standard
+// StdoutWith allows you to specify a custom io.Writer for handling standard
 // output. This can be useful for redirecting output to a file, logging system,
 // or for testing purposes. It is used to print the help text.
-func StdoutWith(fn func(msg string, args ...any)) {
-	app.StdoutWith(fn)
+func StdoutWith(w io.Writer) {
+	app.StdoutWith(w)
 }
 
-// StderrWith allows you to specify a custom function for handling standard error
+// StderrWith allows you to specify a custom io.Writer for handling standard error
 // output. This can be useful for redirecting error messages to a file, logging
 // system, or for testing purposes. It is used to print error messages.
-func StderrWith(fn func(msg string, args ...any)) {
-	app.StderrWith(fn)
+func StderrWith(w io.Writer) {
+	app.StderrWith(w)
 }
 
 // Print prints a formatted message using the stdout function.
@@ -224,198 +245,222 @@ func Cmd(name string, shortDescription string, execute func()) *internal.Command
 	return app.Cmd(name, shortDescription, execute)
 }
 
-func Pos(name, description string) *internal.GenericPositional[string] {
+func Pos(name, description string) TPositional[string] {
 	return app.Pos(name, description)
 }
-func PosString(name, description string) *internal.GenericPositional[string] {
+func PosString(name, description string) TPositional[string] {
 	return app.PosString(name, description)
 }
-func PosInt(name, description string) *internal.GenericPositional[int] {
+func PosInt(name, description string) TPositional[int] {
 	return app.PosInt(name, description)
 }
-func PosInt8(name, description string) *internal.GenericPositional[int8] {
+func PosInt8(name, description string) TPositional[int8] {
 	return app.PosInt8(name, description)
 }
-func PosInt16(name, description string) *internal.GenericPositional[int16] {
+func PosInt16(name, description string) TPositional[int16] {
 	return app.PosInt16(name, description)
 }
-func PosInt32(name, description string) *internal.GenericPositional[int32] {
+func PosInt32(name, description string) TPositional[int32] {
 	return app.PosInt32(name, description)
 }
-func PosInt64(name, description string) *internal.GenericPositional[int64] {
+func PosInt64(name, description string) TPositional[int64] {
 	return app.PosInt64(name, description)
 }
-func PosUint(name, description string) *internal.GenericPositional[uint] {
+func PosUint(name, description string) TPositional[uint] {
 	return app.PosUint(name, description)
 }
-func PosUint8(name, description string) *internal.GenericPositional[uint8] {
+func PosUint8(name, description string) TPositional[uint8] {
 	return app.PosUint8(name, description)
 }
-func PosUint16(name, description string) *internal.GenericPositional[uint16] {
+func PosUint16(name, description string) TPositional[uint16] {
 	return app.PosUint16(name, description)
 }
-func PosUint32(name, description string) *internal.GenericPositional[uint32] {
+func PosUint32(name, description string) TPositional[uint32] {
 	return app.PosUint32(name, description)
 }
-func PosUint64(name, description string) *internal.GenericPositional[uint64] {
+func PosUint64(name, description string) TPositional[uint64] {
 	return app.PosUint64(name, description)
 }
-func PosFloat(name, description string) *internal.GenericPositional[float64] {
+func PosFloat(name, description string) TPositional[float64] {
 	return app.PosFloat(name, description)
 }
-func PosFloat32(name, description string) *internal.GenericPositional[float32] {
+func PosFloat32(name, description string) TPositional[float32] {
 	return app.PosFloat32(name, description)
 }
-func PosFloat64(name, description string) *internal.GenericPositional[float64] {
+func PosFloat64(name, description string) TPositional[float64] {
 	return app.PosFloat64(name, description)
 }
-func PosBool(name, description string) *internal.GenericPositional[bool] {
+func PosBool(name, description string) TPositional[bool] {
 	return app.PosBool(name, description)
 }
-func PosDuration(name, description string) *internal.GenericPositional[time.Duration] {
+func PosDuration(name, description string) TPositional[time.Duration] {
 	return app.PosDuration(name, description)
 }
-func PosIntSlice(name, description string) *internal.GenericPositional[[]int] {
+func PosStringSlice(name, description string) TPositional[[]string] {
+	return app.PosStringSlice(name, description)
+}
+func PosIntSlice(name, description string) TPositional[[]int] {
 	return app.PosIntSlice(name, description)
 }
-func PosInt8Slice(name, description string) *internal.GenericPositional[[]int8] {
+func PosInt8Slice(name, description string) TPositional[[]int8] {
 	return app.PosInt8Slice(name, description)
 }
-func PosInt16Slice(name, description string) *internal.GenericPositional[[]int16] {
+func PosInt16Slice(name, description string) TPositional[[]int16] {
 	return app.PosInt16Slice(name, description)
 }
-func PosInt32Slice(name, description string) *internal.GenericPositional[[]int32] {
+func PosInt32Slice(name, description string) TPositional[[]int32] {
 	return app.PosInt32Slice(name, description)
 }
-func PosInt64Slice(name, description string) *internal.GenericPositional[[]int64] {
+func PosInt64Slice(name, description string) TPositional[[]int64] {
 	return app.PosInt64Slice(name, description)
 }
-func PosUintSlice(name, description string) *internal.GenericPositional[[]uint] {
+func PosUintSlice(name, description string) TPositional[[]uint] {
 	return app.PosUintSlice(name, description)
 }
-func PosUint8Slice(name, description string) *internal.GenericPositional[[]uint8] {
+func PosUint8Slice(name, description string) TPositional[[]uint8] {
 	return app.PosUint8Slice(name, description)
 }
-func PosUint16Slice(name, description string) *internal.GenericPositional[[]uint16] {
+func PosUint16Slice(name, description string) TPositional[[]uint16] {
 	return app.PosUint16Slice(name, description)
 }
-func PosUint32Slice(name, description string) *internal.GenericPositional[[]uint32] {
+func PosUint32Slice(name, description string) TPositional[[]uint32] {
 	return app.PosUint32Slice(name, description)
 }
-func PosUint64Slice(name, description string) *internal.GenericPositional[[]uint64] {
+func PosUint64Slice(name, description string) TPositional[[]uint64] {
 	return app.PosUint64Slice(name, description)
 }
-func PosFloatSlice(name, description string) *internal.GenericPositional[[]float64] {
+func PosFloatSlice(name, description string) TPositional[[]float64] {
 	return app.PosFloatSlice(name, description)
 }
-func PosFloat32Slice(name, description string) *internal.GenericPositional[[]float32] {
+func PosFloat32Slice(name, description string) TPositional[[]float32] {
 	return app.PosFloat32Slice(name, description)
 }
-func PosFloat64Slice(name, description string) *internal.GenericPositional[[]float64] {
+func PosFloat64Slice(name, description string) TPositional[[]float64] {
 	return app.PosFloat64Slice(name, description)
 }
-func PosBoolSlice(name, description string) *internal.GenericPositional[[]bool] {
+func PosBoolSlice(name, description string) TPositional[[]bool] {
 	return app.PosBoolSlice(name, description)
 }
-func PosDurationSlice(name, description string) *internal.GenericPositional[[]time.Duration] {
+func PosDurationSlice(name, description string) TPositional[[]time.Duration] {
 	return app.PosDurationSlice(name, description)
 }
 
-func Flag(long, short, description string) *internal.GenericFlag[string] {
+func Flag(long, short, description string) TFlag[string] {
 	return app.Flag(long, short, description)
 }
-func FlagString(long, short, description string) *internal.GenericFlag[string] {
+func FlagString(long, short, description string) TFlag[string] {
 	return app.FlagString(long, short, description)
 }
-func FlagInt(long, short, description string) *internal.GenericFlag[int] {
+func FlagInt(long, short, description string) TFlag[int] {
 	return app.FlagInt(long, short, description)
 }
-func FlagInt8(long, short, description string) *internal.GenericFlag[int8] {
+func FlagInt8(long, short, description string) TFlag[int8] {
 	return app.FlagInt8(long, short, description)
 }
-func FlagInt16(long, short, description string) *internal.GenericFlag[int16] {
+func FlagInt16(long, short, description string) TFlag[int16] {
 	return app.FlagInt16(long, short, description)
 }
-func FlagInt32(long, short, description string) *internal.GenericFlag[int32] {
+func FlagInt32(long, short, description string) TFlag[int32] {
 	return app.FlagInt32(long, short, description)
 }
-func FlagInt64(long, short, description string) *internal.GenericFlag[int64] {
+func FlagInt64(long, short, description string) TFlag[int64] {
 	return app.FlagInt64(long, short, description)
 }
-func FlagUint(long, short, description string) *internal.GenericFlag[uint] {
+func FlagUint(long, short, description string) TFlag[uint] {
 	return app.FlagUint(long, short, description)
 }
-func FlagUint8(long, short, description string) *internal.GenericFlag[uint8] {
+func FlagUint8(long, short, description string) TFlag[uint8] {
 	return app.FlagUint8(long, short, description)
 }
-func FlagUint16(long, short, description string) *internal.GenericFlag[uint16] {
+func FlagUint16(long, short, description string) TFlag[uint16] {
 	return app.FlagUint16(long, short, description)
 }
-func FlagUint32(long, short, description string) *internal.GenericFlag[uint32] {
+func FlagUint32(long, short, description string) TFlag[uint32] {
 	return app.FlagUint32(long, short, description)
 }
-func FlagUint64(long, short, description string) *internal.GenericFlag[uint64] {
+func FlagUint64(long, short, description string) TFlag[uint64] {
 	return app.FlagUint64(long, short, description)
 }
-func FlagFloat(long, short, description string) *internal.GenericFlag[float64] {
+func FlagFloat(long, short, description string) TFlag[float64] {
 	return app.FlagFloat(long, short, description)
 }
-func FlagFloat32(long, short, description string) *internal.GenericFlag[float32] {
+func FlagFloat32(long, short, description string) TFlag[float32] {
 	return app.FlagFloat32(long, short, description)
 }
-func FlagFloat64(long, short, description string) *internal.GenericFlag[float64] {
+func FlagFloat64(long, short, description string) TFlag[float64] {
 	return app.FlagFloat64(long, short, description)
 }
-func FlagBool(long, short, description string) *internal.GenericFlag[bool] {
+func FlagBool(long, short, description string) TFlag[bool] {
 	return app.FlagBool(long, short, description)
 }
-func FlagDuration(long, short, description string) *internal.GenericFlag[time.Duration] {
+func FlagDuration(long, short, description string) TFlag[time.Duration] {
 	return app.FlagDuration(long, short, description)
 }
-func FlagIntSlice(long, short, description string) *internal.GenericFlag[[]int] {
+func FlagStringSlice(long, short, description string) TFlag[[]string] {
+	return app.FlagStringSlice(long, short, description)
+}
+func FlagIntSlice(long, short, description string) TFlag[[]int] {
 	return app.FlagIntSlice(long, short, description)
 }
-func FlagInt8Slice(long, short, description string) *internal.GenericFlag[[]int8] {
+func FlagInt8Slice(long, short, description string) TFlag[[]int8] {
 	return app.FlagInt8Slice(long, short, description)
 }
-func FlagInt16Slice(long, short, description string) *internal.GenericFlag[[]int16] {
+func FlagInt16Slice(long, short, description string) TFlag[[]int16] {
 	return app.FlagInt16Slice(long, short, description)
 }
-func FlagInt32Slice(long, short, description string) *internal.GenericFlag[[]int32] {
+func FlagInt32Slice(long, short, description string) TFlag[[]int32] {
 	return app.FlagInt32Slice(long, short, description)
 }
-func FlagInt64Slice(long, short, description string) *internal.GenericFlag[[]int64] {
+func FlagInt64Slice(long, short, description string) TFlag[[]int64] {
 	return app.FlagInt64Slice(long, short, description)
 }
-func FlagUintSlice(long, short, description string) *internal.GenericFlag[[]uint] {
+func FlagUintSlice(long, short, description string) TFlag[[]uint] {
 	return app.FlagUintSlice(long, short, description)
 }
-func FlagUint8Slice(long, short, description string) *internal.GenericFlag[[]uint8] {
+func FlagUint8Slice(long, short, description string) TFlag[[]uint8] {
 	return app.FlagUint8Slice(long, short, description)
 }
-func FlagUint16Slice(long, short, description string) *internal.GenericFlag[[]uint16] {
+func FlagUint16Slice(long, short, description string) TFlag[[]uint16] {
 	return app.FlagUint16Slice(long, short, description)
 }
-func FlagUint32Slice(long, short, description string) *internal.GenericFlag[[]uint32] {
+func FlagUint32Slice(long, short, description string) TFlag[[]uint32] {
 	return app.FlagUint32Slice(long, short, description)
 }
-func FlagUint64Slice(long, short, description string) *internal.GenericFlag[[]uint64] {
+func FlagUint64Slice(long, short, description string) TFlag[[]uint64] {
 	return app.FlagUint64Slice(long, short, description)
 }
-func FlagFloatSlice(long, short, description string) *internal.GenericFlag[[]float64] {
+func FlagFloatSlice(long, short, description string) TFlag[[]float64] {
 	return app.FlagFloatSlice(long, short, description)
 }
-func FlagFloat32Slice(long, short, description string) *internal.GenericFlag[[]float32] {
+func FlagFloat32Slice(long, short, description string) TFlag[[]float32] {
 	return app.FlagFloat32Slice(long, short, description)
 }
-func FlagFloat64Slice(long, short, description string) *internal.GenericFlag[[]float64] {
+func FlagFloat64Slice(long, short, description string) TFlag[[]float64] {
 	return app.FlagFloat64Slice(long, short, description)
 }
-func FlagBoolSlice(long, short, description string) *internal.GenericFlag[[]bool] {
+func FlagBoolSlice(long, short, description string) TFlag[[]bool] {
 	return app.FlagBoolSlice(long, short, description)
 }
-func FlagDurationSlice(long, short, description string) *internal.GenericFlag[[]time.Duration] {
+func FlagDurationSlice(long, short, description string) TFlag[[]time.Duration] {
 	return app.FlagDurationSlice(long, short, description)
+}
+
+// GetFlag retrieves a flag by its long or short name and attempts to cast it to the specified type T.
+// If the flag is not found or cannot be cast to the desired type, an error is returned.
+func GetFlag[T internal.Flag](longOrShort string) (T, error) {
+	f, err := app.GetFlag(longOrShort)
+	if err != nil {
+		var zero T
+		return zero, err
+	}
+
+	typed, ok := f.(T)
+	if !ok {
+		var zero T
+		return zero, internal.ErrFlagNotType
+	}
+
+	return typed, nil
 }
 
 // CheckExclusiveFlags checks that at most one of the provided flags is passed.
@@ -433,7 +478,7 @@ func CheckExclusiveFlags(flags ...internal.Flag) {
 		for _, flag := range parsedFlags {
 			flagNames = append(flagNames, flag.Signature())
 		}
-		app.Stderr("mutually exclusive flags provided: %s", strings.Join(flagNames, " and "))
+		app.Error("mutually exclusive flags provided: %s", strings.Join(flagNames, " and "))
 		app.Exit(1)
 	}
 }
@@ -451,6 +496,6 @@ func CheckAnyFlag(flags ...internal.Flag) {
 	for _, flag := range flags {
 		flagNames = append(flagNames, flag.Signature())
 	}
-	app.Stderr("at least one of the following flags must be provided: %s", strings.Join(flagNames, " or "))
+	app.Error("at least one of the following flags must be provided: %s", strings.Join(flagNames, " or "))
 	app.Exit(1)
 }
