@@ -11,3 +11,5 @@
 - Deprecation notices
 - ParseE catching panic instead of os.Exit
 - Comparison table
+- Remove Shell helper
+- Add checks like IsTTY

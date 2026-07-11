@@ -77,11 +77,6 @@ func (a *App) Description(d string) { a.CurrentCommand().WithDescription(d) }
 // the root command.
 func (a *App) Version(v string) { a.version = v }
 
-// Shell creates a new shell command to be executed.
-func (a *App) Shell(name string, args ...string) *Shell {
-	return NewShell(name, args...)
-}
-
 // StdoutWith allows you to specify a custom io.Writer for handling standard
 // output. This can be useful for redirecting output to a file, logging system,
 // or for testing purposes. It is used to print the help text.

@@ -1,3 +1,7 @@
+# 0.6.0 (TBD)
+
+- Removing the Shell wrapper as it is not on the scope of this library.
+
 # 0.5.0 (2026-07-07)
 
 - Replacing stdout and stderr by io.Writers.
