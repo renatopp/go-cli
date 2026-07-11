@@ -1,6 +1,8 @@
 # go-cli
 
+- If asked for plan, answer with the plan, dont change code
 - If asked for review, analysis or general question, never change the code
+- Always look for the least amount of code changes to achieve the goal
 - Never commit or change remote
 
 Philosophy:

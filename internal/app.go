@@ -462,40 +462,10 @@ func (a *App) PosString(name, description string) *GenericPositional[string] {
 func (a *App) PosInt(name, description string) *GenericPositional[int] {
 	return _addpos(a, NewGenericPositional(name, description, ParseInt[int]))
 }
-func (a *App) PosInt8(name, description string) *GenericPositional[int8] {
-	return _addpos(a, NewGenericPositional(name, description, ParseInt[int8]))
-}
-func (a *App) PosInt16(name, description string) *GenericPositional[int16] {
-	return _addpos(a, NewGenericPositional(name, description, ParseInt[int16]))
-}
-func (a *App) PosInt32(name, description string) *GenericPositional[int32] {
-	return _addpos(a, NewGenericPositional(name, description, ParseInt[int32]))
-}
-func (a *App) PosInt64(name, description string) *GenericPositional[int64] {
-	return _addpos(a, NewGenericPositional(name, description, ParseInt[int64]))
-}
 func (a *App) PosUint(name, description string) *GenericPositional[uint] {
 	return _addpos(a, NewGenericPositional(name, description, ParseUint[uint]))
 }
-func (a *App) PosUint8(name, description string) *GenericPositional[uint8] {
-	return _addpos(a, NewGenericPositional(name, description, ParseUint[uint8]))
-}
-func (a *App) PosUint16(name, description string) *GenericPositional[uint16] {
-	return _addpos(a, NewGenericPositional(name, description, ParseUint[uint16]))
-}
-func (a *App) PosUint32(name, description string) *GenericPositional[uint32] {
-	return _addpos(a, NewGenericPositional(name, description, ParseUint[uint32]))
-}
-func (a *App) PosUint64(name, description string) *GenericPositional[uint64] {
-	return _addpos(a, NewGenericPositional(name, description, ParseUint[uint64]))
-}
 func (a *App) PosFloat(name, description string) *GenericPositional[float64] {
-	return _addpos(a, NewGenericPositional(name, description, ParseFloat[float64]))
-}
-func (a *App) PosFloat32(name, description string) *GenericPositional[float32] {
-	return _addpos(a, NewGenericPositional(name, description, ParseFloat[float32]))
-}
-func (a *App) PosFloat64(name, description string) *GenericPositional[float64] {
 	return _addpos(a, NewGenericPositional(name, description, ParseFloat[float64]))
 }
 func (a *App) PosBool(name, description string) *GenericPositional[bool] {
@@ -503,54 +473,6 @@ func (a *App) PosBool(name, description string) *GenericPositional[bool] {
 }
 func (a *App) PosDuration(name, description string) *GenericPositional[time.Duration] {
 	return _addpos(a, NewGenericPositional(name, description, ParseDuration))
-}
-func (a *App) PosIntSlice(name, description string) *GenericPositional[[]int] {
-	return _addpos(a, NewGenericPositional(name, description, ParseIntSlice[int]))
-}
-func (a *App) PosStringSlice(name, description string) *GenericPositional[[]string] {
-	return _addpos(a, NewGenericPositional(name, description, ParseStringSlice))
-}
-func (a *App) PosInt8Slice(name, description string) *GenericPositional[[]int8] {
-	return _addpos(a, NewGenericPositional(name, description, ParseIntSlice[int8]))
-}
-func (a *App) PosInt16Slice(name, description string) *GenericPositional[[]int16] {
-	return _addpos(a, NewGenericPositional(name, description, ParseIntSlice[int16]))
-}
-func (a *App) PosInt32Slice(name, description string) *GenericPositional[[]int32] {
-	return _addpos(a, NewGenericPositional(name, description, ParseIntSlice[int32]))
-}
-func (a *App) PosInt64Slice(name, description string) *GenericPositional[[]int64] {
-	return _addpos(a, NewGenericPositional(name, description, ParseIntSlice[int64]))
-}
-func (a *App) PosUintSlice(name, description string) *GenericPositional[[]uint] {
-	return _addpos(a, NewGenericPositional(name, description, ParseUintSlice[uint]))
-}
-func (a *App) PosUint8Slice(name, description string) *GenericPositional[[]uint8] {
-	return _addpos(a, NewGenericPositional(name, description, ParseUintSlice[uint8]))
-}
-func (a *App) PosUint16Slice(name, description string) *GenericPositional[[]uint16] {
-	return _addpos(a, NewGenericPositional(name, description, ParseUintSlice[uint16]))
-}
-func (a *App) PosUint32Slice(name, description string) *GenericPositional[[]uint32] {
-	return _addpos(a, NewGenericPositional(name, description, ParseUintSlice[uint32]))
-}
-func (a *App) PosUint64Slice(name, description string) *GenericPositional[[]uint64] {
-	return _addpos(a, NewGenericPositional(name, description, ParseUintSlice[uint64]))
-}
-func (a *App) PosFloatSlice(name, description string) *GenericPositional[[]float64] {
-	return _addpos(a, NewGenericPositional(name, description, ParseFloatSlice[float64]))
-}
-func (a *App) PosFloat32Slice(name, description string) *GenericPositional[[]float32] {
-	return _addpos(a, NewGenericPositional(name, description, ParseFloatSlice[float32]))
-}
-func (a *App) PosFloat64Slice(name, description string) *GenericPositional[[]float64] {
-	return _addpos(a, NewGenericPositional(name, description, ParseFloatSlice[float64]))
-}
-func (a *App) PosBoolSlice(name, description string) *GenericPositional[[]bool] {
-	return _addpos(a, NewGenericPositional(name, description, ParseBoolSlice))
-}
-func (a *App) PosDurationSlice(name, description string) *GenericPositional[[]time.Duration] {
-	return _addpos(a, NewGenericPositional(name, description, ParseDurationSlice))
 }
 
 func (a *App) Flag(long, short, description string) *GenericFlag[string] {
@@ -562,40 +484,10 @@ func (a *App) FlagString(long, short, description string) *GenericFlag[string] {
 func (a *App) FlagInt(long, short, description string) *GenericFlag[int] {
 	return _addflag(a, NewGenericFlag(long, short, description, ParseInt[int]))
 }
-func (a *App) FlagInt8(long, short, description string) *GenericFlag[int8] {
-	return _addflag(a, NewGenericFlag(long, short, description, ParseInt[int8]))
-}
-func (a *App) FlagInt16(long, short, description string) *GenericFlag[int16] {
-	return _addflag(a, NewGenericFlag(long, short, description, ParseInt[int16]))
-}
-func (a *App) FlagInt32(long, short, description string) *GenericFlag[int32] {
-	return _addflag(a, NewGenericFlag(long, short, description, ParseInt[int32]))
-}
-func (a *App) FlagInt64(long, short, description string) *GenericFlag[int64] {
-	return _addflag(a, NewGenericFlag(long, short, description, ParseInt[int64]))
-}
 func (a *App) FlagUint(long, short, description string) *GenericFlag[uint] {
 	return _addflag(a, NewGenericFlag(long, short, description, ParseUint[uint]))
 }
-func (a *App) FlagUint8(long, short, description string) *GenericFlag[uint8] {
-	return _addflag(a, NewGenericFlag(long, short, description, ParseUint[uint8]))
-}
-func (a *App) FlagUint16(long, short, description string) *GenericFlag[uint16] {
-	return _addflag(a, NewGenericFlag(long, short, description, ParseUint[uint16]))
-}
-func (a *App) FlagUint32(long, short, description string) *GenericFlag[uint32] {
-	return _addflag(a, NewGenericFlag(long, short, description, ParseUint[uint32]))
-}
-func (a *App) FlagUint64(long, short, description string) *GenericFlag[uint64] {
-	return _addflag(a, NewGenericFlag(long, short, description, ParseUint[uint64]))
-}
 func (a *App) FlagFloat(long, short, description string) *GenericFlag[float64] {
-	return _addflag(a, NewGenericFlag(long, short, description, ParseFloat[float64]))
-}
-func (a *App) FlagFloat32(long, short, description string) *GenericFlag[float32] {
-	return _addflag(a, NewGenericFlag(long, short, description, ParseFloat[float32]))
-}
-func (a *App) FlagFloat64(long, short, description string) *GenericFlag[float64] {
 	return _addflag(a, NewGenericFlag(long, short, description, ParseFloat[float64]))
 }
 func (a *App) FlagBool(long, short, description string) *GenericFlag[bool] {
@@ -603,54 +495,6 @@ func (a *App) FlagBool(long, short, description string) *GenericFlag[bool] {
 }
 func (a *App) FlagDuration(long, short, description string) *GenericFlag[time.Duration] {
 	return _addflag(a, NewGenericFlag(long, short, description, ParseDuration))
-}
-func (a *App) FlagStringSlice(long, short, description string) *GenericFlag[[]string] {
-	return _addflag(a, NewGenericFlag(long, short, description, ParseStringSlice))
-}
-func (a *App) FlagIntSlice(long, short, description string) *GenericFlag[[]int] {
-	return _addflag(a, NewGenericFlag(long, short, description, ParseIntSlice[int]))
-}
-func (a *App) FlagInt8Slice(long, short, description string) *GenericFlag[[]int8] {
-	return _addflag(a, NewGenericFlag(long, short, description, ParseIntSlice[int8]))
-}
-func (a *App) FlagInt16Slice(long, short, description string) *GenericFlag[[]int16] {
-	return _addflag(a, NewGenericFlag(long, short, description, ParseIntSlice[int16]))
-}
-func (a *App) FlagInt32Slice(long, short, description string) *GenericFlag[[]int32] {
-	return _addflag(a, NewGenericFlag(long, short, description, ParseIntSlice[int32]))
-}
-func (a *App) FlagInt64Slice(long, short, description string) *GenericFlag[[]int64] {
-	return _addflag(a, NewGenericFlag(long, short, description, ParseIntSlice[int64]))
-}
-func (a *App) FlagUintSlice(long, short, description string) *GenericFlag[[]uint] {
-	return _addflag(a, NewGenericFlag(long, short, description, ParseUintSlice[uint]))
-}
-func (a *App) FlagUint8Slice(long, short, description string) *GenericFlag[[]uint8] {
-	return _addflag(a, NewGenericFlag(long, short, description, ParseUintSlice[uint8]))
-}
-func (a *App) FlagUint16Slice(long, short, description string) *GenericFlag[[]uint16] {
-	return _addflag(a, NewGenericFlag(long, short, description, ParseUintSlice[uint16]))
-}
-func (a *App) FlagUint32Slice(long, short, description string) *GenericFlag[[]uint32] {
-	return _addflag(a, NewGenericFlag(long, short, description, ParseUintSlice[uint32]))
-}
-func (a *App) FlagUint64Slice(long, short, description string) *GenericFlag[[]uint64] {
-	return _addflag(a, NewGenericFlag(long, short, description, ParseUintSlice[uint64]))
-}
-func (a *App) FlagFloatSlice(long, short, description string) *GenericFlag[[]float64] {
-	return _addflag(a, NewGenericFlag(long, short, description, ParseFloatSlice[float64]))
-}
-func (a *App) FlagFloat32Slice(long, short, description string) *GenericFlag[[]float32] {
-	return _addflag(a, NewGenericFlag(long, short, description, ParseFloatSlice[float32]))
-}
-func (a *App) FlagFloat64Slice(long, short, description string) *GenericFlag[[]float64] {
-	return _addflag(a, NewGenericFlag(long, short, description, ParseFloatSlice[float64]))
-}
-func (a *App) FlagBoolSlice(long, short, description string) *GenericFlag[[]bool] {
-	return _addflag(a, NewGenericFlag(long, short, description, ParseBoolSlice))
-}
-func (a *App) FlagDurationSlice(long, short, description string) *GenericFlag[[]time.Duration] {
-	return _addflag(a, NewGenericFlag(long, short, description, ParseDurationSlice))
 }
 
 func (a *App) GetFlag(longOrShort string) (Flag, error) {
@@ -684,6 +528,22 @@ func (a *App) initialize() {
 			a.path = append(a.path, name)
 		}
 	}
+}
+
+// FlagFunc registers a flag of any type T on the app's current command, using
+// the provided parser to convert the user input string into T. This is the
+// entry point for custom flag types. It is a package-level function because Go
+// methods cannot have type parameters.
+func FlagFunc[T any](a *App, long, short, description string, parser func(string) (T, error)) *GenericFlag[T] {
+	return _addflag(a, NewGenericFlag(long, short, description, parser))
+}
+
+// PosFunc registers a positional argument of any type T on the app's current
+// command, using the provided parser to convert the user input string into T.
+// This is the entry point for custom positional types. It is a package-level
+// function because Go methods cannot have type parameters.
+func PosFunc[T any](a *App, name, description string, parser func(string) (T, error)) *GenericPositional[T] {
+	return _addpos(a, NewGenericPositional(name, description, parser))
 }
 
 func _addpos[T Positional](a *App, p T) T {

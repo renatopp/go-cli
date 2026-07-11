@@ -243,6 +243,15 @@ func Cmd(name string, shortDescription string, execute func()) *internal.Command
 	return app.Cmd(name, shortDescription, execute)
 }
 
+// PosFunc creates a positional argument of any type T, using the provided
+// parser function to convert the user input string into T. Use this to define
+// custom positional types, e.g.:
+//
+//	level := cli.PosFunc("level", "The log level.", ParseLevel)
+func PosFunc[T any](name, description string, parser func(string) (T, error)) TPositional[T] {
+	return internal.PosFunc(app, name, description, parser)
+}
+
 func Pos(name, description string) TPositional[string] {
 	return app.Pos(name, description)
 }
@@ -252,41 +261,11 @@ func PosString(name, description string) TPositional[string] {
 func PosInt(name, description string) TPositional[int] {
 	return app.PosInt(name, description)
 }
-func PosInt8(name, description string) TPositional[int8] {
-	return app.PosInt8(name, description)
-}
-func PosInt16(name, description string) TPositional[int16] {
-	return app.PosInt16(name, description)
-}
-func PosInt32(name, description string) TPositional[int32] {
-	return app.PosInt32(name, description)
-}
-func PosInt64(name, description string) TPositional[int64] {
-	return app.PosInt64(name, description)
-}
 func PosUint(name, description string) TPositional[uint] {
 	return app.PosUint(name, description)
 }
-func PosUint8(name, description string) TPositional[uint8] {
-	return app.PosUint8(name, description)
-}
-func PosUint16(name, description string) TPositional[uint16] {
-	return app.PosUint16(name, description)
-}
-func PosUint32(name, description string) TPositional[uint32] {
-	return app.PosUint32(name, description)
-}
-func PosUint64(name, description string) TPositional[uint64] {
-	return app.PosUint64(name, description)
-}
 func PosFloat(name, description string) TPositional[float64] {
 	return app.PosFloat(name, description)
-}
-func PosFloat32(name, description string) TPositional[float32] {
-	return app.PosFloat32(name, description)
-}
-func PosFloat64(name, description string) TPositional[float64] {
-	return app.PosFloat64(name, description)
 }
 func PosBool(name, description string) TPositional[bool] {
 	return app.PosBool(name, description)
@@ -294,53 +273,14 @@ func PosBool(name, description string) TPositional[bool] {
 func PosDuration(name, description string) TPositional[time.Duration] {
 	return app.PosDuration(name, description)
 }
-func PosStringSlice(name, description string) TPositional[[]string] {
-	return app.PosStringSlice(name, description)
-}
-func PosIntSlice(name, description string) TPositional[[]int] {
-	return app.PosIntSlice(name, description)
-}
-func PosInt8Slice(name, description string) TPositional[[]int8] {
-	return app.PosInt8Slice(name, description)
-}
-func PosInt16Slice(name, description string) TPositional[[]int16] {
-	return app.PosInt16Slice(name, description)
-}
-func PosInt32Slice(name, description string) TPositional[[]int32] {
-	return app.PosInt32Slice(name, description)
-}
-func PosInt64Slice(name, description string) TPositional[[]int64] {
-	return app.PosInt64Slice(name, description)
-}
-func PosUintSlice(name, description string) TPositional[[]uint] {
-	return app.PosUintSlice(name, description)
-}
-func PosUint8Slice(name, description string) TPositional[[]uint8] {
-	return app.PosUint8Slice(name, description)
-}
-func PosUint16Slice(name, description string) TPositional[[]uint16] {
-	return app.PosUint16Slice(name, description)
-}
-func PosUint32Slice(name, description string) TPositional[[]uint32] {
-	return app.PosUint32Slice(name, description)
-}
-func PosUint64Slice(name, description string) TPositional[[]uint64] {
-	return app.PosUint64Slice(name, description)
-}
-func PosFloatSlice(name, description string) TPositional[[]float64] {
-	return app.PosFloatSlice(name, description)
-}
-func PosFloat32Slice(name, description string) TPositional[[]float32] {
-	return app.PosFloat32Slice(name, description)
-}
-func PosFloat64Slice(name, description string) TPositional[[]float64] {
-	return app.PosFloat64Slice(name, description)
-}
-func PosBoolSlice(name, description string) TPositional[[]bool] {
-	return app.PosBoolSlice(name, description)
-}
-func PosDurationSlice(name, description string) TPositional[[]time.Duration] {
-	return app.PosDurationSlice(name, description)
+
+// FlagFunc creates a flag of any type T, using the provided parser function to
+// convert the user input string into T. Use this to define custom flag types,
+// e.g.:
+//
+//	level := cli.FlagFunc("level", "l", "The log level.", ParseLevel)
+func FlagFunc[T any](long, short, description string, parser func(string) (T, error)) TFlag[T] {
+	return internal.FlagFunc(app, long, short, description, parser)
 }
 
 func Flag(long, short, description string) TFlag[string] {
@@ -352,95 +292,17 @@ func FlagString(long, short, description string) TFlag[string] {
 func FlagInt(long, short, description string) TFlag[int] {
 	return app.FlagInt(long, short, description)
 }
-func FlagInt8(long, short, description string) TFlag[int8] {
-	return app.FlagInt8(long, short, description)
-}
-func FlagInt16(long, short, description string) TFlag[int16] {
-	return app.FlagInt16(long, short, description)
-}
-func FlagInt32(long, short, description string) TFlag[int32] {
-	return app.FlagInt32(long, short, description)
-}
-func FlagInt64(long, short, description string) TFlag[int64] {
-	return app.FlagInt64(long, short, description)
-}
 func FlagUint(long, short, description string) TFlag[uint] {
 	return app.FlagUint(long, short, description)
 }
-func FlagUint8(long, short, description string) TFlag[uint8] {
-	return app.FlagUint8(long, short, description)
-}
-func FlagUint16(long, short, description string) TFlag[uint16] {
-	return app.FlagUint16(long, short, description)
-}
-func FlagUint32(long, short, description string) TFlag[uint32] {
-	return app.FlagUint32(long, short, description)
-}
-func FlagUint64(long, short, description string) TFlag[uint64] {
-	return app.FlagUint64(long, short, description)
-}
 func FlagFloat(long, short, description string) TFlag[float64] {
 	return app.FlagFloat(long, short, description)
-}
-func FlagFloat32(long, short, description string) TFlag[float32] {
-	return app.FlagFloat32(long, short, description)
-}
-func FlagFloat64(long, short, description string) TFlag[float64] {
-	return app.FlagFloat64(long, short, description)
 }
 func FlagBool(long, short, description string) TFlag[bool] {
 	return app.FlagBool(long, short, description)
 }
 func FlagDuration(long, short, description string) TFlag[time.Duration] {
 	return app.FlagDuration(long, short, description)
-}
-func FlagStringSlice(long, short, description string) TFlag[[]string] {
-	return app.FlagStringSlice(long, short, description)
-}
-func FlagIntSlice(long, short, description string) TFlag[[]int] {
-	return app.FlagIntSlice(long, short, description)
-}
-func FlagInt8Slice(long, short, description string) TFlag[[]int8] {
-	return app.FlagInt8Slice(long, short, description)
-}
-func FlagInt16Slice(long, short, description string) TFlag[[]int16] {
-	return app.FlagInt16Slice(long, short, description)
-}
-func FlagInt32Slice(long, short, description string) TFlag[[]int32] {
-	return app.FlagInt32Slice(long, short, description)
-}
-func FlagInt64Slice(long, short, description string) TFlag[[]int64] {
-	return app.FlagInt64Slice(long, short, description)
-}
-func FlagUintSlice(long, short, description string) TFlag[[]uint] {
-	return app.FlagUintSlice(long, short, description)
-}
-func FlagUint8Slice(long, short, description string) TFlag[[]uint8] {
-	return app.FlagUint8Slice(long, short, description)
-}
-func FlagUint16Slice(long, short, description string) TFlag[[]uint16] {
-	return app.FlagUint16Slice(long, short, description)
-}
-func FlagUint32Slice(long, short, description string) TFlag[[]uint32] {
-	return app.FlagUint32Slice(long, short, description)
-}
-func FlagUint64Slice(long, short, description string) TFlag[[]uint64] {
-	return app.FlagUint64Slice(long, short, description)
-}
-func FlagFloatSlice(long, short, description string) TFlag[[]float64] {
-	return app.FlagFloatSlice(long, short, description)
-}
-func FlagFloat32Slice(long, short, description string) TFlag[[]float32] {
-	return app.FlagFloat32Slice(long, short, description)
-}
-func FlagFloat64Slice(long, short, description string) TFlag[[]float64] {
-	return app.FlagFloat64Slice(long, short, description)
-}
-func FlagBoolSlice(long, short, description string) TFlag[[]bool] {
-	return app.FlagBoolSlice(long, short, description)
-}
-func FlagDurationSlice(long, short, description string) TFlag[[]time.Duration] {
-	return app.FlagDurationSlice(long, short, description)
 }
 
 // GetFlag retrieves a flag by its long or short name and attempts to cast it to the specified type T.

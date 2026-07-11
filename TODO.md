@@ -12,6 +12,7 @@
 - Add WithEnv() binding on flags and positionals
 - Add WithChoices() to replace CheckExclusiveFlags
 - Deprecation notices
+- Add custom flag
 
 - Add license file
 - Comparison table
