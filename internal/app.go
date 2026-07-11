@@ -2,6 +2,7 @@ package internal
 
 import (
 	"fmt"
+	"github.com/renatopp/go-cli/parsers"
 	"io"
 	"os"
 	"path"
@@ -454,47 +455,47 @@ func (a *App) Cmd(name string, shortDescription string, execute func()) *Command
 }
 
 func (a *App) Pos(name, description string) *GenericPositional[string] {
-	return _addpos(a, NewGenericPositional(name, description, ParseString))
+	return _addpos(a, NewGenericPositional(name, description, parsers.String))
 }
 func (a *App) PosString(name, description string) *GenericPositional[string] {
-	return _addpos(a, NewGenericPositional(name, description, ParseString))
+	return _addpos(a, NewGenericPositional(name, description, parsers.String))
 }
 func (a *App) PosInt(name, description string) *GenericPositional[int] {
-	return _addpos(a, NewGenericPositional(name, description, ParseInt[int]))
+	return _addpos(a, NewGenericPositional(name, description, parsers.Int[int]))
 }
 func (a *App) PosUint(name, description string) *GenericPositional[uint] {
-	return _addpos(a, NewGenericPositional(name, description, ParseUint[uint]))
+	return _addpos(a, NewGenericPositional(name, description, parsers.Uint[uint]))
 }
 func (a *App) PosFloat(name, description string) *GenericPositional[float64] {
-	return _addpos(a, NewGenericPositional(name, description, ParseFloat[float64]))
+	return _addpos(a, NewGenericPositional(name, description, parsers.Float[float64]))
 }
 func (a *App) PosBool(name, description string) *GenericPositional[bool] {
-	return _addpos(a, NewGenericPositional(name, description, ParseBool))
+	return _addpos(a, NewGenericPositional(name, description, parsers.Bool))
 }
 func (a *App) PosDuration(name, description string) *GenericPositional[time.Duration] {
-	return _addpos(a, NewGenericPositional(name, description, ParseDuration))
+	return _addpos(a, NewGenericPositional(name, description, parsers.Duration))
 }
 
 func (a *App) Flag(long, short, description string) *GenericFlag[string] {
-	return _addflag(a, NewGenericFlag(long, short, description, ParseString))
+	return _addflag(a, NewGenericFlag(long, short, description, parsers.String))
 }
 func (a *App) FlagString(long, short, description string) *GenericFlag[string] {
-	return _addflag(a, NewGenericFlag(long, short, description, ParseString))
+	return _addflag(a, NewGenericFlag(long, short, description, parsers.String))
 }
 func (a *App) FlagInt(long, short, description string) *GenericFlag[int] {
-	return _addflag(a, NewGenericFlag(long, short, description, ParseInt[int]))
+	return _addflag(a, NewGenericFlag(long, short, description, parsers.Int[int]))
 }
 func (a *App) FlagUint(long, short, description string) *GenericFlag[uint] {
-	return _addflag(a, NewGenericFlag(long, short, description, ParseUint[uint]))
+	return _addflag(a, NewGenericFlag(long, short, description, parsers.Uint[uint]))
 }
 func (a *App) FlagFloat(long, short, description string) *GenericFlag[float64] {
-	return _addflag(a, NewGenericFlag(long, short, description, ParseFloat[float64]))
+	return _addflag(a, NewGenericFlag(long, short, description, parsers.Float[float64]))
 }
 func (a *App) FlagBool(long, short, description string) *GenericFlag[bool] {
-	return _addflag(a, NewGenericFlag(long, short, description, ParseBool))
+	return _addflag(a, NewGenericFlag(long, short, description, parsers.Bool))
 }
 func (a *App) FlagDuration(long, short, description string) *GenericFlag[time.Duration] {
-	return _addflag(a, NewGenericFlag(long, short, description, ParseDuration))
+	return _addflag(a, NewGenericFlag(long, short, description, parsers.Duration))
 }
 
 func (a *App) GetFlag(longOrShort string) (Flag, error) {
@@ -506,12 +507,12 @@ func (a *App) initialize() {
 	curCmd := a.currentCommand
 
 	if a.autoHelp && (!curCmd.HasFlag("help") || !curCmd.HasFlag("h")) {
-		helpFlag := NewGenericFlag("help", "h", GetLocale().HelpFlagDescription, ParseBool)
+		helpFlag := NewGenericFlag("help", "h", GetLocale().HelpFlagDescription, parsers.Bool)
 		curCmd.WithFlag(helpFlag)
 	}
 
 	if a.version != "" && curCmd == rootCmd && (!rootCmd.HasFlag("version") || !rootCmd.HasFlag("v")) {
-		versionFlag := NewGenericFlag("version", "v", GetLocale().VersionFlagDescription, ParseBool)
+		versionFlag := NewGenericFlag("version", "v", GetLocale().VersionFlagDescription, parsers.Bool)
 		rootCmd.WithFlag(versionFlag)
 	}
 

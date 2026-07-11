@@ -1,6 +1,9 @@
 package main
 
-import "github.com/renatopp/go-cli"
+import (
+	"github.com/renatopp/go-cli"
+	"github.com/renatopp/go-cli/locales"
+)
 
 func main() {
 	cli.Name("locale")
@@ -10,7 +13,7 @@ func main() {
 	cli.Pos("input", "sample")
 	cli.Command("command", "sample", func() {})
 	cli.AutoHelp(true)
-	cli.SetLocale(cli.PTBR)
+	cli.SetLocale(locales.PTBR())
 	cli.Version("0.0.0")
 	cli.Parse()
 	cli.ShowHelp()

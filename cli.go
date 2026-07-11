@@ -6,6 +6,7 @@ import (
 	"time"
 
 	internal "github.com/renatopp/go-cli/internal"
+	"github.com/renatopp/go-cli/locales"
 )
 
 var app *internal.App
@@ -31,22 +32,15 @@ func Clear() {
 	app.Clear()
 }
 
-// Locale is a struct containing the user-facing strings used by go-cli, such
-// as help text labels ("Usage", "Commands", "Options", ...) and error
-// messages (unknown flag, missing required flag, etc). Any field left as the
-// zero value falls back to the built-in English text, so you only need to
-// override the strings you want to translate.
-type Locale = internal.Locale
-
 // SetLocale replaces the strings used for help text and error messages
 // across the CLI, allowing you to localize go-cli's built-in output. It
-// applies globally, independent of which App instance is used.
-func SetLocale(locale Locale) {
+// applies globally, independent of which App instance is used. The built-in
+// locales and the Locale type live in the locales package, e.g.:
+//
+//	cli.SetLocale(locales.PTBR())
+func SetLocale(locale locales.Locale) {
 	internal.SetLocale(locale)
 }
-
-var EN = internal.DefaultLocale()
-var PTBR = internal.PTBRLocale()
 
 // Name sets the name for the current command. The name is used in help text
 // to identify the command and its usage. Use only its immediate name (e.g.

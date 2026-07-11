@@ -5,13 +5,14 @@ import (
 	"testing"
 
 	"github.com/renatopp/go-cli"
+	"github.com/renatopp/go-cli/locales"
 )
 
 func TestLocaleCustomErrorMessage(t *testing.T) {
 	defer cli.Clear()
-	defer cli.SetLocale(cli.Locale{})
+	defer cli.SetLocale(locales.Locale{})
 
-	cli.SetLocale(cli.Locale{
+	cli.SetLocale(locales.Locale{
 		ErrUnknownFlag: "bandeira desconhecida %s",
 	})
 	cli.UsePanicInsteadOfExit(true)
@@ -23,10 +24,10 @@ func TestLocaleCustomErrorMessage(t *testing.T) {
 
 func TestLocaleFallsBackToDefault(t *testing.T) {
 	defer cli.Clear()
-	defer cli.SetLocale(cli.Locale{})
+	defer cli.SetLocale(locales.Locale{})
 
 	// Only override one field; the rest should keep the English defaults.
-	cli.SetLocale(cli.Locale{
+	cli.SetLocale(locales.Locale{
 		ErrMissingRequiredFlag: "falta a bandeira obrigatória %s",
 	})
 	cli.UsePanicInsteadOfExit(true)
@@ -38,9 +39,9 @@ func TestLocaleFallsBackToDefault(t *testing.T) {
 
 func TestLocaleHelpLabels(t *testing.T) {
 	defer cli.Clear()
-	defer cli.SetLocale(cli.Locale{})
+	defer cli.SetLocale(locales.Locale{})
 
-	cli.SetLocale(cli.Locale{
+	cli.SetLocale(locales.Locale{
 		UsageLabel: "Uso",
 	})
 	cli.Flag("name", "n", "your name")

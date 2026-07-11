@@ -2,6 +2,7 @@ package internal
 
 import (
 	"fmt"
+	"github.com/renatopp/go-cli/parsers"
 	"strings"
 )
 
@@ -164,7 +165,7 @@ func (a *Arguments) tryGetFlag(name string) (Flag, error) {
 		}
 
 		// If extra flags are allowed, we create a new generic string flag for the unknown flag and add it to the flags map. This allows users to access the value of the extra flag using the same API as regular flags.
-		extraFlag := NewGenericFlag(long, short, "", ParseString)
+		extraFlag := NewGenericFlag(long, short, "", parsers.String)
 		a.flags[name] = extraFlag
 		return extraFlag, nil
 	}
