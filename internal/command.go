@@ -87,6 +87,30 @@ func (c *Command) WithSubcommand(cmd *Command) *Command {
 	return c
 }
 
+func (c *Command) Name() string {
+	return c.name
+}
+
+func (c *Command) Description() string {
+	return c.description
+}
+
+func (c *Command) ShortDescription() string {
+	return c.shortDescription
+}
+
+func (c *Command) Commands() []*Command {
+	return c.subcommands[:]
+}
+
+func (c *Command) Positionals() []Positional {
+	return c.positionals[:]
+}
+
+func (c *Command) Flags() []Flag {
+	return c.flags[:]
+}
+
 func (c *Command) HasFlag(n string) bool {
 	for _, f := range c.flags {
 		if f.Long() == n || f.Short() == n {

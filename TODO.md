@@ -1,15 +1,19 @@
 # TODO
 
-- Shell completion
 - Colored outputs
 - Examples
+- Add HelpFormatter
+- Add ErrorFormatter
+ 
+- Shell completion
+- Did you mean... suggestions
+
 - OnParsed callbacks on flags and positionals
-- Add license file
 - Add WithEnv() binding on flags and positionals
 - Add WithChoices() to replace CheckExclusiveFlags
-- Did you mean... suggestions
 - Deprecation notices
-- ParseE catching panic instead of os.Exit
+
+- Add license file
 - Comparison table
-- Remove Shell helper
+
 - Add checks like IsTTY

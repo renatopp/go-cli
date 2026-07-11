@@ -1,5 +1,8 @@
 # go-cli
 
+- If asked for review, analysis or general question, never change the code
+- Never commit or change remote
+
 Philosophy:
 - This is a command-line interface (CLI) library that parses arguments such as positionals and flags
 - It provides help message as convenience

@@ -91,6 +91,9 @@ func Fatal(format string, v ...any) { app.Fatal(format, v...) }
 // message using the stderr function and then exits with code 1.
 func FatalIf(err error) { app.FatalIf(err) }
 
+// CurrentCommand returns the current command being executed.
+func CurrentCommand() *internal.Command { return app.CurrentCommand() }
+
 // Arguments returns the parsed arguments for the current command. It will be
 // nil if the arguments have not been parsed yet.
 func Arguments() *internal.Arguments { return app.Arguments() }
