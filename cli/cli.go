@@ -3,60 +3,18 @@ package cli
 import (
 	"io"
 	"time"
-
-	internal "github.com/renatopp/go-cli/internal"
-	"github.com/renatopp/go-cli/locales"
 )
 
-var app *internal.App
-
-type TFlag[T any] = *internal.GenericFlag[T]
-type TPositional[T any] = *internal.GenericPositional[T]
-
-// TCommand is the command type used across the CLI, exported here so custom
-// help formatters can reference it, e.g. func(cmd cli.TCommand) string.
-type TCommand = *internal.Command
-
-// HelpFormatter converts a command into its help text. See SetHelpFormatter.
-type HelpFormatter = internal.HelpFormatter
-
-// ErrorFormatter converts an error into the message written to stderr. See
-// SetErrorFormatter.
-type ErrorFormatter = internal.ErrorFormatter
-
-// DefaultHelpFormatter is the built-in help style. Custom help formatters can
-// wrap it to prepend or append content.
-var DefaultHelpFormatter HelpFormatter = internal.DefaultHelpFormatter
-
-// DefaultErrorFormatter is the built-in error style, which prefixes messages
-// with the localized error label, e.g. "Error: unknown flag x". Custom error
-// formatters can wrap it or replace it entirely.
-var DefaultErrorFormatter ErrorFormatter = internal.DefaultErrorFormatter
-
-// Typed errors produced while parsing arguments. Custom error formatters can
-// inspect them with errors.As to render specific messages, add suggestions,
-// etc.
-type (
-	InvalidFlagValueError          = internal.InvalidFlagValueError
-	InvalidPositionalValueError    = internal.InvalidPositionalValueError
-	MissingRequiredFlagError       = internal.MissingRequiredFlagError
-	MissingRequiredPositionalError = internal.MissingRequiredPositionalError
-	UnknownFlagError               = internal.UnknownFlagError
-	RepeatedFlagError              = internal.RepeatedFlagError
-	MissingFlagValueError          = internal.MissingFlagValueError
-	UnexpectedPositionalError      = internal.UnexpectedPositionalError
-	ExclusiveFlagsError            = internal.ExclusiveFlagsError
-	AtLeastOneFlagError            = internal.AtLeastOneFlagError
-)
+var app *App
 
 // Initialize global state
 func init() {
-	app = internal.NewApp()
+	app = NewApp()
 }
 
 // New creates a new App instance with default settings.
-func New() *internal.App {
-	return internal.NewApp()
+func New() *App {
+	return NewApp()
 }
 
 // Clear resets the state of the CLI, allowing users to define a new command
@@ -65,16 +23,6 @@ func New() *internal.App {
 // the CLI state after executing a command.
 func Clear() {
 	app.Clear()
-}
-
-// SetLocale replaces the strings used for help text and error messages
-// across the CLI, allowing you to localize go-cli's built-in output. It
-// applies globally, independent of which App instance is used. The built-in
-// locales and the Locale type live in the locales package, e.g.:
-//
-//	cli.SetLocale(locales.PTBR())
-func SetLocale(locale locales.Locale) {
-	internal.SetLocale(locale)
 }
 
 // Name sets the name for the current command. The name is used in help text
@@ -110,7 +58,7 @@ func SetStderr(w io.Writer) {
 // command, allowing you to fully customize the help style. The default is
 // DefaultHelpFormatter, which can also be wrapped, e.g.:
 //
-//	cli.SetHelpFormatter(func(cmd cli.TCommand) string {
+//	cli.SetHelpFormatter(func(cmd *cli.Command) string {
 //		return banner + cli.DefaultHelpFormatter(cmd)
 //	})
 func SetHelpFormatter(f HelpFormatter) {
@@ -136,11 +84,7 @@ func Fatal(format string, v ...any) { app.Fatal(format, v...) }
 func FatalIf(err error) { app.FatalIf(err) }
 
 // CurrentCommand returns the current command being executed.
-func CurrentCommand() *internal.Command { return app.CurrentCommand() }
-
-// Arguments returns the parsed arguments for the current command. It will be
-// nil if the arguments have not been parsed yet.
-func Arguments() *internal.Arguments { return app.Arguments() }
+func CurrentCommand() *Command { return app.CurrentCommand() }
 
 // NArgs returns the number of positional arguments provided by the user.
 // Should be used only after Parse() is called, otherwise it will return 0.
@@ -272,18 +216,11 @@ func ParseArgs(args []string) {
 	app.ParseArgs(args)
 }
 
-// Command creates a new command with the specified name, short description, and
-// execution function. The command is added as a subcommand to the current command.
-// The execute function will be called when the command is invoked by the user.
-func Command(name string, shortDescription string, execute func()) *internal.Command {
-	return app.Command(name, shortDescription, execute)
-}
-
-// Cmd is an alias for Command, providing a shorter name for creating commands.
-// It creates a new command with the specified name, short description, and
+// Cmd creates a new command with the specified name, short description, and
 // execution function. The command is added as a subcommand to the current
-// command.
-func Cmd(name string, shortDescription string, execute func()) *internal.Command {
+// command. The execute function will be called when the command is invoked by
+// the user.
+func Cmd(name string, shortDescription string, execute func()) *Command {
 	return app.Cmd(name, shortDescription, execute)
 }
 
@@ -292,29 +229,29 @@ func Cmd(name string, shortDescription string, execute func()) *internal.Command
 // custom positional types, e.g.:
 //
 //	level := cli.PosFunc("level", "The log level.", ParseLevel)
-func PosFunc[T any](name, description string, parser func(string) (T, error)) TPositional[T] {
-	return internal.PosFunc(app, name, description, parser)
+func PosFunc[T any](name, description string, parser func(string) (T, error)) *GenericPositional[T] {
+	return _addpos(app, NewGenericPositional(name, description, parser))
 }
 
-func Pos(name, description string) TPositional[string] {
+func Pos(name, description string) *GenericPositional[string] {
 	return app.Pos(name, description)
 }
-func PosString(name, description string) TPositional[string] {
+func PosString(name, description string) *GenericPositional[string] {
 	return app.PosString(name, description)
 }
-func PosInt(name, description string) TPositional[int] {
+func PosInt(name, description string) *GenericPositional[int] {
 	return app.PosInt(name, description)
 }
-func PosUint(name, description string) TPositional[uint] {
+func PosUint(name, description string) *GenericPositional[uint] {
 	return app.PosUint(name, description)
 }
-func PosFloat(name, description string) TPositional[float64] {
+func PosFloat(name, description string) *GenericPositional[float64] {
 	return app.PosFloat(name, description)
 }
-func PosBool(name, description string) TPositional[bool] {
+func PosBool(name, description string) *GenericPositional[bool] {
 	return app.PosBool(name, description)
 }
-func PosDuration(name, description string) TPositional[time.Duration] {
+func PosDuration(name, description string) *GenericPositional[time.Duration] {
 	return app.PosDuration(name, description)
 }
 
@@ -323,35 +260,32 @@ func PosDuration(name, description string) TPositional[time.Duration] {
 // e.g.:
 //
 //	level := cli.FlagFunc("level", "l", "The log level.", ParseLevel)
-func FlagFunc[T any](long, short, description string, parser func(string) (T, error)) TFlag[T] {
-	return internal.FlagFunc(app, long, short, description, parser)
+func FlagFunc[T any](long, short, description string, parser func(string) (T, error)) *GenericFlag[T] {
+	return _addflag(app, NewGenericFlag(long, short, description, parser))
 }
 
-func Flag(long, short, description string) TFlag[string] {
-	return app.Flag(long, short, description)
-}
-func FlagString(long, short, description string) TFlag[string] {
+func FlagString(long, short, description string) *GenericFlag[string] {
 	return app.FlagString(long, short, description)
 }
-func FlagInt(long, short, description string) TFlag[int] {
+func FlagInt(long, short, description string) *GenericFlag[int] {
 	return app.FlagInt(long, short, description)
 }
-func FlagUint(long, short, description string) TFlag[uint] {
+func FlagUint(long, short, description string) *GenericFlag[uint] {
 	return app.FlagUint(long, short, description)
 }
-func FlagFloat(long, short, description string) TFlag[float64] {
+func FlagFloat(long, short, description string) *GenericFlag[float64] {
 	return app.FlagFloat(long, short, description)
 }
-func FlagBool(long, short, description string) TFlag[bool] {
+func FlagBool(long, short, description string) *GenericFlag[bool] {
 	return app.FlagBool(long, short, description)
 }
-func FlagDuration(long, short, description string) TFlag[time.Duration] {
+func FlagDuration(long, short, description string) *GenericFlag[time.Duration] {
 	return app.FlagDuration(long, short, description)
 }
 
 // GetFlag retrieves a flag by its long or short name and attempts to cast it to the specified type T.
 // If the flag is not found or cannot be cast to the desired type, an error is returned.
-func GetFlag[T internal.Flag](longOrShort string) (T, error) {
+func GetFlag[T Flag](longOrShort string) (T, error) {
 	f, err := app.GetFlag(longOrShort)
 	if err != nil {
 		var zero T
@@ -361,7 +295,7 @@ func GetFlag[T internal.Flag](longOrShort string) (T, error) {
 	typed, ok := f.(T)
 	if !ok {
 		var zero T
-		return zero, internal.ErrFlagNotType
+		return zero, ErrFlagNotType
 	}
 
 	return typed, nil
@@ -369,8 +303,8 @@ func GetFlag[T internal.Flag](longOrShort string) (T, error) {
 
 // CheckExclusiveFlags checks that at most one of the provided flags is passed.
 // This function should be called after Parse().
-func CheckExclusiveFlags(flags ...internal.Flag) {
-	parsedFlags := []internal.Flag{}
+func CheckExclusiveFlags(flags ...Flag) {
+	parsedFlags := []Flag{}
 	for _, flag := range flags {
 		if flag.IsParsed() {
 			parsedFlags = append(parsedFlags, flag)
@@ -384,7 +318,7 @@ func CheckExclusiveFlags(flags ...internal.Flag) {
 
 // CheckAnyFlag checks that at least one of the provided flags is passed. This
 // function should be called after Parse().
-func CheckAnyFlag(flags ...internal.Flag) {
+func CheckAnyFlag(flags ...Flag) {
 	for _, flag := range flags {
 		if flag.IsParsed() {
 			return

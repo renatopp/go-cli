@@ -19,4 +19,4 @@ Internal Coding Rules:
 - Public methods before private methods
 - Public functions before private functions
 - Types before functions, but struct declaraction should be followed by its factory function
-- App should have the same interface (or superset) as @cli.go
+- App should have the same interface (or superset) as @cli/cli.go

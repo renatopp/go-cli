@@ -1,4 +1,4 @@
-package internal
+package cli
 
 import (
 	"fmt"
@@ -73,7 +73,7 @@ func DefaultHelpFormatter(cmd *Command) string {
 		positionals.WriteString(">]")
 	}
 
-	writer := NewDefaultTypewriter()
+	writer := newDefaultTypewriter()
 	writer.WriteLine("%s: %s%s%s%s", loc.UsageLabel, name, cmds, opts, positionals.String())
 	if cmd.description != "" {
 		writer.WriteLine("\n%s", strings.TrimSpace(cmd.description))

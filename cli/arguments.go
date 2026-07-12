@@ -1,8 +1,8 @@
-package internal
+package cli
 
 import (
 	"fmt"
-	"github.com/renatopp/go-cli/parsers"
+	"github.com/renatopp/go-cli/cli/parsers"
 	"strings"
 )
 

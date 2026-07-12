@@ -1,8 +1,8 @@
-package internal
+package cli
 
 import (
 	"fmt"
-	"github.com/renatopp/go-cli/parsers"
+	"github.com/renatopp/go-cli/cli/parsers"
 	"io"
 	"os"
 	"path"
@@ -421,22 +421,6 @@ func (a *App) initialize() {
 		}
 		a.path = append(a.path, rootCmd.name)
 	}
-}
-
-// FlagFunc registers a flag of any type T on the app's current command, using
-// the provided parser to convert the user input string into T. This is the
-// entry point for custom flag types. It is a package-level function because Go
-// methods cannot have type parameters.
-func FlagFunc[T any](a *App, long, short, description string, parser func(string) (T, error)) *GenericFlag[T] {
-	return _addflag(a, NewGenericFlag(long, short, description, parser))
-}
-
-// PosFunc registers a positional argument of any type T on the app's current
-// command, using the provided parser to convert the user input string into T.
-// This is the entry point for custom positional types. It is a package-level
-// function because Go methods cannot have type parameters.
-func PosFunc[T any](a *App, name, description string, parser func(string) (T, error)) *GenericPositional[T] {
-	return _addpos(a, NewGenericPositional(name, description, parser))
 }
 
 func _addpos[T Positional](a *App, p T) T {

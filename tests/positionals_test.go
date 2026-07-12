@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/renatopp/go-cli"
+	"github.com/renatopp/go-cli/cli"
 )
 
 func TestPositionalBasic(t *testing.T) {

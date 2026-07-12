@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/renatopp/go-cli"
-	"github.com/renatopp/go-cli/locales"
+	"github.com/renatopp/go-cli/cli"
+	"github.com/renatopp/go-cli/cli/locales"
 )
 
 func TestLocaleCustomErrorMessage(t *testing.T) {
@@ -44,7 +44,7 @@ func TestLocaleHelpLabels(t *testing.T) {
 	cli.SetLocale(locales.Locale{
 		UsageLabel: "Uso",
 	})
-	cli.Flag("name", "n", "your name")
+	cli.FlagString("name", "n", "your name")
 	help := cli.HelpString()
 	assertTrue(t, strings.Contains(help, "Uso:"), "expected help to contain translated usage label")
 }

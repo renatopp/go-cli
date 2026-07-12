@@ -4,17 +4,17 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/renatopp/go-cli"
+	"github.com/renatopp/go-cli/cli"
 )
 
 func main() {
 	cli.Name("styles")
 	cli.Description("A simple CLI application to demonstrate custom help and error styles.")
-	cli.Flag("size", "s", "sample")
+	cli.FlagString("size", "s", "sample")
 	cli.AutoHelp(true)
 
 	// Wrap the default help style with a custom banner.
-	cli.SetHelpFormatter(func(cmd cli.TCommand) string {
+	cli.SetHelpFormatter(func(cmd *cli.Command) string {
 		return "== STYLES ==\n\n" + cli.DefaultHelpFormatter(cmd)
 	})
 

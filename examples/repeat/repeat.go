@@ -3,7 +3,7 @@ package main
 import (
 	"strings"
 
-	"github.com/renatopp/go-cli"
+	"github.com/renatopp/go-cli/cli"
 )
 
 func main() {

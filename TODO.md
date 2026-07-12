@@ -1,10 +1,14 @@
 # TODO
 
 - Improving/Simplifying parsing logic 
+- Remove locale file from internal
+- Restore Flag and Command functions
 
 [output]
 - Colored outputs
 - Examples
+- Add HelpFormatter
+- Add ErrorFormatter
 - Did you mean... suggestions
 - man pages
 - groups

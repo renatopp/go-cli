@@ -6,6 +6,9 @@
 - Adding SetHelpFormatter and SetErrorFormatter to customize help and error styles, with DefaultHelpFormatter and DefaultErrorFormatter as the built-in styles.
 - Adding typed parsing errors (e.g. UnknownFlagError, MissingRequiredFlagError) that can be inspected with errors.As in custom error formatters.
 - Localizing CheckExclusiveFlags and CheckAnyFlag error messages.
+- Moving the internal package into the root cli package, removing the type alias layer (TFlag, TPositional, TCommand).
+- Removing the package-level Flag, Command and Arguments functions to avoid conflicts with the Flag, Command and Arguments types; use FlagString and Cmd instead.
+- Moving the library code to the cli/ folder; the import path is now github.com/renatopp/go-cli/cli, with locales and parsers as its subpackages.
 
 # 0.5.0 (2026-07-07)
 
