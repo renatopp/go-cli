@@ -149,7 +149,7 @@ func (f *GenericPositional[T]) AsHidden() *GenericPositional[T] {
 func (f *GenericPositional[T]) Parse(value string) error {
 	parsedValue, err := f.parser(value)
 	if err != nil {
-		return fmt.Errorf(GetLocale().ErrInvalidPositionalValue, f.Name(), value)
+		return &InvalidPositionalValueError{Positional: f, Value: value, Detail: value, Cause: err}
 	}
 
 	f.value = parsedValue
@@ -157,7 +157,7 @@ func (f *GenericPositional[T]) Parse(value string) error {
 	f.parsed = true
 	if f.validator != nil {
 		if err := f.validator(parsedValue); err != nil {
-			return fmt.Errorf(GetLocale().ErrInvalidPositionalValue, f.Name(), err.Error())
+			return &InvalidPositionalValueError{Positional: f, Value: value, Detail: err.Error(), Cause: err}
 		}
 	}
 

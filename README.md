@@ -21,16 +21,19 @@ go get github.com/renatopp/go-cli
 After that, just import the package and use the `cli` name:
 
 ```go
-import "github.com/renatopp/go-cli"
+import (
+  "fmt"
+
+  "github.com/renatopp/go-cli"
+)
 
 func main() {
   cli.Name("hello")
   cli.Description("Prints a classical message.")
   cli.AutoHelp(true)
   cli.Parse()
-[]
-  cli.Print("Hello, World!")
 
+  fmt.Println("Hello, World!")
 }
 ```
 

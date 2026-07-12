@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 	"path"
-	"strings"
 	"time"
 )
 
@@ -18,6 +17,8 @@ type App struct {
 	arguments               *Arguments // parsed arguments
 	stdout                  io.Writer
 	stderr                  io.Writer
+	helpFormatter           HelpFormatter
+	errorFormatter          ErrorFormatter
 	panicInsteadOfExit      bool
 	extraFlagsAllowed       bool
 	extraPositionalsAllowed bool
@@ -46,6 +47,8 @@ func (a *App) Clear() {
 	a.arguments = nil
 	a.stdout = os.Stdout
 	a.stderr = os.Stderr
+	a.helpFormatter = DefaultHelpFormatter
+	a.errorFormatter = DefaultErrorFormatter
 	a.panicInsteadOfExit = false
 	a.extraFlagsAllowed = false
 	a.extraPositionalsAllowed = false
@@ -78,39 +81,53 @@ func (a *App) Description(d string) { a.CurrentCommand().WithDescription(d) }
 // the root command.
 func (a *App) Version(v string) { a.version = v }
 
-// StdoutWith allows you to specify a custom io.Writer for handling standard
+// SetStdout allows you to specify a custom io.Writer for handling standard
 // output. This can be useful for redirecting output to a file, logging system,
 // or for testing purposes. It is used to print the help text.
-func (a *App) StdoutWith(w io.Writer) {
+func (a *App) SetStdout(w io.Writer) {
 	a.stdout = w
 }
 
-// StderrWith allows you to specify a custom io.Writer for handling standard error
+// SetStderr allows you to specify a custom io.Writer for handling standard error
 // output. This can be useful for redirecting error messages to a file, logging
 // system, or for testing purposes. It is used to print error messages.
-func (a *App) StderrWith(w io.Writer) {
+func (a *App) SetStderr(w io.Writer) {
 	a.stderr = w
 }
 
-// Print prints a formatted message using the stdout writer.
-func (a *App) Print(format string, v ...any) { fmt.Fprintf(a.stdout, format+"\n", v...) }
+// SetHelpFormatter replaces the function used to render the help message for
+// a command. The default is DefaultHelpFormatter.
+func (a *App) SetHelpFormatter(f HelpFormatter) {
+	a.helpFormatter = f
+}
 
-// Error prints a formatted error message using the stderr writer.
-func (a *App) Error(format string, v ...any) { fmt.Fprintf(a.stderr, format+"\n", v...) }
+// SetErrorFormatter replaces the function used to render error messages
+// before they are written to stderr. The default is DefaultErrorFormatter.
+// Parsing errors are typed (e.g. *UnknownFlagError), so the formatter can
+// inspect them with errors.As.
+func (a *App) SetErrorFormatter(f ErrorFormatter) {
+	a.errorFormatter = f
+}
 
-// Fatal prints a formatted error message using the stderr function and then
-// exits with code 1.
-func (a *App) Fatal(format string, v ...any) {
-	a.Error("Error: "+format, v...)
+// Fail renders the given error using the error formatter, writes it to the
+// stderr writer and exits with code 1.
+func (a *App) Fail(err error) {
+	fmt.Fprintf(a.stderr, "%s\n", a.errorFormatter(err))
 	a.Exit(1)
 }
 
-// FatalIf checks if the provided error is not nil, and if so, it prints the error
-// message using the stderr function and then exits with code 1.
+// Fatal formats an error message, renders it using the error formatter,
+// writes it to the stderr writer and then exits with code 1.
+func (a *App) Fatal(format string, v ...any) {
+	a.Fail(fmt.Errorf(format, v...))
+}
+
+// FatalIf checks if the provided error is not nil, and if so, it renders the
+// error using the error formatter, writes it to the stderr writer and then
+// exits with code 1.
 func (a *App) FatalIf(err error) {
 	if err != nil {
-		a.Error("Error: %v", err)
-		a.Exit(1)
+		a.Fail(err)
 	}
 }
 
@@ -234,141 +251,16 @@ func (a *App) Exit(code int) {
 }
 
 // ShowHelp prints the help message for the current command, including its description,
-// usage, and available flags and subcommands.
+// usage, and available flags and subcommands, using the help formatter.
 func (a *App) ShowHelp() {
-	s := a.HelpString()
-	a.Print("%s", s)
+	fmt.Fprintf(a.stdout, "%s\n", a.HelpString())
 }
 
 // HelpString generates and returns the help message string for the current
-// command, including its description,
+// command using the help formatter.
 func (a *App) HelpString() string {
 	a.initialize()
-	name := strings.Join(a.path, " ")
-	cmd := a.CurrentCommand()
-	loc := GetLocale()
-
-	hasVisibleSubcommands := false
-	for _, sub := range cmd.subcommands {
-		if !sub.IsHidden() {
-			hasVisibleSubcommands = true
-			break
-		}
-	}
-
-	hasVisibleFlags := false
-	for _, f := range cmd.flags {
-		if !f.IsHidden() {
-			hasVisibleFlags = true
-			break
-		}
-	}
-
-	hasVisiblePositionals := false
-	for _, p := range cmd.positionals {
-		if !p.IsHidden() {
-			hasVisiblePositionals = true
-			break
-		}
-	}
-
-	cmds := ""
-	if hasVisibleSubcommands {
-		cmds = fmt.Sprintf(" <%s>", loc.UsageCommandLabel)
-	}
-
-	opts := ""
-	if hasVisibleFlags {
-		opts = fmt.Sprintf(" [%s]", loc.UsageOptionsLabel)
-	}
-
-	var positionals strings.Builder
-	for _, p := range cmd.positionals {
-		if p.IsHidden() {
-			continue
-		}
-
-		if p.IsRequired() {
-			positionals.WriteString(" <")
-			positionals.WriteString(p.Name())
-			positionals.WriteString(">")
-			continue
-		}
-		positionals.WriteString(" [<")
-		positionals.WriteString(p.Name())
-		positionals.WriteString(">]")
-	}
-
-	writer := NewDefaultTypewriter()
-	writer.WriteLine("%s: %s%s%s%s", loc.UsageLabel, name, cmds, opts, positionals.String())
-	if cmd.description != "" {
-		writer.WriteLine("\n%s", strings.TrimSpace(cmd.description))
-	}
-
-	if hasVisibleSubcommands {
-		writer.WriteLine("")
-		writer.WriteLine("%s:", loc.CommandsLabel)
-		for _, sub := range cmd.subcommands {
-			if sub.IsHidden() {
-				continue
-			}
-			writer.WriteLine("  %s\t%s", sub.name, sub.shortDescription)
-		}
-	}
-
-	if hasVisibleFlags {
-		writer.WriteLine("")
-		writer.WriteLine("%s:", loc.OptionsLabel)
-		for _, f := range cmd.flags {
-			if f.IsHidden() {
-				continue
-			}
-
-			opts := f.Signature()
-			desc := f.Description()
-			labels := make([]string, 0, 3)
-			if f.IsGlobal() {
-				labels = append(labels, loc.FlagGlobalLabel)
-			}
-			if f.IsRequired() {
-				labels = append(labels, loc.FlagRequiredLabel)
-			}
-			if f.HasDefault() {
-				labels = append(labels, fmt.Sprintf(loc.FlagDefaultLabel, f.RawDefault()))
-			}
-			label := ""
-			if len(labels) > 0 {
-				label = fmt.Sprintf("(%s) ", strings.Join(labels, ", "))
-			}
-			writer.WriteLine("  %s\t%s%s", opts, label, desc)
-		}
-	}
-
-	if hasVisiblePositionals {
-		writer.WriteLine("")
-		writer.WriteLine("%s:", loc.ArgumentsLabel)
-		for _, p := range cmd.positionals {
-			if p.IsHidden() {
-				continue
-			}
-
-			desc := p.Description()
-			labels := make([]string, 0, 3)
-			if p.IsRequired() {
-				labels = append(labels, loc.FlagRequiredLabel)
-			}
-			if p.HasDefault() {
-				labels = append(labels, fmt.Sprintf(loc.FlagDefaultLabel, p.RawDefault()))
-			}
-			label := ""
-			if len(labels) > 0 {
-				label = fmt.Sprintf("(%s) ", strings.Join(labels, ", "))
-			}
-			writer.WriteLine("  %s\t%s%s", p.Name(), label, desc)
-		}
-	}
-
-	return writer.Flush()
+	return a.helpFormatter(a.CurrentCommand())
 }
 
 // AutoHelp configures the CLI to automatically show the help message when the user
@@ -417,8 +309,7 @@ func (a *App) Parse() {
 	// Parse the flags and positionals of the stack
 	args, err := parseArguments(a)
 	if err != nil {
-		a.Error("%s", err.Error())
-		a.Exit(1)
+		a.Fail(err)
 	}
 	a.arguments = args
 }
@@ -517,17 +408,18 @@ func (a *App) initialize() {
 	}
 
 	if len(a.path) == 0 {
-		if rootCmd.name != "" {
-			a.path = append(a.path, rootCmd.name)
-		} else {
+		if rootCmd.name == "" {
 			exec := os.Args[0]
 			name := path.Base(exec)
 			ext := path.Ext(name)
 			if ext != "" {
 				name = name[:len(name)-len(ext)]
 			}
-			a.path = append(a.path, name)
+			// Set the resolved name on the root command so that helpers like
+			// Command.Path() report the executable name.
+			rootCmd.name = name
 		}
+		a.path = append(a.path, rootCmd.name)
 	}
 }
 

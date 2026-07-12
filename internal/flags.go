@@ -181,14 +181,14 @@ func (f *GenericFlag[T]) AsHidden() *GenericFlag[T] {
 func (f *GenericFlag[T]) Parse(value string) error {
 	parsedValue, err := f.parser(value)
 	if err != nil {
-		return fmt.Errorf(GetLocale().ErrInvalidFlagValue, f.Signature(), value)
+		return &InvalidFlagValueError{Flag: f, Value: value, Detail: value, Cause: err}
 	}
 	f.parsed = true
 	f.value = parsedValue
 	f.values = append(f.values, parsedValue)
 	if f.validator != nil {
 		if err := f.validator(parsedValue); err != nil {
-			return fmt.Errorf(GetLocale().ErrInvalidFlagValue, f.Signature(), err.Error())
+			return &InvalidFlagValueError{Flag: f, Value: value, Detail: err.Error(), Cause: err}
 		}
 	}
 

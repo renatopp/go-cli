@@ -10,7 +10,7 @@ import (
 func TestFlagInvalidExtra(t *testing.T) {
 	defer cli.Clear()
 	cli.UsePanicInsteadOfExit(true)
-	cli.StderrWith(printfContains(t, "unknown flag"))
+	cli.SetStderr(printfContains(t, "unknown flag"))
 	expectPanicWith(t, func() {
 		cli.ParseArgs(make_args("--a", "1"))
 	}, 1)
@@ -55,7 +55,7 @@ func TestFlagLongWithDashedValue(t *testing.T) {
 func TestFlagInvalidLongWithoutValue(t *testing.T) {
 	defer cli.Clear()
 	cli.UsePanicInsteadOfExit(true)
-	cli.StderrWith(printfContains(t, "missing value for flag"))
+	cli.SetStderr(printfContains(t, "missing value for flag"))
 	cli.Flag("long", "", "")
 	expectPanicWith(t, func() {
 		cli.ParseArgs(make_args("--long"))
@@ -95,7 +95,7 @@ func TestFlagShortCombinedDashedValue(t *testing.T) {
 func TestFlagInvalidShortWithoutValue(t *testing.T) {
 	defer cli.Clear()
 	cli.UsePanicInsteadOfExit(true)
-	cli.StderrWith(printfContains(t, "missing value for flag"))
+	cli.SetStderr(printfContains(t, "missing value for flag"))
 	cli.Flag("", "s", "")
 	expectPanicWith(t, func() {
 		cli.ParseArgs(make_args("-s"))
@@ -138,7 +138,7 @@ func TestFlagCombinedWithDashedValue(t *testing.T) {
 func TestFlagInvalidRepeatedLong(t *testing.T) {
 	defer cli.Clear()
 	cli.UsePanicInsteadOfExit(true)
-	cli.StderrWith(printfContains(t, "specified multiple times"))
+	cli.SetStderr(printfContains(t, "specified multiple times"))
 	cli.Flag("a", "", "")
 	expectPanicWith(t, func() {
 		cli.ParseArgs(make_args("--a", "1", "--a", "2"))
@@ -148,7 +148,7 @@ func TestFlagInvalidRepeatedLong(t *testing.T) {
 func TestFlagInvalidRepeatedShort(t *testing.T) {
 	defer cli.Clear()
 	cli.UsePanicInsteadOfExit(true)
-	cli.StderrWith(printfContains(t, "specified multiple times"))
+	cli.SetStderr(printfContains(t, "specified multiple times"))
 	cli.Flag("", "a", "")
 	expectPanicWith(t, func() {
 		cli.ParseArgs(make_args("-a", "1", "-a", "2"))
@@ -188,7 +188,7 @@ func TestFlagRepeatedCombined(t *testing.T) {
 func TestFlagRequired(t *testing.T) {
 	defer cli.Clear()
 	cli.UsePanicInsteadOfExit(true)
-	cli.StderrWith(printfContains(t, "missing required flag"))
+	cli.SetStderr(printfContains(t, "missing required flag"))
 	cli.Flag("a", "", "").AsRequired()
 	expectPanicWith(t, func() {
 		cli.ParseArgs(make_args())
@@ -245,7 +245,7 @@ func TestFlagHiddenRequiredStillValidated(t *testing.T) {
 	defer cli.Clear()
 
 	cli.UsePanicInsteadOfExit(true)
-	cli.StderrWith(printfContains(t, "missing required flag"))
+	cli.SetStderr(printfContains(t, "missing required flag"))
 	cli.Flag("secret", "s", "hidden required flag").AsHidden().AsRequired()
 
 	expectPanicWith(t, func() {

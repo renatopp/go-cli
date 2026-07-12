@@ -1,6 +1,11 @@
 # 0.6.0 (TBD)
 
 - Removing the Shell wrapper as it is not on the scope of this library.
+- Renaming StdoutWith/StderrWith to SetStdout/SetStderr.
+- Removing Print and Error functions; use fmt directly instead.
+- Adding SetHelpFormatter and SetErrorFormatter to customize help and error styles, with DefaultHelpFormatter and DefaultErrorFormatter as the built-in styles.
+- Adding typed parsing errors (e.g. UnknownFlagError, MissingRequiredFlagError) that can be inspected with errors.As in custom error formatters.
+- Localizing CheckExclusiveFlags and CheckAnyFlag error messages.
 
 # 0.5.0 (2026-07-07)
 

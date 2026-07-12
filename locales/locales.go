@@ -19,6 +19,7 @@ type Locale struct {
 	FlagGlobalLabel   string // e.g. "as in (global)"
 	FlagRequiredLabel string // e.g. "as in (required)"
 	FlagDefaultLabel  string // e.g. "as in (default=%v)", receives the default value
+	ErrorLabel        string // e.g. "as in Error: <message>"
 
 	// Auto-generated flag descriptions
 	HelpFlagDescription    string // description for the automatic --help/-h flag
@@ -33,6 +34,8 @@ type Locale struct {
 	ErrFlagSpecifiedMultiple     string // %s = flag name
 	ErrMissingValueForFlag       string // %s = flag name
 	ErrUnexpectedExtraPositional string // %s = token
+	ErrExclusiveFlags            string // %s = flag signatures joined by "and"
+	ErrAtLeastOneFlag            string // %s = flag signatures joined by "or"
 }
 
 // EN returns the built-in English locale, which is the default used by go-cli.
@@ -47,6 +50,7 @@ func EN() Locale {
 		FlagGlobalLabel:   "global",
 		FlagRequiredLabel: "required",
 		FlagDefaultLabel:  "default=%v",
+		ErrorLabel:        "Error",
 
 		HelpFlagDescription:    "Show help message",
 		VersionFlagDescription: "Show version information",
@@ -59,6 +63,8 @@ func EN() Locale {
 		ErrFlagSpecifiedMultiple:     "flag %s was specified multiple times",
 		ErrMissingValueForFlag:       "missing value for flag %s",
 		ErrUnexpectedExtraPositional: "unexpected extra positional argument: %s",
+		ErrExclusiveFlags:            "mutually exclusive flags provided: %s",
+		ErrAtLeastOneFlag:            "at least one of the following flags must be provided: %s",
 	}
 }
 
@@ -74,6 +80,7 @@ func PTBR() Locale {
 		FlagGlobalLabel:   "global",
 		FlagRequiredLabel: "obrigatório",
 		FlagDefaultLabel:  "padrão=%v",
+		ErrorLabel:        "Erro",
 
 		HelpFlagDescription:    "Exibir mensagem de ajuda",
 		VersionFlagDescription: "Exibir informações da versão",
@@ -86,5 +93,7 @@ func PTBR() Locale {
 		ErrFlagSpecifiedMultiple:     "flag %s foi especificada múltiplas vezes",
 		ErrMissingValueForFlag:       "valor ausente para a flag %s",
 		ErrUnexpectedExtraPositional: "argumento posicional extra inesperado: %s",
+		ErrExclusiveFlags:            "flags mutuamente exclusivas fornecidas: %s",
+		ErrAtLeastOneFlag:            "pelo menos uma das seguintes flags deve ser fornecida: %s",
 	}
 }

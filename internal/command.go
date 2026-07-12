@@ -91,6 +91,20 @@ func (c *Command) Name() string {
 	return c.name
 }
 
+// Parent returns the parent command, or nil for the root command.
+func (c *Command) Parent() *Command {
+	return c.parent
+}
+
+// Path returns the names of the commands leading to this command, starting at
+// the root, e.g. ["git", "commit"].
+func (c *Command) Path() []string {
+	if c.parent == nil {
+		return []string{c.name}
+	}
+	return append(c.parent.Path(), c.name)
+}
+
 func (c *Command) Description() string {
 	return c.description
 }

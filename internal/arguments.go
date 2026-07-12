@@ -81,7 +81,7 @@ func parseArguments(app *App) (*Arguments, error) {
 	}
 
 	if app.version != "" && args.hasVersionFlag && app.CurrentCommand() == app.RootCommand() {
-		app.Print(app.version)
+		fmt.Fprintf(app.stdout, "%s\n", app.version)
 		app.Exit(0)
 	}
 
@@ -93,12 +93,12 @@ func parseArguments(app *App) (*Arguments, error) {
 	// check for required flags and positionals
 	for _, flag := range cmd.flags {
 		if flag.IsRequired() && !flag.IsParsed() {
-			return args, fmt.Errorf(GetLocale().ErrMissingRequiredFlag, flag.Signature())
+			return args, &MissingRequiredFlagError{Flag: flag}
 		}
 	}
 	for i, positional := range cmd.positionals {
 		if positional.IsRequired() && i >= len(args.Args) {
-			return args, fmt.Errorf(GetLocale().ErrMissingRequiredPositional, positional.Name())
+			return args, &MissingRequiredPositionalError{Positional: positional}
 		}
 	}
 
@@ -169,7 +169,7 @@ func (a *Arguments) tryGetFlag(name string) (Flag, error) {
 		a.flags[name] = extraFlag
 		return extraFlag, nil
 	}
-	return nil, fmt.Errorf(GetLocale().ErrUnknownFlag, name)
+	return nil, &UnknownFlagError{Name: name}
 }
 
 // parseFlag parses the flag with the given value. It checks for repeated flags
@@ -181,7 +181,7 @@ func (a *Arguments) parseFlag(name string, value string) error {
 
 	if flag.IsParsed() {
 		if !a.app.repeatedFlagsAllowed && !flag.IsRepeatable() {
-			return fmt.Errorf(GetLocale().ErrFlagSpecifiedMultiple, name)
+			return &RepeatedFlagError{Name: name}
 		}
 	}
 
@@ -208,7 +208,7 @@ func (a *Arguments) parseLong(token string) error {
 		if hasFlag {
 			value, ok := a.next()
 			if !ok {
-				return fmt.Errorf(GetLocale().ErrMissingValueForFlag, name)
+				return &MissingFlagValueError{Name: name}
 			}
 			return a.parseFlag(name, value)
 		}
@@ -233,7 +233,7 @@ func (a *Arguments) parseShort(token string) error {
 			_, hasFlag := a.flags[name]
 			value, ok := a.next()
 			if hasFlag && !ok {
-				return fmt.Errorf(GetLocale().ErrMissingValueForFlag, name)
+				return &MissingFlagValueError{Name: name}
 			}
 			return a.parseFlag(name, value)
 
@@ -269,7 +269,7 @@ func (a *Arguments) parsePositional(token string) error {
 		}
 
 		if !a.app.extraPositionalsAllowed {
-			return fmt.Errorf(GetLocale().ErrUnexpectedExtraPositional, token)
+			return &UnexpectedPositionalError{Token: token}
 		}
 
 		a.ExtraArgs = append(a.ExtraArgs, token)

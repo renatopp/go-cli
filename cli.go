@@ -2,7 +2,6 @@ package cli
 
 import (
 	"io"
-	"strings"
 	"time"
 
 	internal "github.com/renatopp/go-cli/internal"
@@ -13,6 +12,42 @@ var app *internal.App
 
 type TFlag[T any] = *internal.GenericFlag[T]
 type TPositional[T any] = *internal.GenericPositional[T]
+
+// TCommand is the command type used across the CLI, exported here so custom
+// help formatters can reference it, e.g. func(cmd cli.TCommand) string.
+type TCommand = *internal.Command
+
+// HelpFormatter converts a command into its help text. See SetHelpFormatter.
+type HelpFormatter = internal.HelpFormatter
+
+// ErrorFormatter converts an error into the message written to stderr. See
+// SetErrorFormatter.
+type ErrorFormatter = internal.ErrorFormatter
+
+// DefaultHelpFormatter is the built-in help style. Custom help formatters can
+// wrap it to prepend or append content.
+var DefaultHelpFormatter HelpFormatter = internal.DefaultHelpFormatter
+
+// DefaultErrorFormatter is the built-in error style, which prefixes messages
+// with the localized error label, e.g. "Error: unknown flag x". Custom error
+// formatters can wrap it or replace it entirely.
+var DefaultErrorFormatter ErrorFormatter = internal.DefaultErrorFormatter
+
+// Typed errors produced while parsing arguments. Custom error formatters can
+// inspect them with errors.As to render specific messages, add suggestions,
+// etc.
+type (
+	InvalidFlagValueError          = internal.InvalidFlagValueError
+	InvalidPositionalValueError    = internal.InvalidPositionalValueError
+	MissingRequiredFlagError       = internal.MissingRequiredFlagError
+	MissingRequiredPositionalError = internal.MissingRequiredPositionalError
+	UnknownFlagError               = internal.UnknownFlagError
+	RepeatedFlagError              = internal.RepeatedFlagError
+	MissingFlagValueError          = internal.MissingFlagValueError
+	UnexpectedPositionalError      = internal.UnexpectedPositionalError
+	ExclusiveFlagsError            = internal.ExclusiveFlagsError
+	AtLeastOneFlagError            = internal.AtLeastOneFlagError
+)
 
 // Initialize global state
 func init() {
@@ -57,32 +92,47 @@ func Description(d string) { app.Description(d) }
 // the root command.
 func Version(v string) { app.Version(v) }
 
-// StdoutWith allows you to specify a custom io.Writer for handling standard
+// SetStdout allows you to specify a custom io.Writer for handling standard
 // output. This can be useful for redirecting output to a file, logging system,
 // or for testing purposes. It is used to print the help text.
-func StdoutWith(w io.Writer) {
-	app.StdoutWith(w)
+func SetStdout(w io.Writer) {
+	app.SetStdout(w)
 }
 
-// StderrWith allows you to specify a custom io.Writer for handling standard error
+// SetStderr allows you to specify a custom io.Writer for handling standard error
 // output. This can be useful for redirecting error messages to a file, logging
 // system, or for testing purposes. It is used to print error messages.
-func StderrWith(w io.Writer) {
-	app.StderrWith(w)
+func SetStderr(w io.Writer) {
+	app.SetStderr(w)
 }
 
-// Print prints a formatted message using the stdout function.
-func Print(format string, v ...any) { app.Print(format, v...) }
+// SetHelpFormatter replaces the function used to render the help message of a
+// command, allowing you to fully customize the help style. The default is
+// DefaultHelpFormatter, which can also be wrapped, e.g.:
+//
+//	cli.SetHelpFormatter(func(cmd cli.TCommand) string {
+//		return banner + cli.DefaultHelpFormatter(cmd)
+//	})
+func SetHelpFormatter(f HelpFormatter) {
+	app.SetHelpFormatter(f)
+}
 
-// Error prints a formatted error message using the stderr function.
-func Error(format string, v ...any) { app.Error(format, v...) }
+// SetErrorFormatter replaces the function used to render error messages
+// before they are written to stderr, allowing you to fully customize the
+// error style. The default is DefaultErrorFormatter. Parsing errors are typed
+// (e.g. *UnknownFlagError, *MissingRequiredFlagError), so the formatter can
+// inspect them with errors.As.
+func SetErrorFormatter(f ErrorFormatter) {
+	app.SetErrorFormatter(f)
+}
 
-// Fatal prints a formatted error message using the stderr function and then
-// exits with code 1.
+// Fatal prints a formatted error message using the error formatter and the
+// stderr writer, and then exits with code 1.
 func Fatal(format string, v ...any) { app.Fatal(format, v...) }
 
 // FatalIf checks if the provided error is not nil, and if so, it prints the error
-// message using the stderr function and then exits with code 1.
+// message using the error formatter and the stderr writer, and then exits with
+// code 1.
 func FatalIf(err error) { app.FatalIf(err) }
 
 // CurrentCommand returns the current command being executed.
@@ -328,12 +378,7 @@ func CheckExclusiveFlags(flags ...internal.Flag) {
 	}
 
 	if len(parsedFlags) > 1 {
-		flagNames := []string{}
-		for _, flag := range parsedFlags {
-			flagNames = append(flagNames, flag.Signature())
-		}
-		app.Error("mutually exclusive flags provided: %s", strings.Join(flagNames, " and "))
-		app.Exit(1)
+		app.Fail(&ExclusiveFlagsError{Flags: parsedFlags})
 	}
 }
 
@@ -346,10 +391,5 @@ func CheckAnyFlag(flags ...internal.Flag) {
 		}
 	}
 
-	flagNames := []string{}
-	for _, flag := range flags {
-		flagNames = append(flagNames, flag.Signature())
-	}
-	app.Error("at least one of the following flags must be provided: %s", strings.Join(flagNames, " or "))
-	app.Exit(1)
+	app.Fail(&AtLeastOneFlagError{Flags: flags})
 }

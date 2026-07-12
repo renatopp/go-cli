@@ -16,7 +16,7 @@ func TestLocaleCustomErrorMessage(t *testing.T) {
 		ErrUnknownFlag: "bandeira desconhecida %s",
 	})
 	cli.UsePanicInsteadOfExit(true)
-	cli.StderrWith(printfContains(t, "bandeira desconhecida"))
+	cli.SetStderr(printfContains(t, "bandeira desconhecida"))
 	expectPanicWith(t, func() {
 		cli.ParseArgs(make_args("--a", "1"))
 	}, 1)
@@ -31,7 +31,7 @@ func TestLocaleFallsBackToDefault(t *testing.T) {
 		ErrMissingRequiredFlag: "falta a bandeira obrigatória %s",
 	})
 	cli.UsePanicInsteadOfExit(true)
-	cli.StderrWith(printfContains(t, "unknown flag"))
+	cli.SetStderr(printfContains(t, "unknown flag"))
 	expectPanicWith(t, func() {
 		cli.ParseArgs(make_args("--a", "1"))
 	}, 1)

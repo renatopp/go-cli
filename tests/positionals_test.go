@@ -47,7 +47,7 @@ func TestPositionalExtraNotAllowed(t *testing.T) {
 	cli.UsePanicInsteadOfExit(true)
 	cli.AllowExtraPositionals(false) // default is false, but just to be explicit
 	cli.Pos("a", "desc")
-	cli.StderrWith(printfContains(t, "extra"))
+	cli.SetStderr(printfContains(t, "extra"))
 	expectPanicWith(t, func() {
 		cli.ParseArgs(make_args("1", "2", "3", "4"))
 	}, 1)
@@ -66,7 +66,7 @@ func TestPositionalCustomValidation(t *testing.T) {
 	cli.UsePanicInsteadOfExit(true)
 	a := cli.Pos("a", "desc").WithValidation(validFn)
 	cli.Pos("b", "desc").WithValidation(validFn)
-	cli.StderrWith(printfContains(t, "invalid value"))
+	cli.SetStderr(printfContains(t, "invalid value"))
 	expectPanicWith(t, func() {
 		cli.ParseArgs(make_args("1", "2"))
 	}, 1)
@@ -79,7 +79,7 @@ func TestPositionalRequired(t *testing.T) {
 	cli.UsePanicInsteadOfExit(true)
 	cli.Pos("a", "desc").AsRequired()
 	cli.Pos("b", "desc").AsRequired()
-	cli.StderrWith(printfContains(t, ": b"))
+	cli.SetStderr(printfContains(t, ": b"))
 	expectPanicWith(t, func() {
 		cli.ParseArgs(make_args("1"))
 	}, 1)
@@ -186,7 +186,7 @@ func TestPositionalHiddenRequiredStillValidated(t *testing.T) {
 	defer cli.Clear()
 
 	cli.UsePanicInsteadOfExit(true)
-	cli.StderrWith(printfContains(t, "missing required positional argument"))
+	cli.SetStderr(printfContains(t, "missing required positional argument"))
 	cli.Pos("secret", "hidden required positional").AsHidden().AsRequired()
 
 	expectPanicWith(t, func() {
