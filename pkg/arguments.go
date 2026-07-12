@@ -1,14 +1,15 @@
-package cli
+package pkg
 
 import (
 	"fmt"
-	"github.com/renatopp/go-cli/cli/parsers"
 	"strings"
+
+	"github.com/renatopp/go-cli/pkg/parsers"
 )
 
 type Arguments struct {
-	Args      []string // the list of registered and non-registered positional arguments
-	ExtraArgs []string // the list of extra positional arguments that are not defined in the command
+	pos      []string // the list of registered and non-registered positional arguments
+	extraPos []string // the list of extra positional arguments that are not defined in the command
 
 	app                   *App     // reference to the main app for accessing configuration like AllowExtraPositionals
 	queue                 []string // the queue of arguments to be parsed
@@ -21,8 +22,8 @@ type Arguments struct {
 
 func parseArguments(app *App) (*Arguments, error) {
 	args := &Arguments{
-		Args:           []string{},
-		ExtraArgs:      []string{},
+		pos:            []string{},
+		extraPos:       []string{},
 		app:            app,
 		queue:          app.queue,
 		flags:          map[string]Flag{},
@@ -31,7 +32,7 @@ func parseArguments(app *App) (*Arguments, error) {
 		hasVersionFlag: false,
 	}
 
-	cmd := app.CurrentCommand()
+	cmd := app.GetCurrentCommand()
 
 	// prepare the flags and positionals maps for easy lookup during parsing
 	for _, flag := range cmd.flags {
@@ -76,11 +77,11 @@ func parseArguments(app *App) (*Arguments, error) {
 
 	// check for auto help or auto version before performing other validations
 	if app.autoHelp && args.hasHelpFlag {
-		app.ShowHelp()
+		app.Help()
 		app.Exit(0)
 	}
 
-	if app.version != "" && args.hasVersionFlag && app.CurrentCommand() == app.RootCommand() {
+	if app.version != "" && args.hasVersionFlag && app.GetCurrentCommand() == app.GetRootCommand() {
 		fmt.Fprintf(app.stdout, "%s\n", app.version)
 		app.Exit(0)
 	}
@@ -97,7 +98,7 @@ func parseArguments(app *App) (*Arguments, error) {
 		}
 	}
 	for i, positional := range cmd.positionals {
-		if positional.IsRequired() && i >= len(args.Args) {
+		if positional.IsRequired() && i >= len(args.pos) {
 			return args, &MissingRequiredPositionalError{Positional: positional}
 		}
 	}
@@ -253,13 +254,13 @@ func (a *Arguments) parseShort(token string) error {
 
 // value
 func (a *Arguments) parsePositional(token string) error {
-	i := len(a.Args)
+	i := len(a.pos)
 	var positional Positional
 	if i < len(a.positionals) {
 		positional = a.positionals[i]
 	}
 
-	a.Args = append(a.Args, token)
+	a.pos = append(a.pos, token)
 	if positional != nil {
 		return positional.Parse(token)
 	} else {
@@ -272,7 +273,7 @@ func (a *Arguments) parsePositional(token string) error {
 			return &UnexpectedPositionalError{Token: token}
 		}
 
-		a.ExtraArgs = append(a.ExtraArgs, token)
+		a.extraPos = append(a.extraPos, token)
 	}
 	return nil
 }

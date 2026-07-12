@@ -1,12 +1,13 @@
-package cli
+package pkg
 
 import (
 	"fmt"
-	"github.com/renatopp/go-cli/cli/parsers"
 	"io"
 	"os"
 	"path"
 	"time"
+
+	"github.com/renatopp/go-cli/pkg/parsers"
 )
 
 type App struct {
@@ -57,69 +58,64 @@ func (a *App) Clear() {
 	a.version = ""
 }
 
-// RootCommand returns the root command of the CLI, which is the top-level
+// GetRootCommand returns the root command of the CLI, which is the top-level
 // command that all other subcommands are attached to. You can use this to define your commands and flags.
-func (a *App) RootCommand() *Command { return a.rootCommand }
+func (a *App) GetRootCommand() *Command { return a.rootCommand }
 
-// CurrentCommand returns the current command being executed, which is the last
+// GetCurrentCommand returns the current command being executed, which is the last
 // command in the path. It will be the root command if no subcommand has been
 // executed yet.
-func (a *App) CurrentCommand() *Command { return a.currentCommand }
+func (a *App) GetCurrentCommand() *Command { return a.currentCommand }
 
 // Name sets the name for the current command. The name is used in help text
 // to identify the command and its usage. Use only its immediate name (e.g.
 // "version" instead of "app version") since the command hierarchy is
 // automatically handled by go-cli.
-func (a *App) Name(n string) { a.CurrentCommand().WithName(n) }
+func (a *App) Name(n string) { a.GetCurrentCommand().WithName(n) }
 
 // Description sets the description for the current command. Descriptions are
 // used in help text to provide more information about the command and its
 // purpose.
-func (a *App) Description(d string) { a.CurrentCommand().WithDescription(d) }
+func (a *App) Description(d string) { a.GetCurrentCommand().WithDescription(d) }
 
 // Version sets the version for the CLI. This enables the --version flag for
 // the root command.
 func (a *App) Version(v string) { a.version = v }
 
-// SetStdout allows you to specify a custom io.Writer for handling standard
+// Stdout allows you to specify a custom io.Writer for handling standard
 // output. This can be useful for redirecting output to a file, logging system,
 // or for testing purposes. It is used to print the help text.
-func (a *App) SetStdout(w io.Writer) {
+func (a *App) Stdout(w io.Writer) {
 	a.stdout = w
 }
 
-// SetStderr allows you to specify a custom io.Writer for handling standard error
+// Stderr allows you to specify a custom io.Writer for handling standard error
 // output. This can be useful for redirecting error messages to a file, logging
 // system, or for testing purposes. It is used to print error messages.
-func (a *App) SetStderr(w io.Writer) {
+func (a *App) Stderr(w io.Writer) {
 	a.stderr = w
 }
 
-// SetHelpFormatter replaces the function used to render the help message for
+// HelpFormatter replaces the function used to render the help message for
 // a command. The default is DefaultHelpFormatter.
-func (a *App) SetHelpFormatter(f HelpFormatter) {
+func (a *App) HelpFormatter(f HelpFormatter) {
 	a.helpFormatter = f
 }
 
-// SetErrorFormatter replaces the function used to render error messages
+// ErrorFormatter replaces the function used to render error messages
 // before they are written to stderr. The default is DefaultErrorFormatter.
 // Parsing errors are typed (e.g. *UnknownFlagError), so the formatter can
 // inspect them with errors.As.
-func (a *App) SetErrorFormatter(f ErrorFormatter) {
+func (a *App) ErrorFormatter(f ErrorFormatter) {
 	a.errorFormatter = f
-}
-
-// Fail renders the given error using the error formatter, writes it to the
-// stderr writer and exits with code 1.
-func (a *App) Fail(err error) {
-	fmt.Fprintf(a.stderr, "%s\n", a.errorFormatter(err))
-	a.Exit(1)
 }
 
 // Fatal formats an error message, renders it using the error formatter,
 // writes it to the stderr writer and then exits with code 1.
 func (a *App) Fatal(format string, v ...any) {
-	a.Fail(fmt.Errorf(format, v...))
+	err := fmt.Errorf(format, v...)
+	fmt.Fprintf(a.stderr, "%s\n", a.errorFormatter(err))
+	a.Exit(1)
 }
 
 // FatalIf checks if the provided error is not nil, and if so, it renders the
@@ -127,7 +123,7 @@ func (a *App) Fatal(format string, v ...any) {
 // exits with code 1.
 func (a *App) FatalIf(err error) {
 	if err != nil {
-		a.Fail(err)
+		a.Fatal("%v", err)
 	}
 }
 
@@ -135,93 +131,88 @@ func (a *App) FatalIf(err error) {
 // nil if the arguments have not been parsed yet.
 func (a *App) Arguments() *Arguments { return a.arguments }
 
-// NArgs returns the number of positional arguments provided by the user.
+// GetPosCount returns the number of positional arguments provided by the user.
 // Should be used only after Parse() is called, otherwise it will return 0.
-func (a *App) NArgs() int {
+func (a *App) GetPosCount() int {
 	if !a.IsParsed() {
 		return 0
 	}
-	return len(a.Arguments().Args)
+	return len(a.Arguments().pos)
 }
 
-// Arg retrieves the value of a positional argument by its index.
+// GetPosAt retrieves the value of a positional argument by its index.
 // Should be used only after Parse() is called, otherwise it will return an
 // empty string.
-func (a *App) Arg(index int) string {
+func (a *App) GetPosAt(index int) string {
 	if !a.IsParsed() {
 		return ""
 	}
-	args := a.Arguments().Args
+	args := a.Arguments().pos
 	if index < 0 || index >= len(args) {
 		return ""
 	}
 	return args[index]
 }
 
-// Args retrieves all positional arguments provided by the user.
+// GetPos retrieves all positional arguments provided by the user.
 // Should be used only after Parse() is called, otherwise it will return an
 // empty slice.
-func (a *App) Args() []string {
+func (a *App) GetPos() []string {
 	if !a.IsParsed() {
 		return []string{}
 	}
-	return a.Arguments().Args
+	return a.Arguments().pos
 }
 
-// NExtraArgs returns the number of extra positional arguments provided by the user,
+// GetExtraPosCount returns the number of extra positional arguments provided by the user,
 // i.e., those that are not defined in the command. Should be used only after
 // Parse() is called, otherwise it will return 0.
-func (a *App) NExtraArgs() int {
+func (a *App) GetExtraPosCount() int {
 	if !a.IsParsed() {
 		return 0
 	}
-	return len(a.Arguments().ExtraArgs)
+	return len(a.Arguments().extraPos)
 }
 
-// ExtraArg retrieves the value of an extra positional argument by its index, i.e.,
+// GetExtraPosAt retrieves the value of an extra positional argument by its index, i.e.,
 // those that are not defined in the command. Should be used only after Parse() is
 // called, otherwise it will return an empty string.
-func (a *App) ExtraArg(index int) string {
+func (a *App) GetExtraPosAt(index int) string {
 	if !a.IsParsed() {
 		return ""
 	}
-	extraArgs := a.Arguments().ExtraArgs
+	extraArgs := a.Arguments().extraPos
 	if index < 0 || index >= len(extraArgs) {
 		return ""
 	}
 	return extraArgs[index]
 }
 
-// ExtraArgs retrieves all extra positional arguments provided by the user, i.e.,
+// GetExtraPos retrieves all extra positional arguments provided by the user, i.e.,
 // those that are not defined in the command. Should be used only after Parse() is
 // called, otherwise it will return an empty slice.
-func (a *App) ExtraArgs() []string {
+func (a *App) GetExtraPos() []string {
 	if !a.IsParsed() {
 		return []string{}
 	}
-	return a.Arguments().ExtraArgs
+	return a.Arguments().extraPos
 }
 
-// SetArgs sets the arguments for the app.
-func (a *App) SetArgs(args []string) {
-	a.queue = args
-}
-
-// UsePanicInsteadOfExit configures the CLI to panic instead of exiting when
+// UsePanic configures the CLI to panic instead of exiting when
 // an error  occurs or when a command finishes execution. This can be useful
 // for testing purposes or customization of the cli behavior. The panic will
 // be called with the exit code as the argument.
-func (a *App) UsePanicInsteadOfExit(usePanic bool) {
+func (a *App) UsePanic(usePanic bool) {
 	a.panicInsteadOfExit = usePanic
 }
 
-// AllowExtraPositionals configures the CLI to allow extra positional arguments
+// AllowExtraPos configures the CLI to allow extra positional arguments
 // that are not defined in the command.  You may use variadic positional for
 // this purpose as well. By default, extra positional arguments are not allowed.
 //
 // Extra positional arguments can be accessed using the `Arg` function or the
 // `ExtraArg` function.
-func (a *App) AllowExtraPositionals(allow bool) {
+func (a *App) AllowExtraPos(allow bool) {
 	a.extraPositionalsAllowed = allow
 }
 
@@ -250,17 +241,17 @@ func (a *App) Exit(code int) {
 	os.Exit(code)
 }
 
-// ShowHelp prints the help message for the current command, including its description,
+// Help prints the help message for the current command, including its description,
 // usage, and available flags and subcommands, using the help formatter.
-func (a *App) ShowHelp() {
-	fmt.Fprintf(a.stdout, "%s\n", a.HelpString())
+func (a *App) Help() {
+	fmt.Fprintf(a.stdout, "%s\n", a.GetHelp())
 }
 
-// HelpString generates and returns the help message string for the current
+// GetHelp generates and returns the help message string for the current
 // command using the help formatter.
-func (a *App) HelpString() string {
+func (a *App) GetHelp() string {
 	a.initialize()
-	return a.helpFormatter(a.CurrentCommand())
+	return a.helpFormatter(a.GetCurrentCommand())
 }
 
 // AutoHelp configures the CLI to automatically show the help message when the user
@@ -272,6 +263,11 @@ func (a *App) AutoHelp(enabled bool) {
 // IsParsed returns true if the arguments have been parsed
 // successfully.
 func (a *App) IsParsed() bool { return a.arguments != nil }
+
+func (a *App) Args(args []string) *App {
+	a.queue = args
+	return a
+}
 
 // Parse is called for every command in the path.
 func (a *App) Parse() {
@@ -308,9 +304,7 @@ func (a *App) Parse() {
 
 	// Parse the flags and positionals of the stack
 	args, err := parseArguments(a)
-	if err != nil {
-		a.Fail(err)
-	}
+	a.FatalIf(err)
 	a.arguments = args
 }
 
@@ -325,24 +319,16 @@ func (a *App) ParseArgs(args []string) {
 // execution function. The command is added as a subcommand to the current command.
 // The execute function will be called when the command is invoked by the user.
 func (a *App) Command(name string, shortDescription string, execute func()) *Command {
-	cmd := NewCommand(a.CurrentCommand()).
+	cmd := NewCommand(a.GetCurrentCommand()).
 		WithName(name).
 		WithShortDescription(shortDescription).
 		WithDescription(shortDescription).
 		WithExecute(execute)
 
-	a.CurrentCommand().
+	a.GetCurrentCommand().
 		WithSubcommand(cmd)
 
 	return cmd
-}
-
-// Cmd is an alias for Command, providing a shorter name for creating commands.
-// It creates a new command with the specified name, short description, and
-// execution function. The command is added as a subcommand to the current
-// command.
-func (a *App) Cmd(name string, shortDescription string, execute func()) *Command {
-	return a.Command(name, shortDescription, execute)
 }
 
 func (a *App) Pos(name, description string) *GenericPositional[string] {
@@ -390,7 +376,7 @@ func (a *App) FlagDuration(long, short, description string) *GenericFlag[time.Du
 }
 
 func (a *App) GetFlag(longOrShort string) (Flag, error) {
-	return a.CurrentCommand().GetFlag(longOrShort)
+	return a.GetCurrentCommand().GetFlag(longOrShort)
 }
 
 func (a *App) initialize() {
@@ -424,11 +410,11 @@ func (a *App) initialize() {
 }
 
 func _addpos[T Positional](a *App, p T) T {
-	a.CurrentCommand().WithPositional(p)
+	a.GetCurrentCommand().WithPositional(p)
 	return p
 }
 
 func _addflag[T Flag](a *App, f T) T {
-	a.CurrentCommand().WithFlag(f)
+	a.GetCurrentCommand().WithFlag(f)
 	return f
 }

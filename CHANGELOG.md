@@ -7,8 +7,8 @@
 - Adding typed parsing errors (e.g. UnknownFlagError, MissingRequiredFlagError) that can be inspected with errors.As in custom error formatters.
 - Localizing CheckExclusiveFlags and CheckAnyFlag error messages.
 - Moving the internal package into the root cli package, removing the type alias layer (TFlag, TPositional, TCommand).
-- Removing the package-level Flag, Command and Arguments functions to avoid conflicts with the Flag, Command and Arguments types; use FlagString and Cmd instead.
-- Moving the library code to the cli/ folder; the import path is now github.com/renatopp/go-cli/cli, with locales and parsers as its subpackages.
+- Removing the package-level Arguments function to avoid conflict with the Arguments type. Flag and Command remain as aliases to FlagString and Cmd.
+- Moving the core implementation to the pkg/ package (github.com/renatopp/go-cli/pkg), with locales and parsers as its subpackages; the root package keeps the global convenience API.
 
 # 0.5.0 (2026-07-07)
 

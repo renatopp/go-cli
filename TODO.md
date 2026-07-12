@@ -2,7 +2,8 @@
 
 - Improving/Simplifying parsing logic 
 - Remove locale file from internal
-- Restore Flag and Command functions
+- Reorder functions on cli.go
+- Move functions that are only available after parsing to Arguments
 
 [output]
 - Colored outputs

@@ -1,6 +1,6 @@
 package main
 
-import "github.com/renatopp/go-cli/cli"
+import "github.com/renatopp/go-cli"
 
 func main() {
 	cli.Name("hello")

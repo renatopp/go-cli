@@ -3,21 +3,21 @@ package main
 import (
 	"fmt"
 
-	"github.com/renatopp/go-cli/cli"
+	"github.com/renatopp/go-cli"
 )
 
 func main() {
 	cli.Name("list")
 	cli.Description("List folders and files")
-	cli.Cmd("folders", "List folders", cmdFolders)
-	cli.Cmd("files", "List files", cmdFiles)
+	cli.Command("folders", "List folders", cmdFolders)
+	cli.Command("files", "List files", cmdFiles)
 
 	// if a command is provided, parse will exit after executing it, so the code
 	// after this won't be executed.
 	cli.Parse()
 
 	// will only execute this if no subcommand is provided.
-	cli.ShowHelp()
+	cli.Help()
 }
 
 func cmdFolders() {

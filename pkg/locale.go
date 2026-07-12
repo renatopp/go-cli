@@ -1,9 +1,9 @@
-package cli
+package pkg
 
 import (
 	"reflect"
 
-	"github.com/renatopp/go-cli/cli/locales"
+	"github.com/renatopp/go-cli/pkg/locales"
 )
 
 // Locale is re-exported here for convenience of the internal package.

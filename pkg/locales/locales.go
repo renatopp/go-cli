@@ -68,8 +68,8 @@ func EN() Locale {
 	}
 }
 
-// PTBR returns the built-in Brazilian Portuguese locale.
-func PTBR() Locale {
+// PT_BR returns the built-in Brazilian Portuguese locale.
+func PT_BR() Locale {
 	return Locale{
 		UsageLabel:        "Uso",
 		UsageCommandLabel: "comando",

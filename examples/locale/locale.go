@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/renatopp/go-cli/cli"
-	"github.com/renatopp/go-cli/cli/locales"
+	"github.com/renatopp/go-cli"
+	"github.com/renatopp/go-cli/pkg/locales"
 )
 
 func main() {
@@ -11,10 +11,10 @@ func main() {
 	cli.FlagString("size", "s", "sample")
 	cli.FlagBool("other", "o", "sample")
 	cli.Pos("input", "sample")
-	cli.Cmd("command", "sample", func() {})
+	cli.Command("command", "sample", func() {})
 	cli.AutoHelp(true)
-	cli.SetLocale(locales.PTBR())
+	cli.Locale(locales.PT_BR())
 	cli.Version("0.0.0")
 	cli.Parse()
-	cli.ShowHelp()
+	cli.Help()
 }

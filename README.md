@@ -24,7 +24,7 @@ After that, just import the package and use the `cli` name:
 import (
   "fmt"
 
-  "github.com/renatopp/go-cli/cli"
+  "github.com/renatopp/go-cli"
 )
 
 func main() {
@@ -93,7 +93,7 @@ package main
 import (
 	"strings"
 
-	"github.com/renatopp/go-cli/cli"
+	"github.com/renatopp/go-cli"
 )
 
 func main() {
@@ -186,7 +186,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/renatopp/go-cli/cli"
+	"github.com/renatopp/go-cli"
 )
 
 func main() {
