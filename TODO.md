@@ -1,11 +1,8 @@
 # TODO
 
-- Consistency in naming on cli, app, command, flag and positional
-  - App methods
-  - Command methods
-- Move formatters to their own package
 - Move functions that are only available after parsing to Arguments
 - Improving/Simplifying parsing logic 
+- Remove raw default logic
 
 [output]
 - Colored outputs
@@ -23,6 +20,7 @@
 - Deprecation notices
 - More typed parsers
 - Command aliases
+- AllowFlagRedefinitions
 
 [interface]
 - Lifecycle hooks before and after command execution

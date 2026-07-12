@@ -7,6 +7,7 @@ import (
 	"github.com/renatopp/go-cli"
 	"github.com/renatopp/go-cli/pkg"
 	cerrors "github.com/renatopp/go-cli/pkg/errors"
+	"github.com/renatopp/go-cli/pkg/formatters"
 )
 
 func main() {
@@ -17,7 +18,7 @@ func main() {
 
 	// Wrap the default help style with a custom banner.
 	cli.HelpFormatter(func(cmd *pkg.Command, loc pkg.Locale) string {
-		return "== STYLES ==\n\n" + pkg.DefaultHelpFormatter(cmd, loc)
+		return "== STYLES ==\n\n" + formatters.DefaultHelpFormatter(cmd, loc)
 	})
 
 	// Customize error messages, inspecting typed errors for special cases.

@@ -10,6 +10,17 @@ import (
 	"github.com/renatopp/go-cli/pkg/parsers"
 )
 
+// HelpFormatter converts a command into its help text. Set a custom one with
+// App.HelpFormatter to fully control how help is rendered.
+type HelpFormatter func(cmd *Command, loc Locale) string
+
+// ErrorFormatter converts an error into the message printed to stderr. Set a
+// custom one with App.ErrorFormatter to fully control how errors are rendered.
+// Parsing errors are of type *errors.CliError (see the errors package), so
+// formatters can inspect them with errors.As and use Locale.LocalizedError to
+// render locale-specific messages.
+type ErrorFormatter func(err error, loc Locale) string
+
 // Locale is re-exported here for convenience of the internal package.
 type Locale = locales.Locale
 
@@ -33,44 +44,14 @@ type App struct {
 }
 
 // NewApp creates a new App instance with default settings.
-func NewApp() *App {
-	s := &App{}
+func NewApp(hf HelpFormatter, ef ErrorFormatter) *App {
+	s := &App{
+		helpFormatter:  hf,
+		errorFormatter: ef,
+	}
 	s.Clear()
 	return s
 }
-
-// Clear resets the state of the CLI, allowing you to define a new set of
-// commands and flags. This is useful for testing or if you want to reuse the
-// same App instance for different command configurations. It clears the command
-// path, argument queue, root command, current command, and parsed arguments,
-// and resets the output functions and configuration options to their default values.
-func (a *App) Clear() {
-	a.path = []string{}
-	a.queue = os.Args[1:]
-	a.rootCommand = NewCommand(nil)
-	a.currentCommand = a.rootCommand
-	a.arguments = nil
-	a.stdout = os.Stdout
-	a.stderr = os.Stderr
-	a.helpFormatter = DefaultHelpFormatter
-	a.errorFormatter = DefaultErrorFormatter
-	a.locale = locales.EN()
-	a.panicInsteadOfExit = false
-	a.extraFlagsAllowed = false
-	a.extraPositionalsAllowed = false
-	a.repeatedFlagsAllowed = false
-	a.autoHelp = false
-	a.version = ""
-}
-
-// RootCommand returns the root command of the CLI, which is the top-level
-// command that all other subcommands are attached to. You can use this to define your commands and flags.
-func (a *App) RootCommand() *Command { return a.rootCommand }
-
-// CurrentCommand returns the current command being executed, which is the last
-// command in the path. It will be the root command if no subcommand has been
-// executed yet.
-func (a *App) CurrentCommand() *Command { return a.currentCommand }
 
 // WithVersion sets the version for the CLI. This enables the --version flag for
 // the root command.
@@ -102,8 +83,175 @@ func (a *App) WithErrorFormatter(f ErrorFormatter) *App { a.errorFormatter = f; 
 // translate.
 func (a *App) WithLocale(l Locale) *App { a.locale = l; return a }
 
+// WithArgs allows you to specify a custom set of arguments for the CLI to parse,
+// instead of using os.Args. This is useful for testing and edge cases. The
+// arguments should NOT INCLUDE the program name.
+func (a *App) WithArgs(args []string) *App {
+	a.queue = args
+	return a
+}
+
+// WithAutoHelp configures the CLI to automatically show the help message when the user
+// provides the `-h` or `--help` flag. By default, auto help is disabled.
+func (a *App) WithAutoHelp(enabled bool) {
+	a.autoHelp = enabled
+}
+
+// UsePanic configures the CLI to panic instead of exiting when
+// an error occurs or when a command finishes execution. This can be useful
+// for testing purposes or customization of the cli behavior. The panic will
+// be called with the exit code as the argument.
+func (a *App) UsePanic(usePanic bool) {
+	a.panicInsteadOfExit = usePanic
+}
+
+// AllowExtraPositionals configures the CLI to allow extra positional arguments
+// that are not defined in the command.  You may use variadic positional for
+// this purpose as well. By default, extra positional arguments are not allowed.
+//
+// Extra positional arguments can be accessed using the `Arg` function or the
+// `ExtraArg` function.
+func (a *App) AllowExtraPositionals(allow bool) {
+	a.extraPositionalsAllowed = allow
+}
+
+// AllowExtraFlags configures the CLI to allow extra flags that are not defined
+// in the command. By default, extra flags are not allowed.
+func (a *App) AllowExtraFlags(allow bool) {
+	a.extraFlagsAllowed = allow
+}
+
+// AllowRepeatedFlags configures the CLI to allow repeated flags. If set to true,
+// the CLI will not return an error if a flag is provided multiple times. Instead,
+// the last value provided for the flag will be used. If set to false, the CLI
+// will return an error if a flag is provided multiple times. By default, repeated
+// flags are not allowed.
+func (a *App) AllowRepeatedFlags(allow bool) {
+	a.repeatedFlagsAllowed = allow
+}
+
+// RootCommand returns the root command of the CLI, which is the top-level
+// command that all other subcommands are attached to. You can use this to define your commands and flags.
+func (a *App) RootCommand() *Command { return a.rootCommand }
+
+// CurrentCommand returns the current command being executed, which is the last
+// command in the path. It will be the root command if no subcommand has been
+// executed yet.
+func (a *App) CurrentCommand() *Command { return a.currentCommand }
+
 // Locale returns this App's currently active locale.
 func (a *App) Locale() Locale { return a.locale }
+
+// IsParsed returns true if the arguments have been parsed
+// successfully.
+func (a *App) IsParsed() bool { return a.arguments != nil }
+
+// TODO: REMOVE
+// Arguments returns the parsed arguments for the current command. It will be
+// nil if the arguments have not been parsed yet.
+func (a *App) Arguments() *Arguments { return a.arguments }
+
+// TODO: REMOVE
+// GetPosCount returns the number of positional arguments provided by the user.
+// Should be used only after Parse() is called, otherwise it will return 0.
+func (a *App) GetPosCount() int {
+	if !a.IsParsed() {
+		return 0
+	}
+	return len(a.Arguments().pos)
+}
+
+// TODO: REMOVE
+// GetPosAt retrieves the value of a positional argument by its index.
+// Should be used only after Parse() is called, otherwise it will return an
+// empty string.
+func (a *App) GetPosAt(index int) string {
+	if !a.IsParsed() {
+		return ""
+	}
+	args := a.Arguments().pos
+	if index < 0 || index >= len(args) {
+		return ""
+	}
+	return args[index]
+}
+
+// TODO: REMOVE
+// GetPos retrieves all positional arguments provided by the user.
+// Should be used only after Parse() is called, otherwise it will return an
+// empty slice.
+func (a *App) GetPos() []string {
+	if !a.IsParsed() {
+		return []string{}
+	}
+	return a.Arguments().pos
+}
+
+// TODO: REMOVE
+// GetExtraPosCount returns the number of extra positional arguments provided by the user,
+// i.e., those that are not defined in the command. Should be used only after
+// Parse() is called, otherwise it will return 0.
+func (a *App) GetExtraPosCount() int {
+	if !a.IsParsed() {
+		return 0
+	}
+	return len(a.Arguments().extraPos)
+}
+
+// TODO: REMOVE
+// GetExtraPosAt retrieves the value of an extra positional argument by its index, i.e.,
+// those that are not defined in the command. Should be used only after Parse() is
+// called, otherwise it will return an empty string.
+func (a *App) GetExtraPosAt(index int) string {
+	if !a.IsParsed() {
+		return ""
+	}
+	extraArgs := a.Arguments().extraPos
+	if index < 0 || index >= len(extraArgs) {
+		return ""
+	}
+	return extraArgs[index]
+}
+
+// TODO: REMOVE
+// GetExtraPos retrieves all extra positional arguments provided by the user, i.e.,
+// those that are not defined in the command. Should be used only after Parse() is
+// called, otherwise it will return an empty slice.
+func (a *App) GetExtraPos() []string {
+	if !a.IsParsed() {
+		return []string{}
+	}
+	return a.Arguments().extraPos
+}
+
+// GetHelp generates and returns the help message string for the current
+// command using the help formatter.
+func (a *App) GetHelp() string {
+	a.initialize()
+	return a.helpFormatter(a.CurrentCommand(), a.locale)
+}
+
+// Clear resets the state of the CLI, allowing you to define a new set of
+// commands and flags. This is useful for testing or if you want to reuse the
+// same App instance for different command configurations. It clears the command
+// path, argument queue, root command, current command, and parsed arguments,
+// and resets the output functions and configuration options to their default values.
+func (a *App) Clear() {
+	a.path = []string{}
+	a.queue = os.Args[1:]
+	a.rootCommand = NewCommand(nil)
+	a.currentCommand = a.rootCommand
+	a.arguments = nil
+	a.stdout = os.Stdout
+	a.stderr = os.Stderr
+	a.locale = locales.EN()
+	a.panicInsteadOfExit = false
+	a.extraFlagsAllowed = false
+	a.extraPositionalsAllowed = false
+	a.repeatedFlagsAllowed = false
+	a.autoHelp = false
+	a.version = ""
+}
 
 // Fatal formats an error message, renders it using the error formatter,
 // writes it to the stderr writer and then exits with code 1.
@@ -124,110 +272,6 @@ func (a *App) FatalIf(err error) {
 	}
 }
 
-// Arguments returns the parsed arguments for the current command. It will be
-// nil if the arguments have not been parsed yet.
-func (a *App) Arguments() *Arguments { return a.arguments }
-
-// GetPosCount returns the number of positional arguments provided by the user.
-// Should be used only after Parse() is called, otherwise it will return 0.
-func (a *App) GetPosCount() int {
-	if !a.IsParsed() {
-		return 0
-	}
-	return len(a.Arguments().pos)
-}
-
-// GetPosAt retrieves the value of a positional argument by its index.
-// Should be used only after Parse() is called, otherwise it will return an
-// empty string.
-func (a *App) GetPosAt(index int) string {
-	if !a.IsParsed() {
-		return ""
-	}
-	args := a.Arguments().pos
-	if index < 0 || index >= len(args) {
-		return ""
-	}
-	return args[index]
-}
-
-// GetPos retrieves all positional arguments provided by the user.
-// Should be used only after Parse() is called, otherwise it will return an
-// empty slice.
-func (a *App) GetPos() []string {
-	if !a.IsParsed() {
-		return []string{}
-	}
-	return a.Arguments().pos
-}
-
-// GetExtraPosCount returns the number of extra positional arguments provided by the user,
-// i.e., those that are not defined in the command. Should be used only after
-// Parse() is called, otherwise it will return 0.
-func (a *App) GetExtraPosCount() int {
-	if !a.IsParsed() {
-		return 0
-	}
-	return len(a.Arguments().extraPos)
-}
-
-// GetExtraPosAt retrieves the value of an extra positional argument by its index, i.e.,
-// those that are not defined in the command. Should be used only after Parse() is
-// called, otherwise it will return an empty string.
-func (a *App) GetExtraPosAt(index int) string {
-	if !a.IsParsed() {
-		return ""
-	}
-	extraArgs := a.Arguments().extraPos
-	if index < 0 || index >= len(extraArgs) {
-		return ""
-	}
-	return extraArgs[index]
-}
-
-// GetExtraPos retrieves all extra positional arguments provided by the user, i.e.,
-// those that are not defined in the command. Should be used only after Parse() is
-// called, otherwise it will return an empty slice.
-func (a *App) GetExtraPos() []string {
-	if !a.IsParsed() {
-		return []string{}
-	}
-	return a.Arguments().extraPos
-}
-
-// UsePanic configures the CLI to panic instead of exiting when
-// an error  occurs or when a command finishes execution. This can be useful
-// for testing purposes or customization of the cli behavior. The panic will
-// be called with the exit code as the argument.
-func (a *App) UsePanic(usePanic bool) {
-	a.panicInsteadOfExit = usePanic
-}
-
-// AllowExtraPos configures the CLI to allow extra positional arguments
-// that are not defined in the command.  You may use variadic positional for
-// this purpose as well. By default, extra positional arguments are not allowed.
-//
-// Extra positional arguments can be accessed using the `Arg` function or the
-// `ExtraArg` function.
-func (a *App) AllowExtraPos(allow bool) {
-	a.extraPositionalsAllowed = allow
-}
-
-// AllowExtraFlags configures the CLI to allow extra flags that are not defined
-// in the command. By default, extra flags are not allowed.
-func (a *App) AllowExtraFlags(allow bool) {
-	a.extraFlagsAllowed = allow
-}
-
-// AllowRepeatedFlags configures the CLI to allow repeated flags. If set to true,
-// the CLI will not return an error if a flag is provided multiple times. Instead,
-// the last value provided for the flag will be used. If set to false, the CLI
-// will return an error if a flag is provided multiple times. By default, repeated
-// flags are not allowed.
-func (a *App) AllowRepeatedFlags(allow bool) {
-	a.repeatedFlagsAllowed = allow
-}
-
 // Exit terminates the program with the given exit code. If
 // PanicInsteadOfExit is true, it panics with the exit code instead of exiting,
 // which can be useful for testing.
@@ -242,28 +286,6 @@ func (a *App) Exit(code int) {
 // usage, and available flags and subcommands, using the help formatter.
 func (a *App) Help() {
 	fmt.Fprintf(a.stdout, "%s\n", a.GetHelp())
-}
-
-// GetHelp generates and returns the help message string for the current
-// command using the help formatter.
-func (a *App) GetHelp() string {
-	a.initialize()
-	return a.helpFormatter(a.CurrentCommand(), a.locale)
-}
-
-// AutoHelp configures the CLI to automatically show the help message when the user
-// provides the `-h` or `--help` flag. By default, auto help is disabled.
-func (a *App) AutoHelp(enabled bool) {
-	a.autoHelp = enabled
-}
-
-// IsParsed returns true if the arguments have been parsed
-// successfully.
-func (a *App) IsParsed() bool { return a.arguments != nil }
-
-func (a *App) Args(args []string) *App {
-	a.queue = args
-	return a
 }
 
 // Parse is called for every command in the path.

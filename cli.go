@@ -7,6 +7,7 @@ import (
 
 	"github.com/renatopp/go-cli/pkg"
 	cerrors "github.com/renatopp/go-cli/pkg/errors"
+	"github.com/renatopp/go-cli/pkg/formatters"
 	"github.com/renatopp/go-cli/pkg/locales"
 	"github.com/renatopp/go-cli/pkg/parsers"
 )
@@ -15,7 +16,7 @@ var app *pkg.App
 
 // Initialize global state
 func init() {
-	app = pkg.NewApp()
+	app = pkg.NewApp(formatters.DefaultHelpFormatter, formatters.DefaultErrorFormatter)
 }
 
 func Clear() { app.Clear() }
@@ -40,7 +41,7 @@ func Version(v string) { app.WithVersion(v) }
 // applies globally, independent of which App instance is used. The built-in
 // locales and the Locale type live in the locales package, e.g.:
 //
-//	cli.Locale(locales.PTBR())
+//	cli.Locale(locales.PT_BR())
 func Locale(locale locales.Locale) {
 	app.WithLocale(locale)
 }
@@ -94,7 +95,7 @@ func UsePanic(usePanic bool) {
 // Extra positional arguments can be accessed using the `Arg` function or the
 // `ExtraArg` function.
 func AllowExtraPos(allow bool) {
-	app.AllowExtraPos(allow)
+	app.AllowExtraPositionals(allow)
 }
 
 // AllowExtraFlags configures the CLI to allow extra flags that are not defined
@@ -115,11 +116,11 @@ func AllowRepeatedFlags(allow bool) {
 // AutoHelp configures the CLI to automatically show the help message when the user
 // provides the `-h` or `--help` flag. By default, auto help is disabled.
 func AutoHelp(enabled bool) {
-	app.AutoHelp(enabled)
+	app.WithAutoHelp(enabled)
 }
 
 func Args(args []string) {
-	app.Args(args)
+	app.WithArgs(args)
 }
 
 // Command is an alias for Cmd. It creates a new command with the specified
@@ -331,12 +332,14 @@ func GetRootCommand() *pkg.Command { return app.RootCommand() }
 // GetCurrentCommand returns the current command being executed.
 func GetCurrentCommand() *pkg.Command { return app.CurrentCommand() }
 
+// TODO: Remove
 // GetPosCount returns the number of positional arguments provided by the user.
 // Should be used only after Parse() is called, otherwise it will return 0.
 func GetPosCount() int {
 	return app.GetPosCount()
 }
 
+// TODO: Remove
 // GetPosAt retrieves the value of a positional argument by its index.
 // Should be used only after Parse() is called, otherwise it will return an
 // empty string.
@@ -344,6 +347,7 @@ func GetPosAt(index int) string {
 	return app.GetPosAt(index)
 }
 
+// TODO: Remove
 // GetPos retrieves all positional arguments provided by the user.
 // Should be used only after Parse() is called, otherwise it will return an
 // empty slice.
@@ -351,6 +355,7 @@ func GetPos() []string {
 	return app.GetPos()
 }
 
+// TODO: Remove
 // GetExtraPosCount returns the number of extra positional arguments provided by the user,
 // i.e., those that are not defined in the command. Should be used only after
 // Parse() is called, otherwise it will return 0.
@@ -358,6 +363,7 @@ func GetExtraPosCount() int {
 	return app.GetExtraPosCount()
 }
 
+// TODO: Remove
 // GetExtraPosAt retrieves the value of an extra positional argument by its index, i.e.,
 // those that are not defined in the command. Should be used only after Parse() is
 // called, otherwise it will return an empty string.
@@ -365,6 +371,7 @@ func GetExtraPosAt(index int) string {
 	return app.GetExtraPosAt(index)
 }
 
+// TODO: Remove
 // GetExtraPos retrieves all extra positional arguments provided by the user, i.e.,
 // those that are not defined in the command. Should be used only after Parse() is
 // called, otherwise it will return an empty slice.

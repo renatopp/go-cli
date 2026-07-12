@@ -1,141 +1,148 @@
 package formatters
 
-// import (
-// 	"fmt"
-// 	"strings"
-// )
+import (
+	"fmt"
+	"strings"
 
-// // DefaultHelpFormatter is the built-in help style. It renders the usage line,
-// // description, and the visible subcommands, options and arguments of the
-// // command, using the active locale for labels.
-// func DefaultHelpFormatter(cmd *Command, loc Locale) string {
-// 	name := strings.Join(cmd.Path(), " ")
+	"github.com/renatopp/go-cli/pkg"
+	"github.com/renatopp/go-cli/pkg/locales"
+)
 
-// 	hasVisibleSubcommands := false
-// 	for _, sub := range cmd.subcommands {
-// 		if !sub.IsHidden() {
-// 			hasVisibleSubcommands = true
-// 			break
-// 		}
-// 	}
+// DefaultHelpFormatter is the built-in help style. It renders the usage line,
+// description, and the visible subcommands, options and arguments of the
+// command, using the active locale for labels.
+func DefaultHelpFormatter(cmd *pkg.Command, loc locales.Locale) string {
+	name := strings.Join(cmd.Path(), " ")
 
-// 	hasVisibleFlags := false
-// 	for _, f := range cmd.flags {
-// 		if !f.IsHidden() {
-// 			hasVisibleFlags = true
-// 			break
-// 		}
-// 	}
+	subcommands := cmd.Subcommands()
+	flags := cmd.Flags()
+	positionals := cmd.Positionals()
 
-// 	hasVisiblePositionals := false
-// 	for _, p := range cmd.positionals {
-// 		if !p.IsHidden() {
-// 			hasVisiblePositionals = true
-// 			break
-// 		}
-// 	}
+	hasVisibleSubcommands := false
+	for _, sub := range subcommands {
+		if !sub.IsHidden() {
+			hasVisibleSubcommands = true
+			break
+		}
+	}
 
-// 	cmds := ""
-// 	if hasVisibleSubcommands {
-// 		cmds = fmt.Sprintf(" <%s>", loc.UsageCommandLabel)
-// 	}
+	hasVisibleFlags := false
+	for _, f := range flags {
+		if !f.IsHidden() {
+			hasVisibleFlags = true
+			break
+		}
+	}
 
-// 	opts := ""
-// 	if hasVisibleFlags {
-// 		opts = fmt.Sprintf(" [%s]", loc.UsageOptionsLabel)
-// 	}
+	hasVisiblePositionals := false
+	for _, p := range positionals {
+		if !p.IsHidden() {
+			hasVisiblePositionals = true
+			break
+		}
+	}
 
-// 	var positionals strings.Builder
-// 	for _, p := range cmd.positionals {
-// 		if p.IsHidden() {
-// 			continue
-// 		}
+	cmds := ""
+	if hasVisibleSubcommands {
+		cmds = fmt.Sprintf(" <%s>", loc.UsageCommandLabel)
+	}
 
-// 		if p.IsRequired() {
-// 			positionals.WriteString(" <")
-// 			positionals.WriteString(p.Name())
-// 			positionals.WriteString(">")
-// 			continue
-// 		}
-// 		positionals.WriteString(" [<")
-// 		positionals.WriteString(p.Name())
-// 		positionals.WriteString(">]")
-// 	}
+	opts := ""
+	if hasVisibleFlags {
+		opts = fmt.Sprintf(" [%s]", loc.UsageOptionsLabel)
+	}
 
-// 	writer := newDefaultTypewriter()
-// 	writer.WriteLine("%s: %s%s%s%s", loc.UsageLabel, name, cmds, opts, positionals.String())
-// 	if cmd.description != "" {
-// 		writer.WriteLine("\n%s", strings.TrimSpace(cmd.description))
-// 	}
+	var pos strings.Builder
+	for _, p := range positionals {
+		if p.IsHidden() {
+			continue
+		}
 
-// 	if hasVisibleSubcommands {
-// 		writer.WriteLine("")
-// 		writer.WriteLine("%s:", loc.CommandsLabel)
-// 		for _, sub := range cmd.subcommands {
-// 			if sub.IsHidden() {
-// 				continue
-// 			}
-// 			writer.WriteLine("  %s\t%s", sub.name, sub.shortDescription)
-// 		}
-// 	}
+		if p.IsRequired() {
+			pos.WriteString(" <")
+			pos.WriteString(p.Name())
+			pos.WriteString(">")
+			continue
+		}
+		pos.WriteString(" [<")
+		pos.WriteString(p.Name())
+		pos.WriteString(">]")
+	}
 
-// 	if hasVisibleFlags {
-// 		writer.WriteLine("")
-// 		writer.WriteLine("%s:", loc.OptionsLabel)
-// 		for _, f := range cmd.flags {
-// 			if f.IsHidden() {
-// 				continue
-// 			}
+	writer := newDefaultTypewriter()
+	writer.WriteLine("%s: %s%s%s%s", loc.UsageLabel, name, cmds, opts, pos.String())
+	if cmd.Description() != "" {
+		writer.WriteLine("\n%s", strings.TrimSpace(cmd.Description()))
+	}
 
-// 			opts := f.Signature()
-// 			desc := f.Description()
-// 			labels := make([]string, 0, 3)
-// 			if f.IsGlobal() {
-// 				labels = append(labels, loc.FlagGlobalLabel)
-// 			}
-// 			if f.IsRequired() {
-// 				labels = append(labels, loc.FlagRequiredLabel)
-// 			}
-// 			if f.HasDefault() {
-// 				labels = append(labels, fmt.Sprintf(loc.FlagDefaultLabel, f.RawDefault()))
-// 			}
-// 			label := ""
-// 			if len(labels) > 0 {
-// 				label = fmt.Sprintf("(%s) ", strings.Join(labels, ", "))
-// 			}
-// 			writer.WriteLine("  %s\t%s%s", opts, label, desc)
-// 		}
-// 	}
+	if hasVisibleSubcommands {
+		writer.WriteLine("")
+		writer.WriteLine("%s:", loc.CommandsLabel)
+		for _, sub := range subcommands {
+			if sub.IsHidden() {
+				continue
+			}
+			writer.WriteLine("  %s\t%s", sub.Name(), sub.ShortDescription())
+		}
+	}
 
-// 	if hasVisiblePositionals {
-// 		writer.WriteLine("")
-// 		writer.WriteLine("%s:", loc.ArgumentsLabel)
-// 		for _, p := range cmd.positionals {
-// 			if p.IsHidden() {
-// 				continue
-// 			}
+	if hasVisibleFlags {
+		writer.WriteLine("")
+		writer.WriteLine("%s:", loc.OptionsLabel)
+		for _, f := range flags {
+			if f.IsHidden() {
+				continue
+			}
 
-// 			desc := p.Description()
-// 			labels := make([]string, 0, 3)
-// 			if p.IsRequired() {
-// 				labels = append(labels, loc.FlagRequiredLabel)
-// 			}
-// 			if p.HasDefault() {
-// 				labels = append(labels, fmt.Sprintf(loc.FlagDefaultLabel, p.RawDefault()))
-// 			}
-// 			label := ""
-// 			if len(labels) > 0 {
-// 				label = fmt.Sprintf("(%s) ", strings.Join(labels, ", "))
-// 			}
-// 			writer.WriteLine("  %s\t%s%s", p.Name(), label, desc)
-// 		}
-// 	}
+			opts := f.Signature()
+			desc := f.Description()
+			labels := make([]string, 0, 3)
+			if f.IsGlobal() {
+				labels = append(labels, loc.FlagGlobalLabel)
+			}
+			if f.IsRequired() {
+				labels = append(labels, loc.FlagRequiredLabel)
+			}
+			if f.HasDefault() {
+				labels = append(labels, fmt.Sprintf(loc.FlagDefaultLabel, f.RawDefault()))
+			}
+			label := ""
+			if len(labels) > 0 {
+				label = fmt.Sprintf("(%s) ", strings.Join(labels, ", "))
+			}
+			writer.WriteLine("  %s\t%s%s", opts, label, desc)
+		}
+	}
 
-// 	return writer.Flush()
-// }
+	if hasVisiblePositionals {
+		writer.WriteLine("")
+		writer.WriteLine("%s:", loc.ArgumentsLabel)
+		for _, p := range positionals {
+			if p.IsHidden() {
+				continue
+			}
 
-// // DefaultErrorFormatter is the built-in error style. It prefixes the error
-// // message with the localized error label, e.g. "Error: unknown flag x".
-// func DefaultErrorFormatter(err error, loc Locale) string {
-// 	return fmt.Sprintf("%s: %s", loc.ErrorLabel, loc.LocalizeError(err))
-// }
+			desc := p.Description()
+			labels := make([]string, 0, 3)
+			if p.IsRequired() {
+				labels = append(labels, loc.FlagRequiredLabel)
+			}
+			if p.HasDefault() {
+				labels = append(labels, fmt.Sprintf(loc.FlagDefaultLabel, p.RawDefault()))
+			}
+			label := ""
+			if len(labels) > 0 {
+				label = fmt.Sprintf("(%s) ", strings.Join(labels, ", "))
+			}
+			writer.WriteLine("  %s\t%s%s", p.Name(), label, desc)
+		}
+	}
+
+	return writer.Flush()
+}
+
+// DefaultErrorFormatter is the built-in error style. It prefixes the error
+// message with the localized error label, e.g. "Error: unknown flag x".
+func DefaultErrorFormatter(err error, loc locales.Locale) string {
+	return fmt.Sprintf("%s: %s", loc.ErrorLabel, loc.LocalizeError(err))
+}
