@@ -3,6 +3,7 @@ package pkg
 import (
 	"reflect"
 
+	cerrors "github.com/renatopp/go-cli/pkg/errors"
 	"github.com/renatopp/go-cli/pkg/locales"
 )
 
@@ -22,8 +23,23 @@ func SetLocale(l Locale) {
 	lv := reflect.ValueOf(&l).Elem()
 	dv := reflect.ValueOf(d)
 	for i := 0; i < lv.NumField(); i++ {
-		if lv.Field(i).String() == "" {
-			lv.Field(i).Set(dv.Field(i))
+		fv := lv.Field(i)
+		// Skip the Messages map - handle it separately below
+		if lv.Type().Field(i).Name == "Messages" {
+			continue
+		}
+		if fv.String() == "" {
+			fv.Set(dv.Field(i))
+		}
+	}
+
+	// Fill in missing error messages from the default locale
+	if l.Errors == nil {
+		l.Errors = make(map[cerrors.ErrorCode]string)
+	}
+	for code, message := range d.Errors {
+		if _, exists := l.Errors[code]; !exists {
+			l.Errors[code] = message
 		}
 	}
 

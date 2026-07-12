@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/renatopp/go-cli"
+	cerrors "github.com/renatopp/go-cli/pkg/errors"
 	"github.com/renatopp/go-cli/pkg/locales"
 )
 
@@ -13,7 +14,9 @@ func TestLocaleCustomErrorMessage(t *testing.T) {
 	defer cli.Locale(locales.Locale{})
 
 	cli.Locale(locales.Locale{
-		ErrUnknownFlag: "bandeira desconhecida %s",
+		Errors: map[cerrors.ErrorCode]string{
+			cerrors.ErrUnknownFlag: "bandeira desconhecida %s",
+		},
 	})
 	cli.UsePanic(true)
 	cli.Stderr(printfContains(t, "bandeira desconhecida"))
@@ -26,9 +29,11 @@ func TestLocaleFallsBackToDefault(t *testing.T) {
 	defer cli.Clear()
 	defer cli.Locale(locales.Locale{})
 
-	// Only override one field; the rest should keep the English defaults.
+	// Only override one message; the rest should keep the English defaults.
 	cli.Locale(locales.Locale{
-		ErrMissingRequiredFlag: "falta a bandeira obrigatória %s",
+		Errors: map[cerrors.ErrorCode]string{
+			cerrors.ErrMissingRequiredFlag: "falta a bandeira obrigatória %s",
+		},
 	})
 	cli.UsePanic(true)
 	cli.Stderr(printfContains(t, "unknown flag"))

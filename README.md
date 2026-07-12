@@ -192,8 +192,8 @@ import (
 func main() {
 	cli.Name("list")
 	cli.Description("List folders and files")
-	cli.Cmd("folders", "List folders", cmdFolders)
-	cli.Cmd("files", "List files", cmdFiles)
+	cli.Command("folders", "List folders", cmdFolders)
+	cli.Command("files", "List files", cmdFiles)
 
 	// if a command is provided, parse will exit after executing it, so the code
 	// after this won't be executed.

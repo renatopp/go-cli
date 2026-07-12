@@ -1,10 +1,12 @@
 package cli
 
 import (
+	"errors"
 	"io"
 	"time"
 
 	"github.com/renatopp/go-cli/pkg"
+	cerrors "github.com/renatopp/go-cli/pkg/errors"
 	"github.com/renatopp/go-cli/pkg/locales"
 )
 
@@ -243,15 +245,15 @@ func ParseArgs(args []string) {
 // CheckExclusiveFlags checks that at most one of the provided flags is passed.
 // This function should be called after Parse().
 func CheckExclusiveFlags(flags ...pkg.Flag) {
-	parsedFlags := []pkg.Flag{}
+	parsedSignatures := []string{}
 	for _, flag := range flags {
 		if flag.IsParsed() {
-			parsedFlags = append(parsedFlags, flag)
+			parsedSignatures = append(parsedSignatures, flag.Signature())
 		}
 	}
 
-	if len(parsedFlags) > 1 {
-		app.FatalIf(&pkg.ExclusiveFlagsError{Flags: parsedFlags})
+	if len(parsedSignatures) > 1 {
+		app.FatalIf(cerrors.NewExclusiveFlagsError(parsedSignatures))
 	}
 }
 
@@ -264,7 +266,11 @@ func CheckAnyFlag(flags ...pkg.Flag) {
 		}
 	}
 
-	app.FatalIf(&pkg.AtLeastOneFlagError{Flags: flags})
+	signatures := make([]string, 0, len(flags))
+	for _, flag := range flags {
+		signatures = append(signatures, flag.Signature())
+	}
+	app.FatalIf(cerrors.NewAtLeastOneFlagError(signatures))
 }
 
 // IsParsed returns true if the arguments have been parsed
@@ -337,7 +343,7 @@ func GetFlag[T pkg.Flag](longOrShort string) (T, error) {
 	typed, ok := f.(T)
 	if !ok {
 		var zero T
-		return zero, pkg.ErrFlagNotType
+		return zero, errors.New("flag is not of the expected type")
 	}
 
 	return typed, nil

@@ -1,6 +1,10 @@
 package pkg
 
-import "fmt"
+import (
+	"fmt"
+
+	cerrors "github.com/renatopp/go-cli/pkg/errors"
+)
 
 type Flag interface {
 	Long() string
@@ -181,14 +185,14 @@ func (f *GenericFlag[T]) AsHidden() *GenericFlag[T] {
 func (f *GenericFlag[T]) Parse(value string) error {
 	parsedValue, err := f.parser(value)
 	if err != nil {
-		return &InvalidFlagValueError{Flag: f, Value: value, Detail: value, Cause: err}
+		return cerrors.NewInvalidFlagValueError(f.Signature(), value, err)
 	}
 	f.parsed = true
 	f.value = parsedValue
 	f.values = append(f.values, parsedValue)
 	if f.validator != nil {
 		if err := f.validator(parsedValue); err != nil {
-			return &InvalidFlagValueError{Flag: f, Value: value, Detail: err.Error(), Cause: err}
+			return cerrors.NewInvalidFlagValueError(f.Signature(), err.Error(), err)
 		}
 	}
 

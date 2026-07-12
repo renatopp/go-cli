@@ -1,6 +1,10 @@
 package pkg
 
-import "fmt"
+import (
+	"fmt"
+
+	cerrors "github.com/renatopp/go-cli/pkg/errors"
+)
 
 type Positional interface {
 	Name() string
@@ -149,7 +153,7 @@ func (f *GenericPositional[T]) AsHidden() *GenericPositional[T] {
 func (f *GenericPositional[T]) Parse(value string) error {
 	parsedValue, err := f.parser(value)
 	if err != nil {
-		return &InvalidPositionalValueError{Positional: f, Value: value, Detail: value, Cause: err}
+		return cerrors.NewInvalidPosValueError(f.Name(), value, err)
 	}
 
 	f.value = parsedValue
@@ -157,7 +161,7 @@ func (f *GenericPositional[T]) Parse(value string) error {
 	f.parsed = true
 	if f.validator != nil {
 		if err := f.validator(parsedValue); err != nil {
-			return &InvalidPositionalValueError{Positional: f, Value: value, Detail: err.Error(), Cause: err}
+			return cerrors.NewInvalidPosValueError(f.Name(), err.Error(), err)
 		}
 	}
 

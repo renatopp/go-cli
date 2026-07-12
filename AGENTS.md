@@ -14,7 +14,7 @@ Philosophy:
 - Strict by default, but flexible
 
 Internal Coding Rules:
-- No global variables
+- No global state apart from the default app
 - No external dependencies
 - Public methods before private methods
 - Public functions before private functions

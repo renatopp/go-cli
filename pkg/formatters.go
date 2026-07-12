@@ -11,8 +11,9 @@ type HelpFormatter func(cmd *Command) string
 
 // ErrorFormatter converts an error into the message printed to stderr. Set a
 // custom one with SetErrorFormatter to fully control how errors are rendered.
-// Parsing errors are typed (e.g. *UnknownFlagError, *MissingRequiredFlagError),
-// so formatters can inspect them with errors.As.
+// Parsing errors are of type *errors.CliError (see the errors package), so
+// formatters can inspect them with errors.As and use Locale.LocalizedError to
+// render locale-specific messages.
 type ErrorFormatter func(err error) string
 
 // DefaultHelpFormatter is the built-in help style. It renders the usage line,
@@ -148,5 +149,6 @@ func DefaultHelpFormatter(cmd *Command) string {
 // DefaultErrorFormatter is the built-in error style. It prefixes the error
 // message with the localized error label, e.g. "Error: unknown flag x".
 func DefaultErrorFormatter(err error) string {
-	return fmt.Sprintf("%s: %s", GetLocale().ErrorLabel, err.Error())
+	loc := GetLocale()
+	return fmt.Sprintf("%s: %s", loc.ErrorLabel, loc.LocalizeError(err))
 }

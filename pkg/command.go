@@ -1,6 +1,9 @@
 package pkg
 
-import "slices"
+import (
+	"errors"
+	"slices"
+)
 
 type Command struct {
 	parent           *Command
@@ -140,7 +143,7 @@ func (c *Command) GetFlag(n string) (Flag, error) {
 			return f, nil
 		}
 	}
-	return nil, ErrFlagNotFound
+	return nil, errors.New("flag not found")
 }
 
 func (c *Command) inheritFlags() {

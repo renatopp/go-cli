@@ -120,10 +120,12 @@ func (a *App) Fatal(format string, v ...any) {
 
 // FatalIf checks if the provided error is not nil, and if so, it renders the
 // error using the error formatter, writes it to the stderr writer and then
-// exits with code 1.
+// exits with code 1. Unlike Fatal, it passes the error through unchanged, so
+// the error formatter can inspect its concrete type (e.g. with errors.As).
 func (a *App) FatalIf(err error) {
 	if err != nil {
-		a.Fatal("%v", err)
+		fmt.Fprintf(a.stderr, "%s\n", a.errorFormatter(err))
+		a.Exit(1)
 	}
 }
 

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	cerrors "github.com/renatopp/go-cli/pkg/errors"
 	"github.com/renatopp/go-cli/pkg/parsers"
 )
 
@@ -94,12 +95,12 @@ func parseArguments(app *App) (*Arguments, error) {
 	// check for required flags and positionals
 	for _, flag := range cmd.flags {
 		if flag.IsRequired() && !flag.IsParsed() {
-			return args, &MissingRequiredFlagError{Flag: flag}
+			return args, cerrors.NewMissingRequiredFlagError(flag.Signature())
 		}
 	}
 	for i, positional := range cmd.positionals {
 		if positional.IsRequired() && i >= len(args.pos) {
-			return args, &MissingRequiredPositionalError{Positional: positional}
+			return args, cerrors.NewMissingRequiredPosError(positional.Name())
 		}
 	}
 
@@ -170,7 +171,7 @@ func (a *Arguments) tryGetFlag(name string) (Flag, error) {
 		a.flags[name] = extraFlag
 		return extraFlag, nil
 	}
-	return nil, &UnknownFlagError{Name: name}
+	return nil, cerrors.NewUnknownFlagError(name)
 }
 
 // parseFlag parses the flag with the given value. It checks for repeated flags
@@ -182,7 +183,7 @@ func (a *Arguments) parseFlag(name string, value string) error {
 
 	if flag.IsParsed() {
 		if !a.app.repeatedFlagsAllowed && !flag.IsRepeatable() {
-			return &RepeatedFlagError{Name: name}
+			return cerrors.NewRepeatedFlagError(name)
 		}
 	}
 
@@ -209,7 +210,7 @@ func (a *Arguments) parseLong(token string) error {
 		if hasFlag {
 			value, ok := a.next()
 			if !ok {
-				return &MissingFlagValueError{Name: name}
+				return cerrors.NewMissingFlagValueError(name)
 			}
 			return a.parseFlag(name, value)
 		}
@@ -234,7 +235,7 @@ func (a *Arguments) parseShort(token string) error {
 			_, hasFlag := a.flags[name]
 			value, ok := a.next()
 			if hasFlag && !ok {
-				return &MissingFlagValueError{Name: name}
+				return cerrors.NewMissingFlagValueError(name)
 			}
 			return a.parseFlag(name, value)
 
@@ -270,7 +271,7 @@ func (a *Arguments) parsePositional(token string) error {
 		}
 
 		if !a.app.extraPositionalsAllowed {
-			return &UnexpectedPositionalError{Token: token}
+			return cerrors.NewUnexpectedPosError(token)
 		}
 
 		a.extraPos = append(a.extraPos, token)

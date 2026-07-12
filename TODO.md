@@ -1,9 +1,10 @@
 # TODO
 
-- Improving/Simplifying parsing logic 
+- Improve error handling
 - Remove locale file from internal
-- Reorder functions on cli.go
+- Consistency in naming on cli, app, command, flag and positional
 - Move functions that are only available after parsing to Arguments
+- Improving/Simplifying parsing logic 
 
 [output]
 - Colored outputs
@@ -33,3 +34,4 @@
 [repository]
 - Add license file
 - Comparison table
+- Add design phylosophy readme

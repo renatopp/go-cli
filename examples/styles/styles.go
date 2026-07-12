@@ -6,6 +6,7 @@ import (
 
 	"github.com/renatopp/go-cli"
 	"github.com/renatopp/go-cli/pkg"
+	cerrors "github.com/renatopp/go-cli/pkg/errors"
 )
 
 func main() {
@@ -21,11 +22,14 @@ func main() {
 
 	// Customize error messages, inspecting typed errors for special cases.
 	cli.ErrorFormatter(func(err error) string {
-		var unknown *pkg.UnknownFlagError
-		if errors.As(err, &unknown) {
-			return fmt.Sprintf("oops! I don't know the flag %q", unknown.Name)
+		var cliErr *cerrors.CliError
+		if errors.As(err, &cliErr) {
+			if cliErr.Code == cerrors.ErrUnknownFlag {
+				// Parameters: [0] = flag name
+				return fmt.Sprintf("oops! I don't know the flag %q", cliErr.Parameters[0])
+			}
 		}
-		return "oops! " + err.Error()
+		return "oops! " + pkg.GetLocale().LocalizeError(err)
 	})
 
 	cli.Parse()
