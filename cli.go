@@ -8,6 +8,7 @@ import (
 	"github.com/renatopp/go-cli/pkg"
 	cerrors "github.com/renatopp/go-cli/pkg/errors"
 	"github.com/renatopp/go-cli/pkg/locales"
+	"github.com/renatopp/go-cli/pkg/parsers"
 )
 
 var app *pkg.App
@@ -23,16 +24,16 @@ func Clear() { app.Clear() }
 // to identify the command and its usage. Use only its immediate name (e.g.
 // "version" instead of "app version") since the command hierarchy is
 // automatically handled by go-cli.
-func Name(n string) { app.Name(n) }
+func Name(n string) { app.CurrentCommand().WithName(n) }
 
 // Description sets the description for the current command. Descriptions are
 // used in help text to provide more information about the command and its
 // purpose.
-func Description(d string) { app.Description(d) }
+func Description(d string) { app.CurrentCommand().WithDescription(d) }
 
 // Version sets the version for the CLI. This enables the --version flag for
 // the root command.
-func Version(v string) { app.Version(v) }
+func Version(v string) { app.WithVersion(v) }
 
 // Locale replaces the strings used for help text and error messages
 // across the CLI, allowing you to localize go-cli's built-in output. It
@@ -41,21 +42,21 @@ func Version(v string) { app.Version(v) }
 //
 //	cli.Locale(locales.PTBR())
 func Locale(locale locales.Locale) {
-	pkg.SetLocale(locale)
+	app.WithLocale(locale)
 }
 
 // Stdout allows you to specify a custom io.Writer for handling standard
 // output. This can be useful for redirecting output to a file, logging system,
 // or for testing purposes. It is used to print the help text.
 func Stdout(w io.Writer) {
-	app.Stdout(w)
+	app.WithStdout(w)
 }
 
 // Stderr allows you to specify a custom io.Writer for handling standard error
 // output. This can be useful for redirecting error messages to a file, logging
 // system, or for testing purposes. It is used to print error messages.
 func Stderr(w io.Writer) {
-	app.Stderr(w)
+	app.WithStderr(w)
 }
 
 // HelpFormatter replaces the function used to render the help message of a
@@ -66,7 +67,7 @@ func Stderr(w io.Writer) {
 //		return banner + pkg.DefaultHelpFormatter(cmd)
 //	})
 func HelpFormatter(f pkg.HelpFormatter) {
-	app.HelpFormatter(f)
+	app.WithHelpFormatter(f)
 }
 
 // ErrorFormatter replaces the function used to render error messages
@@ -75,7 +76,7 @@ func HelpFormatter(f pkg.HelpFormatter) {
 // (e.g. *UnknownFlagError, *MissingRequiredFlagError), so the formatter can
 // inspect them with errors.As.
 func ErrorFormatter(f pkg.ErrorFormatter) {
-	app.ErrorFormatter(f)
+	app.WithErrorFormatter(f)
 }
 
 // UsePanic configures the CLI to panic instead of exiting when
@@ -126,11 +127,20 @@ func Args(args []string) {
 // subcommand to the current command. The execute function will be called when
 // the command is invoked by the user.
 func Command(name string, shortDescription string, execute func()) *pkg.Command {
-	return app.Command(name, shortDescription, execute)
+	c := pkg.NewCommand(app.CurrentCommand()).
+		WithName(name).
+		WithShortDescription(shortDescription).
+		WithDescription(shortDescription).
+		WithExecute(execute)
+
+	app.CurrentCommand().
+		WithSubcommand(c)
+
+	return c
 }
 
 func Pos(name, description string) *pkg.GenericPositional[string] {
-	return app.Pos(name, description)
+	return PosString(name, description)
 }
 
 // PosFunc creates a positional argument of any type T, using the provided
@@ -140,26 +150,44 @@ func Pos(name, description string) *pkg.GenericPositional[string] {
 //	level := cli.PosFunc("level", "The log level.", ParseLevel)
 func PosFunc[T any](name, description string, parser func(string) (T, error)) *pkg.GenericPositional[T] {
 	p := pkg.NewGenericPositional(name, description, parser)
-	app.GetCurrentCommand().WithPositional(p)
+	app.CurrentCommand().WithPositional(p)
 	return p
 }
+
 func PosString(name, description string) *pkg.GenericPositional[string] {
-	return app.PosString(name, description)
+	p := pkg.NewGenericPositional(name, description, parsers.String)
+	app.CurrentCommand().WithPositional(p)
+	return p
 }
+
 func PosInt(name, description string) *pkg.GenericPositional[int] {
-	return app.PosInt(name, description)
+	p := pkg.NewGenericPositional(name, description, parsers.Int[int])
+	app.CurrentCommand().WithPositional(p)
+	return p
 }
+
 func PosUint(name, description string) *pkg.GenericPositional[uint] {
-	return app.PosUint(name, description)
+	p := pkg.NewGenericPositional(name, description, parsers.Uint[uint])
+	app.CurrentCommand().WithPositional(p)
+	return p
 }
+
 func PosFloat(name, description string) *pkg.GenericPositional[float64] {
-	return app.PosFloat(name, description)
+	p := pkg.NewGenericPositional(name, description, parsers.Float[float64])
+	app.CurrentCommand().WithPositional(p)
+	return p
 }
+
 func PosBool(name, description string) *pkg.GenericPositional[bool] {
-	return app.PosBool(name, description)
+	p := pkg.NewGenericPositional(name, description, parsers.Bool)
+	app.CurrentCommand().WithPositional(p)
+	return p
 }
+
 func PosDuration(name, description string) *pkg.GenericPositional[time.Duration] {
-	return app.PosDuration(name, description)
+	p := pkg.NewGenericPositional(name, description, parsers.Duration)
+	app.CurrentCommand().WithPositional(p)
+	return p
 }
 
 // Flag is an alias for FlagString. It creates a string flag with the given
@@ -175,26 +203,44 @@ func Flag(long, short, description string) *pkg.GenericFlag[string] {
 //	level := cli.FlagFunc("level", "l", "The log level.", ParseLevel)
 func FlagFunc[T any](long, short, description string, parser func(string) (T, error)) *pkg.GenericFlag[T] {
 	f := pkg.NewGenericFlag(long, short, description, parser)
-	app.GetCurrentCommand().WithFlag(f)
+	app.CurrentCommand().WithFlag(f)
 	return f
 }
+
 func FlagString(long, short, description string) *pkg.GenericFlag[string] {
-	return app.FlagString(long, short, description)
+	f := pkg.NewGenericFlag(long, short, description, parsers.String)
+	app.CurrentCommand().WithFlag(f)
+	return f
 }
+
 func FlagInt(long, short, description string) *pkg.GenericFlag[int] {
-	return app.FlagInt(long, short, description)
+	f := pkg.NewGenericFlag(long, short, description, parsers.Int[int])
+	app.CurrentCommand().WithFlag(f)
+	return f
 }
+
 func FlagUint(long, short, description string) *pkg.GenericFlag[uint] {
-	return app.FlagUint(long, short, description)
+	f := pkg.NewGenericFlag(long, short, description, parsers.Uint[uint])
+	app.CurrentCommand().WithFlag(f)
+	return f
 }
+
 func FlagFloat(long, short, description string) *pkg.GenericFlag[float64] {
-	return app.FlagFloat(long, short, description)
+	f := pkg.NewGenericFlag(long, short, description, parsers.Float[float64])
+	app.CurrentCommand().WithFlag(f)
+	return f
 }
+
 func FlagBool(long, short, description string) *pkg.GenericFlag[bool] {
-	return app.FlagBool(long, short, description)
+	f := pkg.NewGenericFlag(long, short, description, parsers.Bool)
+	app.CurrentCommand().WithFlag(f)
+	return f
 }
+
 func FlagDuration(long, short, description string) *pkg.GenericFlag[time.Duration] {
-	return app.FlagDuration(long, short, description)
+	f := pkg.NewGenericFlag(long, short, description, parsers.Duration)
+	app.CurrentCommand().WithFlag(f)
+	return f
 }
 
 // Fatal prints a formatted error message using the error formatter and the
@@ -280,10 +326,10 @@ func IsParsed() bool {
 }
 
 // GetRootCommand returns the root command from the stack.
-func GetRootCommand() *pkg.Command { return app.GetRootCommand() }
+func GetRootCommand() *pkg.Command { return app.RootCommand() }
 
 // GetCurrentCommand returns the current command being executed.
-func GetCurrentCommand() *pkg.Command { return app.GetCurrentCommand() }
+func GetCurrentCommand() *pkg.Command { return app.CurrentCommand() }
 
 // GetPosCount returns the number of positional arguments provided by the user.
 // Should be used only after Parse() is called, otherwise it will return 0.
@@ -334,7 +380,7 @@ func GetHelp() string {
 // GetFlag retrieves a flag by its long or short name and attempts to cast it to the specified type T.
 // If the flag is not found or cannot be cast to the desired type, an error is returned.
 func GetFlag[T pkg.Flag](longOrShort string) (T, error) {
-	f, err := app.GetFlag(longOrShort)
+	f, err := app.CurrentCommand().GetFlag(longOrShort)
 	if err != nil {
 		var zero T
 		return zero, err

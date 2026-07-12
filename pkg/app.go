@@ -5,10 +5,13 @@ import (
 	"io"
 	"os"
 	"path"
-	"time"
 
+	"github.com/renatopp/go-cli/pkg/locales"
 	"github.com/renatopp/go-cli/pkg/parsers"
 )
+
+// Locale is re-exported here for convenience of the internal package.
+type Locale = locales.Locale
 
 type App struct {
 	path                    []string // the path of commands leading to the current command, e.g., ["git", "commit"]
@@ -20,6 +23,7 @@ type App struct {
 	stderr                  io.Writer
 	helpFormatter           HelpFormatter
 	errorFormatter          ErrorFormatter
+	locale                  Locale
 	panicInsteadOfExit      bool
 	extraFlagsAllowed       bool
 	extraPositionalsAllowed bool
@@ -50,6 +54,7 @@ func (a *App) Clear() {
 	a.stderr = os.Stderr
 	a.helpFormatter = DefaultHelpFormatter
 	a.errorFormatter = DefaultErrorFormatter
+	a.locale = locales.EN()
 	a.panicInsteadOfExit = false
 	a.extraFlagsAllowed = false
 	a.extraPositionalsAllowed = false
@@ -58,63 +63,53 @@ func (a *App) Clear() {
 	a.version = ""
 }
 
-// GetRootCommand returns the root command of the CLI, which is the top-level
+// RootCommand returns the root command of the CLI, which is the top-level
 // command that all other subcommands are attached to. You can use this to define your commands and flags.
-func (a *App) GetRootCommand() *Command { return a.rootCommand }
+func (a *App) RootCommand() *Command { return a.rootCommand }
 
-// GetCurrentCommand returns the current command being executed, which is the last
+// CurrentCommand returns the current command being executed, which is the last
 // command in the path. It will be the root command if no subcommand has been
 // executed yet.
-func (a *App) GetCurrentCommand() *Command { return a.currentCommand }
+func (a *App) CurrentCommand() *Command { return a.currentCommand }
 
-// Name sets the name for the current command. The name is used in help text
-// to identify the command and its usage. Use only its immediate name (e.g.
-// "version" instead of "app version") since the command hierarchy is
-// automatically handled by go-cli.
-func (a *App) Name(n string) { a.GetCurrentCommand().WithName(n) }
-
-// Description sets the description for the current command. Descriptions are
-// used in help text to provide more information about the command and its
-// purpose.
-func (a *App) Description(d string) { a.GetCurrentCommand().WithDescription(d) }
-
-// Version sets the version for the CLI. This enables the --version flag for
+// WithVersion sets the version for the CLI. This enables the --version flag for
 // the root command.
-func (a *App) Version(v string) { a.version = v }
+func (a *App) WithVersion(v string) *App { a.version = v; return a }
 
-// Stdout allows you to specify a custom io.Writer for handling standard
+// WithStdout allows you to specify a custom io.Writer for handling standard
 // output. This can be useful for redirecting output to a file, logging system,
 // or for testing purposes. It is used to print the help text.
-func (a *App) Stdout(w io.Writer) {
-	a.stdout = w
-}
+func (a *App) WithStdout(w io.Writer) *App { a.stdout = w; return a }
 
-// Stderr allows you to specify a custom io.Writer for handling standard error
+// WithStderr allows you to specify a custom io.Writer for handling standard error
 // output. This can be useful for redirecting error messages to a file, logging
 // system, or for testing purposes. It is used to print error messages.
-func (a *App) Stderr(w io.Writer) {
-	a.stderr = w
-}
+func (a *App) WithStderr(w io.Writer) *App { a.stderr = w; return a }
 
 // HelpFormatter replaces the function used to render the help message for
 // a command. The default is DefaultHelpFormatter.
-func (a *App) HelpFormatter(f HelpFormatter) {
-	a.helpFormatter = f
-}
+func (a *App) WithHelpFormatter(f HelpFormatter) *App { a.helpFormatter = f; return a }
 
 // ErrorFormatter replaces the function used to render error messages
 // before they are written to stderr. The default is DefaultErrorFormatter.
 // Parsing errors are typed (e.g. *UnknownFlagError), so the formatter can
 // inspect them with errors.As.
-func (a *App) ErrorFormatter(f ErrorFormatter) {
-	a.errorFormatter = f
-}
+func (a *App) WithErrorFormatter(f ErrorFormatter) *App { a.errorFormatter = f; return a }
+
+// WithLocale replaces the active locale used for this App's help text and error
+// messages. Any field left as the zero value ("") falls back to the default
+// English text, so callers can override only the strings they want to
+// translate.
+func (a *App) WithLocale(l Locale) *App { a.locale = l; return a }
+
+// Locale returns this App's currently active locale.
+func (a *App) Locale() Locale { return a.locale }
 
 // Fatal formats an error message, renders it using the error formatter,
 // writes it to the stderr writer and then exits with code 1.
 func (a *App) Fatal(format string, v ...any) {
 	err := fmt.Errorf(format, v...)
-	fmt.Fprintf(a.stderr, "%s\n", a.errorFormatter(err))
+	fmt.Fprintf(a.stderr, "%s\n", a.errorFormatter(err, a.locale))
 	a.Exit(1)
 }
 
@@ -124,7 +119,7 @@ func (a *App) Fatal(format string, v ...any) {
 // the error formatter can inspect its concrete type (e.g. with errors.As).
 func (a *App) FatalIf(err error) {
 	if err != nil {
-		fmt.Fprintf(a.stderr, "%s\n", a.errorFormatter(err))
+		fmt.Fprintf(a.stderr, "%s\n", a.errorFormatter(err, a.locale))
 		a.Exit(1)
 	}
 }
@@ -253,7 +248,7 @@ func (a *App) Help() {
 // command using the help formatter.
 func (a *App) GetHelp() string {
 	a.initialize()
-	return a.helpFormatter(a.GetCurrentCommand())
+	return a.helpFormatter(a.CurrentCommand(), a.locale)
 }
 
 // AutoHelp configures the CLI to automatically show the help message when the user
@@ -317,81 +312,17 @@ func (a *App) ParseArgs(args []string) {
 	a.Parse()
 }
 
-// Command creates a new command with the specified name, short description, and
-// execution function. The command is added as a subcommand to the current command.
-// The execute function will be called when the command is invoked by the user.
-func (a *App) Command(name string, shortDescription string, execute func()) *Command {
-	cmd := NewCommand(a.GetCurrentCommand()).
-		WithName(name).
-		WithShortDescription(shortDescription).
-		WithDescription(shortDescription).
-		WithExecute(execute)
-
-	a.GetCurrentCommand().
-		WithSubcommand(cmd)
-
-	return cmd
-}
-
-func (a *App) Pos(name, description string) *GenericPositional[string] {
-	return _addpos(a, NewGenericPositional(name, description, parsers.String))
-}
-func (a *App) PosString(name, description string) *GenericPositional[string] {
-	return _addpos(a, NewGenericPositional(name, description, parsers.String))
-}
-func (a *App) PosInt(name, description string) *GenericPositional[int] {
-	return _addpos(a, NewGenericPositional(name, description, parsers.Int[int]))
-}
-func (a *App) PosUint(name, description string) *GenericPositional[uint] {
-	return _addpos(a, NewGenericPositional(name, description, parsers.Uint[uint]))
-}
-func (a *App) PosFloat(name, description string) *GenericPositional[float64] {
-	return _addpos(a, NewGenericPositional(name, description, parsers.Float[float64]))
-}
-func (a *App) PosBool(name, description string) *GenericPositional[bool] {
-	return _addpos(a, NewGenericPositional(name, description, parsers.Bool))
-}
-func (a *App) PosDuration(name, description string) *GenericPositional[time.Duration] {
-	return _addpos(a, NewGenericPositional(name, description, parsers.Duration))
-}
-
-func (a *App) Flag(long, short, description string) *GenericFlag[string] {
-	return _addflag(a, NewGenericFlag(long, short, description, parsers.String))
-}
-func (a *App) FlagString(long, short, description string) *GenericFlag[string] {
-	return _addflag(a, NewGenericFlag(long, short, description, parsers.String))
-}
-func (a *App) FlagInt(long, short, description string) *GenericFlag[int] {
-	return _addflag(a, NewGenericFlag(long, short, description, parsers.Int[int]))
-}
-func (a *App) FlagUint(long, short, description string) *GenericFlag[uint] {
-	return _addflag(a, NewGenericFlag(long, short, description, parsers.Uint[uint]))
-}
-func (a *App) FlagFloat(long, short, description string) *GenericFlag[float64] {
-	return _addflag(a, NewGenericFlag(long, short, description, parsers.Float[float64]))
-}
-func (a *App) FlagBool(long, short, description string) *GenericFlag[bool] {
-	return _addflag(a, NewGenericFlag(long, short, description, parsers.Bool))
-}
-func (a *App) FlagDuration(long, short, description string) *GenericFlag[time.Duration] {
-	return _addflag(a, NewGenericFlag(long, short, description, parsers.Duration))
-}
-
-func (a *App) GetFlag(longOrShort string) (Flag, error) {
-	return a.GetCurrentCommand().GetFlag(longOrShort)
-}
-
 func (a *App) initialize() {
 	rootCmd := a.rootCommand
 	curCmd := a.currentCommand
 
 	if a.autoHelp && (!curCmd.HasFlag("help") || !curCmd.HasFlag("h")) {
-		helpFlag := NewGenericFlag("help", "h", GetLocale().HelpFlagDescription, parsers.Bool)
+		helpFlag := NewGenericFlag("help", "h", a.locale.HelpFlagDescription, parsers.Bool)
 		curCmd.WithFlag(helpFlag)
 	}
 
 	if a.version != "" && curCmd == rootCmd && (!rootCmd.HasFlag("version") || !rootCmd.HasFlag("v")) {
-		versionFlag := NewGenericFlag("version", "v", GetLocale().VersionFlagDescription, parsers.Bool)
+		versionFlag := NewGenericFlag("version", "v", a.locale.VersionFlagDescription, parsers.Bool)
 		rootCmd.WithFlag(versionFlag)
 	}
 
@@ -409,14 +340,4 @@ func (a *App) initialize() {
 		}
 		a.path = append(a.path, rootCmd.name)
 	}
-}
-
-func _addpos[T Positional](a *App, p T) T {
-	a.GetCurrentCommand().WithPositional(p)
-	return p
-}
-
-func _addflag[T Flag](a *App, f T) T {
-	a.GetCurrentCommand().WithFlag(f)
-	return f
 }

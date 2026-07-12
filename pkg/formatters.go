@@ -6,22 +6,21 @@ import (
 )
 
 // HelpFormatter converts a command into its help text. Set a custom one with
-// SetHelpFormatter to fully control how help is rendered.
-type HelpFormatter func(cmd *Command) string
+// App.HelpFormatter to fully control how help is rendered.
+type HelpFormatter func(cmd *Command, loc Locale) string
 
 // ErrorFormatter converts an error into the message printed to stderr. Set a
-// custom one with SetErrorFormatter to fully control how errors are rendered.
+// custom one with App.ErrorFormatter to fully control how errors are rendered.
 // Parsing errors are of type *errors.CliError (see the errors package), so
 // formatters can inspect them with errors.As and use Locale.LocalizedError to
 // render locale-specific messages.
-type ErrorFormatter func(err error) string
+type ErrorFormatter func(err error, loc Locale) string
 
 // DefaultHelpFormatter is the built-in help style. It renders the usage line,
 // description, and the visible subcommands, options and arguments of the
 // command, using the active locale for labels.
-func DefaultHelpFormatter(cmd *Command) string {
+func DefaultHelpFormatter(cmd *Command, loc Locale) string {
 	name := strings.Join(cmd.Path(), " ")
-	loc := GetLocale()
 
 	hasVisibleSubcommands := false
 	for _, sub := range cmd.subcommands {
@@ -148,7 +147,6 @@ func DefaultHelpFormatter(cmd *Command) string {
 
 // DefaultErrorFormatter is the built-in error style. It prefixes the error
 // message with the localized error label, e.g. "Error: unknown flag x".
-func DefaultErrorFormatter(err error) string {
-	loc := GetLocale()
+func DefaultErrorFormatter(err error, loc Locale) string {
 	return fmt.Sprintf("%s: %s", loc.ErrorLabel, loc.LocalizeError(err))
 }

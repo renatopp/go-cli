@@ -16,12 +16,12 @@ func main() {
 	cli.AutoHelp(true)
 
 	// Wrap the default help style with a custom banner.
-	cli.HelpFormatter(func(cmd *pkg.Command) string {
-		return "== STYLES ==\n\n" + pkg.DefaultHelpFormatter(cmd)
+	cli.HelpFormatter(func(cmd *pkg.Command, loc pkg.Locale) string {
+		return "== STYLES ==\n\n" + pkg.DefaultHelpFormatter(cmd, loc)
 	})
 
 	// Customize error messages, inspecting typed errors for special cases.
-	cli.ErrorFormatter(func(err error) string {
+	cli.ErrorFormatter(func(err error, loc pkg.Locale) string {
 		var cliErr *cerrors.CliError
 		if errors.As(err, &cliErr) {
 			if cliErr.Code == cerrors.ErrUnknownFlag {
@@ -29,7 +29,7 @@ func main() {
 				return fmt.Sprintf("oops! I don't know the flag %q", cliErr.Parameters[0])
 			}
 		}
-		return "oops! " + pkg.GetLocale().LocalizeError(err)
+		return "oops! " + loc.LocalizeError(err)
 	})
 
 	cli.Parse()

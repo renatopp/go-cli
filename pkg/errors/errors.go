@@ -95,9 +95,9 @@ func NewUnexpectedPosError(token string) *CliError {
 }
 
 func NewExclusiveFlagsError(signatures []string) *CliError {
-	return NewCliError(ErrExclusiveFlags, strings.Join(signatures, " and "))
+	return NewCliError(ErrExclusiveFlags, strings.Join(signatures, " & "))
 }
 
 func NewAtLeastOneFlagError(signatures []string) *CliError {
-	return NewCliError(ErrAtLeastOneFlag, strings.Join(signatures, " or "))
+	return NewCliError(ErrAtLeastOneFlag, strings.Join(signatures, " | "))
 }

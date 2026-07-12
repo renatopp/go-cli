@@ -33,7 +33,7 @@ func parseArguments(app *App) (*Arguments, error) {
 		hasVersionFlag: false,
 	}
 
-	cmd := app.GetCurrentCommand()
+	cmd := app.CurrentCommand()
 
 	// prepare the flags and positionals maps for easy lookup during parsing
 	for _, flag := range cmd.flags {
@@ -82,7 +82,7 @@ func parseArguments(app *App) (*Arguments, error) {
 		app.Exit(0)
 	}
 
-	if app.version != "" && args.hasVersionFlag && app.GetCurrentCommand() == app.GetRootCommand() {
+	if app.version != "" && args.hasVersionFlag && app.CurrentCommand() == app.RootCommand() {
 		fmt.Fprintf(app.stdout, "%s\n", app.version)
 		app.Exit(0)
 	}
