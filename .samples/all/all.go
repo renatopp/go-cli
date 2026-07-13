@@ -7,7 +7,7 @@ func main() {
 	cli.Description("This is a sample description lorem	 ipsum dolor sit amet, consectetur adipiscing elit. \tSed do eiusmod tempor incididunt ut labore et dolore magna aliqua.")
 	cli.Flag("longs", "s", "string flag").AsGlobal().AsRepeatable().AsRequired()
 	cli.FlagInt("longi", "i", "int flag").WithDefault(42).WithValidation(func(s int) error { return nil })
-	cli.FlagBool("longb", "b", "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi volutpat leo in neque efficitur finibus. Fusce imperdiet ut nulla a posuere. Nulla accumsan pellentesque gravida. Integer sed tortor et sapien vehicula rutrum tempus convallis nibh. Donec faucibus lacinia quam, id malesuada nunc gravida sed. Mauris eget pellentesque est. Donec sit amet nunc eu elit vehicula rhoncus eu ac dolor. ").WithEnv("BOOLEAN").AsRepeatable()
+	cli.FlagBool("longb", "b", "asdmfpl\nasjdofijasodf\nafosdijaoidsf\n").WithEnv("BOOLEAN").AsRepeatable()
 	cli.FlagDuration("longd", "d", "duration flag").AsHidden()
 	cli.Pos("sample", "sample positional").
 		WithDefault("default").

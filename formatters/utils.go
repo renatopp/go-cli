@@ -47,6 +47,13 @@ func tagStyle(s string) string {
 	return "\033[1m\033[3m" + s + "\033[0m"
 }
 
+func errorStyle(s string) string {
+	if no_color != "" {
+		return s
+	}
+	return "\033[1m\033[31m" + s + "\033[0m"
+}
+
 func indent(s string, spaces int, char string) string {
 	indent := strings.Repeat(char, spaces)
 	lines := strings.Split(s, "\n")
