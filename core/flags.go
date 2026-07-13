@@ -1,12 +1,12 @@
-package pkg
+package core
 
 import (
 	"fmt"
 
-	"github.com/renatopp/go-cli/pkg/errors"
+	"github.com/renatopp/go-cli/errors"
 )
 
-type Flag interface {
+type AnyFlag interface {
 	Long() string
 	Short() string
 	Description() string
@@ -27,19 +27,19 @@ type Flag interface {
 
 // Implements a flag with parametric type. You can use this to create custom
 // flags of any types you want but with default behavior.
-type GenericFlag[T any] struct {
-	description      string                // description of the flag for help text
-	raw              string                // the raw string value provided by the user
-	rawDefault       string                // the raw default value for the flag, used for help text and error messages
-	provided         bool                  // whether the flag has been provided by the user and parsed successfully
-	defaulted        bool                  // whether the flag has a default value
-	required         bool                  // whether the flag is required
-	hidden           bool                  // whether the flag should be hidden from help output
-	long             string                // --name
-	short            string                // -n
-	repeatable       bool                  // whether the flag can be specified multiple times
-	global           bool                  // whether the flag is global
-	onParsedCallback func(*GenericFlag[T]) // callback function to be called after parsing
+type Flag[T any] struct {
+	description      string         // description of the flag for help text
+	raw              string         // the raw string value provided by the user
+	rawDefault       string         // the raw default value for the flag, used for help text and error messages
+	provided         bool           // whether the flag has been provided by the user and parsed successfully
+	defaulted        bool           // whether the flag has a default value
+	required         bool           // whether the flag is required
+	hidden           bool           // whether the flag should be hidden from help output
+	long             string         // --name
+	short            string         // -n
+	repeatable       bool           // whether the flag can be specified multiple times
+	global           bool           // whether the flag is global
+	onParsedCallback func(*Flag[T]) // callback function to be called after parsing
 
 	value     T                       // the parsed value of the flag, only set after parsing. In case of repeatable flags, this will hold the last value provided by the user, and all values will be stored in the `values` field below.
 	values    []T                     // the parsed values of a repeatable flag, only set after parsing. For non-repeatable flags, this will be a slice with a single value (the one returned by Value()) or an empty slice if the flag was not provided and has no default.
@@ -48,9 +48,9 @@ type GenericFlag[T any] struct {
 	validator func(T) error           // custom validator function, provided by the user
 }
 
-// NewGenericFlag creates a new GenericFlag.
-func NewGenericFlag[T any](long, short, description string, parser func(string) (T, error)) *GenericFlag[T] {
-	return &GenericFlag[T]{
+// NewFlag creates a new GenericFlag.
+func NewFlag[T any](long, short, description string, parser func(string) (T, error)) *Flag[T] {
+	return &Flag[T]{
 		description: description,
 		long:        long,
 		short:       short,
@@ -59,7 +59,7 @@ func NewGenericFlag[T any](long, short, description string, parser func(string) 
 }
 
 // WithDefault sets the default value for the flag.
-func (f *GenericFlag[T]) WithDefault(value T) *GenericFlag[T] {
+func (f *Flag[T]) WithDefault(value T) *Flag[T] {
 	f.default_ = value
 	f.rawDefault = fmt.Sprintf("%v", value)
 	f.defaulted = true
@@ -69,7 +69,7 @@ func (f *GenericFlag[T]) WithDefault(value T) *GenericFlag[T] {
 // WithValidation allow further validation to an existing flag type. The
 // validation function should return an error if the value is invalid, which
 // will be used to provide better error messages to the user.
-func (f *GenericFlag[T]) WithValidation(validator func(T) error) *GenericFlag[T] {
+func (f *Flag[T]) WithValidation(validator func(T) error) *Flag[T] {
 	f.validator = validator
 	return f
 }
@@ -79,75 +79,75 @@ func (f *GenericFlag[T]) WithValidation(validator func(T) error) *GenericFlag[T]
 // the `Parse` call.
 //
 // The callback receives the flag itself as an argument.
-func (f *GenericFlag[T]) OnParsed(cb func(flag *GenericFlag[T])) {
+func (f *Flag[T]) OnParsed(cb func(flag *Flag[T])) {
 	f.onParsedCallback = cb
 }
 
 // AsRequired marks the flag as required, meaning the user must provide a value
 // for it.
-func (f *GenericFlag[T]) AsRequired() *GenericFlag[T] {
+func (f *Flag[T]) AsRequired() *Flag[T] {
 	f.required = true
 	return f
 }
 
 // AsRepeatable marks the flag as repeatable, meaning the user can specify it multiple times. All values provided by the user will be stored in a slice of values of type T, which can be accessed using the Values() method. For non-repeatable flags, the Values() method will return a slice with a single value (the one returned by Value()) or an empty slice if the flag was not provided and has no default.
-func (f *GenericFlag[T]) AsRepeatable() *GenericFlag[T] {
+func (f *Flag[T]) AsRepeatable() *Flag[T] {
 	f.repeatable = true
 	return f
 }
 
 // AsGlobal marks the flag as global, meaning it can be used in any subcommand.
-func (f *GenericFlag[T]) AsGlobal() *GenericFlag[T] {
+func (f *Flag[T]) AsGlobal() *Flag[T] {
 	f.global = true
 	return f
 }
 
 // AsHidden marks the flag as hidden, so it is omitted from help output.
-func (f *GenericFlag[T]) AsHidden() *GenericFlag[T] {
+func (f *Flag[T]) AsHidden() *Flag[T] {
 	f.hidden = true
 	return f
 }
 
 // Long returns the long name of the flag (e.g., "name" for --name).
-func (f *GenericFlag[T]) Long() string { return f.long }
+func (f *Flag[T]) Long() string { return f.long }
 
 // Short returns the short name of the flag (e.g., "n" for -n).
-func (f *GenericFlag[T]) Short() string { return f.short }
+func (f *Flag[T]) Short() string { return f.short }
 
 // Description returns the description of the flag for help text.
-func (f *GenericFlag[T]) Description() string { return f.description }
+func (f *Flag[T]) Description() string { return f.description }
 
 // RawValue returns the raw string value provided by the user for this flag.
-func (f *GenericFlag[T]) RawValue() string { return f.raw }
+func (f *Flag[T]) RawValue() string { return f.raw }
 
 // RawDefault returns the raw default value for the flag as a string.
 // Used for help text and error messages.
-func (f *GenericFlag[T]) RawDefault() string { return f.rawDefault }
+func (f *Flag[T]) RawDefault() string { return f.rawDefault }
 
 // HasDefault returns true if the flag has a default value.
-func (f *GenericFlag[T]) HasDefault() bool { return f.defaulted }
+func (f *Flag[T]) HasDefault() bool { return f.defaulted }
 
 // IsProvided returns true if the flag has been provided by the user and parsed successfully.
-func (f *GenericFlag[T]) IsProvided() bool { return f.provided }
+func (f *Flag[T]) IsProvided() bool { return f.provided }
 
 // IsRequired returns true if the flag is required.
-func (f *GenericFlag[T]) IsRequired() bool { return f.required }
+func (f *Flag[T]) IsRequired() bool { return f.required }
 
 // IsHidden returns true if the flag should be hidden from help output.
-func (f *GenericFlag[T]) IsHidden() bool { return f.hidden }
+func (f *Flag[T]) IsHidden() bool { return f.hidden }
 
 // IsRepeatable returns true if the flag can be specified multiple times.
-func (f *GenericFlag[T]) IsRepeatable() bool { return f.repeatable }
+func (f *Flag[T]) IsRepeatable() bool { return f.repeatable }
 
 // IsGlobal returns true if the flag is global, meaning it can be used in any subcommand.
-func (f *GenericFlag[T]) IsGlobal() bool { return f.global }
+func (f *Flag[T]) IsGlobal() bool { return f.global }
 
 // IsRepeated returns true if the flag has been specified multiple times.
-func (f *GenericFlag[T]) IsRepeated() bool { return len(f.values) > 1 }
+func (f *Flag[T]) IsRepeated() bool { return len(f.values) > 1 }
 
 // Signature returns the flag's signature for help text, combining both long
 // and short names if available.
-func (f *GenericFlag[T]) Signature() string {
+func (f *Flag[T]) Signature() string {
 	if f.long != "" && f.short != "" {
 		return fmt.Sprintf("-%s, --%s", f.short, f.long)
 	}
@@ -161,14 +161,14 @@ func (f *GenericFlag[T]) Signature() string {
 }
 
 // Default returns the default value for the flag.
-func (f *GenericFlag[T]) Default() T {
+func (f *Flag[T]) Default() T {
 	return f.default_
 }
 
 // Value returns the parsed value OR the default value if there is one.
 // In case of repeatable flags, this will return the last value provided by the
 // user, and all values will be stored in the `Values`.
-func (f *GenericFlag[T]) Value() T {
+func (f *Flag[T]) Value() T {
 	if f.IsProvided() {
 		return f.value
 	}
@@ -176,7 +176,7 @@ func (f *GenericFlag[T]) Value() T {
 }
 
 // Values returns the parsed values for a repeatable flag. For non-repeatable flags, this will return a slice with a single value (the one returned by Value()) or an empty slice if the flag was not provided and has no default.
-func (f *GenericFlag[T]) Values() []T {
+func (f *Flag[T]) Values() []T {
 	if f.IsProvided() {
 		return f.values
 	}
@@ -188,10 +188,10 @@ func (f *GenericFlag[T]) Values() []T {
 
 // Count returns the number of times the flag was specified by the user.
 // For non-repeatable flags, this will be either 0 or 1.
-func (f *GenericFlag[T]) Count() int { return len(f.values) }
+func (f *Flag[T]) Count() int { return len(f.values) }
 
 // Parse implements the parsing logic for the generic flag.
-func (f *GenericFlag[T]) Parse(value string) error {
+func (f *Flag[T]) Parse(value string) error {
 	parsedValue, err := f.parser(value)
 	if err != nil {
 		return errors.NewInvalidFlagValueError(f.Signature(), value, err)
@@ -208,7 +208,7 @@ func (f *GenericFlag[T]) Parse(value string) error {
 	return nil
 }
 
-func (f *GenericFlag[T]) onParsed() {
+func (f *Flag[T]) onParsed() {
 	if f.onParsedCallback != nil {
 		f.onParsedCallback(f)
 	}

@@ -1,4 +1,4 @@
-package pkg
+package core
 
 import (
 	"errors"
@@ -12,8 +12,8 @@ type Command struct {
 	shortDescription string
 	hidden           bool
 	execute          func()
-	positionals      []Positional
-	flags            []Flag
+	positionals      []AnyPositional
+	flags            []AnyFlag
 	subcommands      []*Command
 }
 
@@ -23,8 +23,8 @@ func NewCommand(parent *Command) *Command {
 		name:        "",
 		description: "",
 		execute:     nil,
-		positionals: []Positional{},
-		flags:       []Flag{},
+		positionals: []AnyPositional{},
+		flags:       []AnyFlag{},
 		subcommands: []*Command{},
 	}
 }
@@ -57,7 +57,7 @@ func (c *Command) WithExecute(execute func()) *Command {
 }
 
 // WithPositional adds a positional argument to the command.
-func (c *Command) WithPositional(arg Positional) *Command {
+func (c *Command) WithPositional(arg AnyPositional) *Command {
 	if len(c.positionals) > 0 {
 		last := c.positionals[len(c.positionals)-1]
 		if last.IsVariadic() {
@@ -70,7 +70,7 @@ func (c *Command) WithPositional(arg Positional) *Command {
 }
 
 // WithFlag adds a flag to the command.
-func (c *Command) WithFlag(flag Flag) *Command {
+func (c *Command) WithFlag(flag AnyFlag) *Command {
 	if flag.Long() != "" && c.HasFlag(flag.Long()) {
 		panic("flag with the same long name already exists: " + flag.Long())
 	}
@@ -138,12 +138,12 @@ func (c *Command) Subcommands() []*Command {
 }
 
 // Positionals returns the list of positional arguments of the command.
-func (c *Command) Positionals() []Positional {
+func (c *Command) Positionals() []AnyPositional {
 	return c.positionals[:]
 }
 
 // Flags returns the list of flags of the command.
-func (c *Command) Flags() []Flag {
+func (c *Command) Flags() []AnyFlag {
 	return c.flags[:]
 }
 
@@ -158,7 +158,7 @@ func (c *Command) HasFlag(n string) bool {
 }
 
 // GetFlag returns the flag with the given long or short name, or an error if not found.
-func (c *Command) GetFlag(n string) (Flag, error) {
+func (c *Command) GetFlag(n string) (AnyFlag, error) {
 	for _, f := range c.flags {
 		if f.Long() == n || f.Short() == n {
 			return f, nil

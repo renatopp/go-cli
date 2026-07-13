@@ -1,6 +1,5 @@
 # TODO
 
-- OnParsed callbacks on flags and positionals
 - Add WithEnv() binding on flags and positionals
 - Colored outputs
 - Examples

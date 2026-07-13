@@ -4,10 +4,9 @@
 package locales
 
 import (
-	"errors"
 	"fmt"
 
-	cerrors "github.com/renatopp/go-cli/pkg/errors"
+	"github.com/renatopp/go-cli/errors"
 )
 
 // Locale holds all the user-facing strings used by go-cli, such as help text
@@ -33,7 +32,7 @@ type Locale struct {
 	VersionFlagDescription string // description for the automatic --version/-v flag
 
 	// Error messages mapped by error code
-	Errors map[cerrors.ErrorCode]string
+	Errors map[errors.ErrorCode]string
 }
 
 // LocalizedError renders err using this locale's messages. If err is not (or
@@ -41,7 +40,7 @@ type Locale struct {
 // registered for its code, the error's own Error() string is returned
 // instead.
 func (l Locale) LocalizeError(err error) string {
-	var cliErr *cerrors.CliError
+	var cliErr *errors.CliError
 	if !errors.As(err, &cliErr) {
 		return err.Error()
 	}
@@ -70,17 +69,17 @@ func EN() Locale {
 		HelpFlagDescription:    "Show help message",
 		VersionFlagDescription: "Show version information",
 
-		Errors: map[cerrors.ErrorCode]string{
-			cerrors.ErrUnknownFlag:         "unknown flag %s",
-			cerrors.ErrMissingRequiredFlag: "missing required flag %s",
-			cerrors.ErrMissingRequiredPos:  "missing required positional argument: %s",
-			cerrors.ErrInvalidFlagValue:    "invalid value for flag %s: %v",
-			cerrors.ErrInvalidPosValue:     "invalid value for positional argument %s: %v",
-			cerrors.ErrRepeatedFlag:        "flag %s was specified multiple times",
-			cerrors.ErrMissingFlagValue:    "missing value for flag %s",
-			cerrors.ErrUnexpectedPos:       "unexpected extra positional argument: %s",
-			cerrors.ErrExclusiveFlags:      "mutually exclusive flags provided: %s",
-			cerrors.ErrAtLeastOneFlag:      "at least one of the following flags must be provided: %s",
+		Errors: map[errors.ErrorCode]string{
+			errors.ErrUnknownFlag:         "unknown flag %s",
+			errors.ErrMissingRequiredFlag: "missing required flag %s",
+			errors.ErrMissingRequiredPos:  "missing required positional argument: %s",
+			errors.ErrInvalidFlagValue:    "invalid value for flag %s: %v",
+			errors.ErrInvalidPosValue:     "invalid value for positional argument %s: %v",
+			errors.ErrRepeatedFlag:        "flag %s was specified multiple times",
+			errors.ErrMissingFlagValue:    "missing value for flag %s",
+			errors.ErrUnexpectedPos:       "unexpected extra positional argument: %s",
+			errors.ErrExclusiveFlags:      "mutually exclusive flags provided: %s",
+			errors.ErrAtLeastOneFlag:      "at least one of the following flags must be provided: %s",
 		},
 	}
 }
@@ -102,17 +101,17 @@ func PT_BR() Locale {
 		HelpFlagDescription:    "Exibir mensagem de ajuda",
 		VersionFlagDescription: "Exibir informações da versão",
 
-		Errors: map[cerrors.ErrorCode]string{
-			cerrors.ErrUnknownFlag:         "flag desconhecida %s",
-			cerrors.ErrMissingRequiredFlag: "flag obrigatória ausente %s",
-			cerrors.ErrMissingRequiredPos:  "argumento posicional obrigatório ausente: %s",
-			cerrors.ErrInvalidFlagValue:    "valor inválido para a flag %s: %v",
-			cerrors.ErrInvalidPosValue:     "valor inválido para o argumento posicional %s: %v",
-			cerrors.ErrRepeatedFlag:        "flag %s foi especificada múltiplas vezes",
-			cerrors.ErrMissingFlagValue:    "valor ausente para a flag %s",
-			cerrors.ErrUnexpectedPos:       "argumento posicional extra inesperado: %s",
-			cerrors.ErrExclusiveFlags:      "flags mutuamente exclusivas fornecidas: %s",
-			cerrors.ErrAtLeastOneFlag:      "pelo menos uma das seguintes flags deve ser fornecida: %s",
+		Errors: map[errors.ErrorCode]string{
+			errors.ErrUnknownFlag:         "flag desconhecida %s",
+			errors.ErrMissingRequiredFlag: "flag obrigatória ausente %s",
+			errors.ErrMissingRequiredPos:  "argumento posicional obrigatório ausente: %s",
+			errors.ErrInvalidFlagValue:    "valor inválido para a flag %s: %v",
+			errors.ErrInvalidPosValue:     "valor inválido para o argumento posicional %s: %v",
+			errors.ErrRepeatedFlag:        "flag %s foi especificada múltiplas vezes",
+			errors.ErrMissingFlagValue:    "valor ausente para a flag %s",
+			errors.ErrUnexpectedPos:       "argumento posicional extra inesperado: %s",
+			errors.ErrExclusiveFlags:      "flags mutuamente exclusivas fornecidas: %s",
+			errors.ErrAtLeastOneFlag:      "pelo menos uma das seguintes flags deve ser fornecida: %s",
 		},
 	}
 }

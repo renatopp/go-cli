@@ -135,6 +135,28 @@ func TestFlagCombinedWithDashedValue(t *testing.T) {
 	assertEqual(t, c.Value(), false)
 }
 
+func TestFlagCombinedThreeBooleans(t *testing.T) {
+	defer cli.Clear()
+	a := cli.FlagBool("", "a", "")
+	b := cli.FlagBool("", "b", "")
+	c := cli.FlagBool("", "c", "")
+	cli.ParseArgs(make_args("-abc"))
+	assertEqual(t, a.Value(), true)
+	assertEqual(t, b.Value(), true)
+	assertEqual(t, c.Value(), true)
+}
+
+func TestFlagCombinedWithSpaceSeparatedValue(t *testing.T) {
+	defer cli.Clear()
+	a := cli.FlagBool("", "a", "")
+	b := cli.FlagBool("", "b", "")
+	c := cli.FlagString("", "c", "")
+	cli.ParseArgs(make_args("-abc", "value"))
+	assertEqual(t, a.Value(), true)
+	assertEqual(t, b.Value(), true)
+	assertEqual(t, c.Value(), "value")
+}
+
 func TestFlagInvalidRepeatedLong(t *testing.T) {
 	defer cli.Clear()
 	cli.UsePanic(true)

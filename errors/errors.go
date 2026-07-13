@@ -6,6 +6,7 @@
 package errors
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 )
@@ -25,6 +26,14 @@ const (
 	ErrExclusiveFlags      ErrorCode = "exclusive_flags"
 	ErrAtLeastOneFlag      ErrorCode = "at_least_one_flag"
 )
+
+func As(err error, target any) bool {
+	return errors.As(err, target)
+}
+
+func Is(err, target error) bool {
+	return errors.Is(err, target)
+}
 
 // CliError represents a CLI parsing or execution error with a code and
 // parameters. Error() returns a generic, unlocalized message; use

@@ -1,4 +1,4 @@
-package pkg
+package core
 
 import (
 	"fmt"
@@ -6,8 +6,8 @@ import (
 	"os"
 	"path"
 
-	"github.com/renatopp/go-cli/pkg/locales"
-	"github.com/renatopp/go-cli/pkg/parsers"
+	"github.com/renatopp/go-cli/locales"
+	"github.com/renatopp/go-cli/parsers"
 )
 
 // HelpFormatter converts a command into its help text. Set a custom one with
@@ -273,12 +273,12 @@ func (a *App) initialize() {
 	curCmd := a.currentCommand
 
 	if a.autoHelp && (!curCmd.HasFlag("help") || !curCmd.HasFlag("h")) {
-		helpFlag := NewGenericFlag("help", "h", a.locale.HelpFlagDescription, parsers.Bool)
+		helpFlag := NewFlag("help", "h", a.locale.HelpFlagDescription, parsers.Bool)
 		curCmd.WithFlag(helpFlag)
 	}
 
 	if a.version != "" && curCmd == rootCmd && (!rootCmd.HasFlag("version") || !rootCmd.HasFlag("v")) {
-		versionFlag := NewGenericFlag("version", "v", a.locale.VersionFlagDescription, parsers.Bool)
+		versionFlag := NewFlag("version", "v", a.locale.VersionFlagDescription, parsers.Bool)
 		rootCmd.WithFlag(versionFlag)
 	}
 

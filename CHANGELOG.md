@@ -8,7 +8,7 @@
 - Localizing CheckExclusiveFlags and CheckAnyFlag error messages.
 - Moving the internal package into the root cli package, removing the type alias layer (TFlag, TPositional, TCommand).
 - Removing the package-level Arguments function to avoid conflict with the Arguments type. Flag and Command remain as aliases to FlagString and Cmd.
-- Moving the core implementation to the pkg/ package (github.com/renatopp/go-cli/pkg), with locales and parsers as its subpackages; the root package keeps the global convenience API.
+- Moving the core implementation to the core/ package (github.com/renatopp/go-cli/core), with locales and parsers as its subpackages; the root package keeps the global convenience API.
 
 # 0.5.0 (2026-07-07)
 

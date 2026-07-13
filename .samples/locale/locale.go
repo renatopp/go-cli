@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/renatopp/go-cli"
-	"github.com/renatopp/go-cli/pkg/locales"
+	"github.com/renatopp/go-cli/locales"
 )
 
 func main() {

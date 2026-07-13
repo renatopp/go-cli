@@ -1,12 +1,12 @@
-package pkg
+package core
 
 import (
 	"fmt"
 
-	cerrors "github.com/renatopp/go-cli/pkg/errors"
+	"github.com/renatopp/go-cli/errors"
 )
 
-type Positional interface {
+type AnyPositional interface {
 	Name() string
 	Description() string
 	RawValue() string
@@ -22,7 +22,7 @@ type Positional interface {
 // Implements a positional argument with parametric type. You can use this to
 // create custom positional arguments of any types you want but with default
 // behavior.
-type GenericPositional[T any] struct {
+type Positional[T any] struct {
 	description string // description of the positional argument for help text
 	raw         string // the raw string value provided by the user
 	rawDefault  string // the raw default value for the positional argument
@@ -40,9 +40,9 @@ type GenericPositional[T any] struct {
 	validator func(T) error           // custom validator function, provided by the user
 }
 
-// NewGenericPositional creates a new GenericPositional.
-func NewGenericPositional[T any](name, description string, parser func(string) (T, error)) *GenericPositional[T] {
-	return &GenericPositional[T]{
+// NewPositional creates a new GenericPositional.
+func NewPositional[T any](name, description string, parser func(string) (T, error)) *Positional[T] {
+	return &Positional[T]{
 		description: description,
 		name:        name,
 		parser:      parser,
@@ -50,7 +50,7 @@ func NewGenericPositional[T any](name, description string, parser func(string) (
 }
 
 // WithDefault sets the default value for the positional argument.
-func (f *GenericPositional[T]) WithDefault(value T) *GenericPositional[T] {
+func (f *Positional[T]) WithDefault(value T) *Positional[T] {
 	f.default_ = value
 	f.rawDefault = fmt.Sprintf("%v", value)
 	f.defaulted = true
@@ -60,14 +60,14 @@ func (f *GenericPositional[T]) WithDefault(value T) *GenericPositional[T] {
 // WithValidation allow further validation to an existing positional argument
 // type. The validation function should return an error if the value is invalid,
 // which will be used to provide better error messages to the user.
-func (f *GenericPositional[T]) WithValidation(validator func(T) error) *GenericPositional[T] {
+func (f *Positional[T]) WithValidation(validator func(T) error) *Positional[T] {
 	f.validator = validator
 	return f
 }
 
 // AsRequired marks the positional argument as required, meaning the user must
 // provide a value for it.
-func (f *GenericPositional[T]) AsRequired() *GenericPositional[T] {
+func (f *Positional[T]) AsRequired() *Positional[T] {
 	f.required = true
 	return f
 }
@@ -76,52 +76,52 @@ func (f *GenericPositional[T]) AsRequired() *GenericPositional[T] {
 // multiple values. This should only be used for the last positional argument of
 // a command, and it will collect all remaining positional arguments provided by
 // the user into a slice of values of type T.
-func (f *GenericPositional[T]) AsVariadic() *GenericPositional[T] {
+func (f *Positional[T]) AsVariadic() *Positional[T] {
 	f.variadic = true
 	return f
 }
 
 // AsHidden marks the positional argument as hidden, so it is omitted from help output.
-func (f *GenericPositional[T]) AsHidden() *GenericPositional[T] {
+func (f *Positional[T]) AsHidden() *Positional[T] {
 	f.hidden = true
 	return f
 }
 
 // Name returns the name of the positional argument for help text.
-func (f *GenericPositional[T]) Name() string { return f.name }
+func (f *Positional[T]) Name() string { return f.name }
 
 // Description returns the description of the positional argument for help text.
-func (f *GenericPositional[T]) Description() string { return f.description }
+func (f *Positional[T]) Description() string { return f.description }
 
 // RawValue returns the raw string value provided by the user for this positional argument.
-func (f *GenericPositional[T]) RawValue() string { return f.raw }
+func (f *Positional[T]) RawValue() string { return f.raw }
 
 // RawDefault returns the raw default value for the positional argument as a
 // string. Used for help text and error messages.
-func (f *GenericPositional[T]) RawDefault() string { return f.rawDefault }
+func (f *Positional[T]) RawDefault() string { return f.rawDefault }
 
 // HasDefault returns true if the positional argument has a default value.
-func (f *GenericPositional[T]) HasDefault() bool { return f.defaulted }
+func (f *Positional[T]) HasDefault() bool { return f.defaulted }
 
 // IsProvided returns true if the positional argument has been provided by the user and parsed successfully.
-func (f *GenericPositional[T]) IsProvided() bool { return f.provided }
+func (f *Positional[T]) IsProvided() bool { return f.provided }
 
 // IsRequired returns true if the positional argument is required.
-func (f *GenericPositional[T]) IsRequired() bool { return f.required }
+func (f *Positional[T]) IsRequired() bool { return f.required }
 
 // IsHidden returns true if the positional argument should be hidden from help output.
-func (f *GenericPositional[T]) IsHidden() bool { return f.hidden }
+func (f *Positional[T]) IsHidden() bool { return f.hidden }
 
 // IsVariadic returns true if this is a variadic positional argument (e.g., "files...").
-func (f *GenericPositional[T]) IsVariadic() bool { return f.variadic }
+func (f *Positional[T]) IsVariadic() bool { return f.variadic }
 
 // Default returns the default value for the positional argument.
-func (f *GenericPositional[T]) Default() T { return f.default_ }
+func (f *Positional[T]) Default() T { return f.default_ }
 
 // Value returns the parsed value OR the default value if there is one.
 // In case of variadic positionals, this will return the last value provided by
 // the user, and all values will be stored in the `values` field.
-func (f *GenericPositional[T]) Value() T {
+func (f *Positional[T]) Value() T {
 	if f.IsProvided() {
 		return f.value
 	}
@@ -131,7 +131,7 @@ func (f *GenericPositional[T]) Value() T {
 // Values returns the parsed values for a variadic positional argument. For
 // non-variadic positionals, this will return a slice with a single value
 // (the one returned by Value()) or an empty slice
-func (f *GenericPositional[T]) Values() []T {
+func (f *Positional[T]) Values() []T {
 	if f.IsProvided() {
 		return f.values
 	}
@@ -143,13 +143,13 @@ func (f *GenericPositional[T]) Values() []T {
 
 // Count returns the number of times the positional argument was specified by
 // the user. For non-variadic positionals, this will be either 0 or 1.
-func (f *GenericPositional[T]) Count() int { return len(f.values) }
+func (f *Positional[T]) Count() int { return len(f.values) }
 
 // Parse implements the parsing logic for the generic positional argument.
-func (f *GenericPositional[T]) Parse(value string) error {
+func (f *Positional[T]) Parse(value string) error {
 	parsedValue, err := f.parser(value)
 	if err != nil {
-		return cerrors.NewInvalidPosValueError(f.Name(), value, err)
+		return errors.NewInvalidPosValueError(f.Name(), value, err)
 	}
 
 	f.value = parsedValue
@@ -157,7 +157,7 @@ func (f *GenericPositional[T]) Parse(value string) error {
 	f.provided = true
 	if f.validator != nil {
 		if err := f.validator(parsedValue); err != nil {
-			return cerrors.NewInvalidPosValueError(f.Name(), err.Error(), err)
+			return errors.NewInvalidPosValueError(f.Name(), err.Error(), err)
 		}
 	}
 

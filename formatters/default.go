@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/renatopp/go-cli/pkg"
-	"github.com/renatopp/go-cli/pkg/locales"
+	"github.com/renatopp/go-cli/core"
+	"github.com/renatopp/go-cli/locales"
 )
 
 // DefaultHelpFormatter is the built-in help style. It renders the usage line,
 // description, and the visible subcommands, options and arguments of the
 // command, using the active locale for labels.
-func DefaultHelpFormatter(cmd *pkg.Command, loc locales.Locale) string {
+func DefaultHelpFormatter(cmd *core.Command, loc locales.Locale) string {
 	name := strings.Join(cmd.Path(), " ")
 
 	subcommands := cmd.Subcommands()

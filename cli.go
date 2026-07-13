@@ -1,22 +1,22 @@
 package cli
 
 import (
-	"errors"
+	"fmt"
 	"io"
 	"time"
 
-	"github.com/renatopp/go-cli/pkg"
-	cerrors "github.com/renatopp/go-cli/pkg/errors"
-	"github.com/renatopp/go-cli/pkg/formatters"
-	"github.com/renatopp/go-cli/pkg/locales"
-	"github.com/renatopp/go-cli/pkg/parsers"
+	"github.com/renatopp/go-cli/core"
+	"github.com/renatopp/go-cli/errors"
+	"github.com/renatopp/go-cli/formatters"
+	"github.com/renatopp/go-cli/locales"
+	"github.com/renatopp/go-cli/parsers"
 )
 
-var app *pkg.App
+var app *core.App
 
 // Initialize global state
 func init() {
-	app = pkg.NewApp(formatters.DefaultHelpFormatter, formatters.DefaultErrorFormatter)
+	app = core.NewApp(formatters.DefaultHelpFormatter, formatters.DefaultErrorFormatter)
 }
 
 func Clear() { app.Clear() }
@@ -64,10 +64,10 @@ func Stderr(w io.Writer) {
 // command, allowing you to fully customize the help style. The default is
 // DefaultHelpFormatter, which can also be wrapped, e.g.:
 //
-//	cli.HelpFormatter(func(cmd *pkg.Command) string {
-//		return banner + pkg.DefaultHelpFormatter(cmd)
+//	cli.HelpFormatter(func(cmd *core.Command) string {
+//		return banner + core.DefaultHelpFormatter(cmd)
 //	})
-func HelpFormatter(f pkg.HelpFormatter) {
+func HelpFormatter(f core.HelpFormatter) {
 	app.WithHelpFormatter(f)
 }
 
@@ -76,7 +76,7 @@ func HelpFormatter(f pkg.HelpFormatter) {
 // error style. The default is DefaultErrorFormatter. Parsing errors are typed
 // (e.g. *UnknownFlagError, *MissingRequiredFlagError), so the formatter can
 // inspect them with errors.As.
-func ErrorFormatter(f pkg.ErrorFormatter) {
+func ErrorFormatter(f core.ErrorFormatter) {
 	app.WithErrorFormatter(f)
 }
 
@@ -127,8 +127,8 @@ func Args(args []string) {
 // name, short description, and execution function. The command is added as a
 // subcommand to the current command. The execute function will be called when
 // the command is invoked by the user.
-func Command(name string, shortDescription string, execute func()) *pkg.Command {
-	c := pkg.NewCommand(app.CurrentCommand()).
+func Command(name string, shortDescription string, execute func()) *core.Command {
+	c := core.NewCommand(app.CurrentCommand()).
 		WithName(name).
 		WithShortDescription(shortDescription).
 		WithDescription(shortDescription).
@@ -140,7 +140,7 @@ func Command(name string, shortDescription string, execute func()) *pkg.Command 
 	return c
 }
 
-func Pos(name, description string) *pkg.GenericPositional[string] {
+func Pos(name, description string) *core.Positional[string] {
 	return PosString(name, description)
 }
 
@@ -149,51 +149,51 @@ func Pos(name, description string) *pkg.GenericPositional[string] {
 // custom positional types, e.g.:
 //
 //	level := cli.PosFunc("level", "The log level.", ParseLevel)
-func PosFunc[T any](name, description string, parser func(string) (T, error)) *pkg.GenericPositional[T] {
-	p := pkg.NewGenericPositional(name, description, parser)
+func PosFunc[T any](name, description string, parser func(string) (T, error)) *core.Positional[T] {
+	p := core.NewPositional(name, description, parser)
 	app.CurrentCommand().WithPositional(p)
 	return p
 }
 
-func PosString(name, description string) *pkg.GenericPositional[string] {
-	p := pkg.NewGenericPositional(name, description, parsers.String)
+func PosString(name, description string) *core.Positional[string] {
+	p := core.NewPositional(name, description, parsers.String)
 	app.CurrentCommand().WithPositional(p)
 	return p
 }
 
-func PosInt(name, description string) *pkg.GenericPositional[int] {
-	p := pkg.NewGenericPositional(name, description, parsers.Int[int])
+func PosInt(name, description string) *core.Positional[int] {
+	p := core.NewPositional(name, description, parsers.Int[int])
 	app.CurrentCommand().WithPositional(p)
 	return p
 }
 
-func PosUint(name, description string) *pkg.GenericPositional[uint] {
-	p := pkg.NewGenericPositional(name, description, parsers.Uint[uint])
+func PosUint(name, description string) *core.Positional[uint] {
+	p := core.NewPositional(name, description, parsers.Uint[uint])
 	app.CurrentCommand().WithPositional(p)
 	return p
 }
 
-func PosFloat(name, description string) *pkg.GenericPositional[float64] {
-	p := pkg.NewGenericPositional(name, description, parsers.Float[float64])
+func PosFloat(name, description string) *core.Positional[float64] {
+	p := core.NewPositional(name, description, parsers.Float[float64])
 	app.CurrentCommand().WithPositional(p)
 	return p
 }
 
-func PosBool(name, description string) *pkg.GenericPositional[bool] {
-	p := pkg.NewGenericPositional(name, description, parsers.Bool)
+func PosBool(name, description string) *core.Positional[bool] {
+	p := core.NewPositional(name, description, parsers.Bool)
 	app.CurrentCommand().WithPositional(p)
 	return p
 }
 
-func PosDuration(name, description string) *pkg.GenericPositional[time.Duration] {
-	p := pkg.NewGenericPositional(name, description, parsers.Duration)
+func PosDuration(name, description string) *core.Positional[time.Duration] {
+	p := core.NewPositional(name, description, parsers.Duration)
 	app.CurrentCommand().WithPositional(p)
 	return p
 }
 
 // Flag is an alias for FlagString. It creates a string flag with the given
 // long name, short name, and description.
-func Flag(long, short, description string) *pkg.GenericFlag[string] {
+func Flag(long, short, description string) *core.Flag[string] {
 	return FlagString(long, short, description)
 }
 
@@ -202,44 +202,44 @@ func Flag(long, short, description string) *pkg.GenericFlag[string] {
 // e.g.:
 //
 //	level := cli.FlagFunc("level", "l", "The log level.", ParseLevel)
-func FlagFunc[T any](long, short, description string, parser func(string) (T, error)) *pkg.GenericFlag[T] {
-	f := pkg.NewGenericFlag(long, short, description, parser)
+func FlagFunc[T any](long, short, description string, parser func(string) (T, error)) *core.Flag[T] {
+	f := core.NewFlag(long, short, description, parser)
 	app.CurrentCommand().WithFlag(f)
 	return f
 }
 
-func FlagString(long, short, description string) *pkg.GenericFlag[string] {
-	f := pkg.NewGenericFlag(long, short, description, parsers.String)
+func FlagString(long, short, description string) *core.Flag[string] {
+	f := core.NewFlag(long, short, description, parsers.String)
 	app.CurrentCommand().WithFlag(f)
 	return f
 }
 
-func FlagInt(long, short, description string) *pkg.GenericFlag[int] {
-	f := pkg.NewGenericFlag(long, short, description, parsers.Int[int])
+func FlagInt(long, short, description string) *core.Flag[int] {
+	f := core.NewFlag(long, short, description, parsers.Int[int])
 	app.CurrentCommand().WithFlag(f)
 	return f
 }
 
-func FlagUint(long, short, description string) *pkg.GenericFlag[uint] {
-	f := pkg.NewGenericFlag(long, short, description, parsers.Uint[uint])
+func FlagUint(long, short, description string) *core.Flag[uint] {
+	f := core.NewFlag(long, short, description, parsers.Uint[uint])
 	app.CurrentCommand().WithFlag(f)
 	return f
 }
 
-func FlagFloat(long, short, description string) *pkg.GenericFlag[float64] {
-	f := pkg.NewGenericFlag(long, short, description, parsers.Float[float64])
+func FlagFloat(long, short, description string) *core.Flag[float64] {
+	f := core.NewFlag(long, short, description, parsers.Float[float64])
 	app.CurrentCommand().WithFlag(f)
 	return f
 }
 
-func FlagBool(long, short, description string) *pkg.GenericFlag[bool] {
-	f := pkg.NewGenericFlag(long, short, description, parsers.Bool)
+func FlagBool(long, short, description string) *core.Flag[bool] {
+	f := core.NewFlag(long, short, description, parsers.Bool)
 	app.CurrentCommand().WithFlag(f)
 	return f
 }
 
-func FlagDuration(long, short, description string) *pkg.GenericFlag[time.Duration] {
-	f := pkg.NewGenericFlag(long, short, description, parsers.Duration)
+func FlagDuration(long, short, description string) *core.Flag[time.Duration] {
+	f := core.NewFlag(long, short, description, parsers.Duration)
 	app.CurrentCommand().WithFlag(f)
 	return f
 }
@@ -275,7 +275,7 @@ func Help() {
 // Subcommands are executed based on the first argument that matches a defined
 // name, interrupting the execution of code after the Parse() call on the
 // parent commands.
-func Parse() *pkg.Result {
+func Parse() *core.Result {
 	return app.Parse()
 }
 
@@ -285,13 +285,13 @@ func Parse() *pkg.Result {
 // relying on the command-line input.
 //
 // DO NOT PROVIDE the program name (i.e., os.Args[0]) in the args slice.
-func ParseArgs(args []string) *pkg.Result {
+func ParseArgs(args []string) *core.Result {
 	return app.ParseArgs(args)
 }
 
 // CheckExclusiveFlags checks that at most one of the provided flags is passed.
 // This function should be called after Parse().
-func CheckExclusiveFlags(flags ...pkg.Flag) {
+func CheckExclusiveFlags(flags ...core.AnyFlag) {
 	parsedSignatures := []string{}
 	for _, flag := range flags {
 		if flag.IsProvided() {
@@ -300,13 +300,13 @@ func CheckExclusiveFlags(flags ...pkg.Flag) {
 	}
 
 	if len(parsedSignatures) > 1 {
-		app.FatalIf(cerrors.NewExclusiveFlagsError(parsedSignatures))
+		app.FatalIf(errors.NewExclusiveFlagsError(parsedSignatures))
 	}
 }
 
 // CheckAnyFlag checks that at least one of the provided flags is passed. This
 // function should be called after Parse().
-func CheckAnyFlag(flags ...pkg.Flag) {
+func CheckAnyFlag(flags ...core.AnyFlag) {
 	for _, flag := range flags {
 		if flag.IsProvided() {
 			return
@@ -317,7 +317,7 @@ func CheckAnyFlag(flags ...pkg.Flag) {
 	for _, flag := range flags {
 		signatures = append(signatures, flag.Signature())
 	}
-	app.FatalIf(cerrors.NewAtLeastOneFlagError(signatures))
+	app.FatalIf(errors.NewAtLeastOneFlagError(signatures))
 }
 
 // IsParsed returns true if the arguments have been parsed
@@ -327,10 +327,10 @@ func IsParsed() bool {
 }
 
 // GetRootCommand returns the root command from the stack.
-func GetRootCommand() *pkg.Command { return app.RootCommand() }
+func GetRootCommand() *core.Command { return app.RootCommand() }
 
 // GetCurrentCommand returns the current command being executed.
-func GetCurrentCommand() *pkg.Command { return app.CurrentCommand() }
+func GetCurrentCommand() *core.Command { return app.CurrentCommand() }
 
 // GetHelp returns the help message for the current command as a string.
 func GetHelp() string {
@@ -339,7 +339,7 @@ func GetHelp() string {
 
 // GetFlag retrieves a flag by its long or short name and attempts to cast it to the specified type T.
 // If the flag is not found or cannot be cast to the desired type, an error is returned.
-func GetFlag[T pkg.Flag](longOrShort string) (T, error) {
+func GetFlag[T core.AnyFlag](longOrShort string) (T, error) {
 	f, err := app.CurrentCommand().GetFlag(longOrShort)
 	if err != nil {
 		var zero T
@@ -349,7 +349,7 @@ func GetFlag[T pkg.Flag](longOrShort string) (T, error) {
 	typed, ok := f.(T)
 	if !ok {
 		var zero T
-		return zero, errors.New("flag is not of the expected type")
+		return zero, fmt.Errorf("flag is not of the expected type")
 	}
 
 	return typed, nil

@@ -1,11 +1,11 @@
-package pkg
+package core
 
 import (
 	"fmt"
 	"strings"
 
-	cerrors "github.com/renatopp/go-cli/pkg/errors"
-	"github.com/renatopp/go-cli/pkg/parsers"
+	"github.com/renatopp/go-cli/errors"
+	"github.com/renatopp/go-cli/parsers"
 )
 
 type Result struct {
@@ -14,8 +14,8 @@ type Result struct {
 
 	app                   *App     // reference to the main app for accessing configuration like AllowExtraPositionals
 	queue                 []string // the queue of arguments to be parsed
-	flags                 map[string]Flag
-	positionals           []Positional
+	flags                 map[string]AnyFlag
+	positionals           []AnyPositional
 	hasVariadicPositional bool
 	hasHelpFlag           bool
 	hasVersionFlag        bool
@@ -84,14 +84,14 @@ func (a *Result) isFlagToken(token string) bool {
 // isBooleanFlag checks if the flag object is a boolean flag
 func (a *Result) isBooleanFlag(name string) bool {
 	if flag, ok := a.flags[name]; ok {
-		_, ok := flag.(*GenericFlag[bool])
+		_, ok := flag.(*Flag[bool])
 		return ok
 	}
 	return false
 }
 
 // tryGetFlag tries to get the flag from the command
-func (a *Result) tryGetFlag(name string) (Flag, error) {
+func (a *Result) tryGetFlag(name string) (AnyFlag, error) {
 	if name == "help" || name == "h" {
 		a.hasHelpFlag = true
 	}
@@ -113,11 +113,11 @@ func (a *Result) tryGetFlag(name string) (Flag, error) {
 		}
 
 		// If extra flags are allowed, we create a new generic string flag for the unknown flag and add it to the flags map. This allows users to access the value of the extra flag using the same API as regular flags.
-		extraFlag := NewGenericFlag(long, short, "", parsers.String)
+		extraFlag := NewFlag(long, short, "", parsers.String)
 		a.flags[name] = extraFlag
 		return extraFlag, nil
 	}
-	return nil, cerrors.NewUnknownFlagError(name)
+	return nil, errors.NewUnknownFlagError(name)
 }
 
 // parseFlag parses the flag with the given value. It checks for repeated flags
@@ -129,7 +129,7 @@ func (a *Result) parseFlag(name string, value string) error {
 
 	if flag.IsProvided() {
 		if !a.app.repeatedFlagsAllowed && !flag.IsRepeatable() {
-			return cerrors.NewRepeatedFlagError(name)
+			return errors.NewRepeatedFlagError(name)
 		}
 	}
 
@@ -156,7 +156,7 @@ func (a *Result) parseLong(token string) error {
 		if hasFlag {
 			value, ok := a.next()
 			if !ok {
-				return cerrors.NewMissingFlagValueError(name)
+				return errors.NewMissingFlagValueError(name)
 			}
 			return a.parseFlag(name, value)
 		}
@@ -181,7 +181,7 @@ func (a *Result) parseShort(token string) error {
 			_, hasFlag := a.flags[name]
 			value, ok := a.next()
 			if hasFlag && !ok {
-				return cerrors.NewMissingFlagValueError(name)
+				return errors.NewMissingFlagValueError(name)
 			}
 			return a.parseFlag(name, value)
 
@@ -202,7 +202,7 @@ func (a *Result) parseShort(token string) error {
 // value
 func (a *Result) parsePositional(token string) error {
 	i := len(a.pos)
-	var positional Positional
+	var positional AnyPositional
 	if i < len(a.positionals) {
 		positional = a.positionals[i]
 	}
@@ -217,7 +217,7 @@ func (a *Result) parsePositional(token string) error {
 		}
 
 		if !a.app.extraPositionalsAllowed {
-			return cerrors.NewUnexpectedPosError(token)
+			return errors.NewUnexpectedPosError(token)
 		}
 
 		a.extraPos = append(a.extraPos, token)
@@ -231,8 +231,8 @@ func parseArguments(app *App) (*Result, error) {
 		extraPos:       []string{},
 		app:            app,
 		queue:          app.queue,
-		flags:          map[string]Flag{},
-		positionals:    []Positional{},
+		flags:          map[string]AnyFlag{},
+		positionals:    []AnyPositional{},
 		hasHelpFlag:    false,
 		hasVersionFlag: false,
 	}
@@ -299,12 +299,12 @@ func parseArguments(app *App) (*Result, error) {
 	// check for required flags and positionals
 	for _, flag := range cmd.flags {
 		if flag.IsRequired() && !flag.IsProvided() {
-			return args, cerrors.NewMissingRequiredFlagError(flag.Signature())
+			return args, errors.NewMissingRequiredFlagError(flag.Signature())
 		}
 	}
 	for i, positional := range cmd.positionals {
 		if positional.IsRequired() && i >= len(args.pos) {
-			return args, cerrors.NewMissingRequiredPosError(positional.Name())
+			return args, errors.NewMissingRequiredPosError(positional.Name())
 		}
 	}
 

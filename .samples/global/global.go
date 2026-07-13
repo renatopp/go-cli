@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/renatopp/go-cli"
-	"github.com/renatopp/go-cli/pkg"
+	"github.com/renatopp/go-cli/core"
 )
 
 func main() {
@@ -23,7 +23,7 @@ func cmd1() {
 	cli.Parse()
 	cli.Help()
 
-	verbose, _ := cli.GetFlag[*pkg.GenericFlag[bool]]("verbose")
+	verbose, _ := cli.GetFlag[*core.GenericFlag[bool]]("verbose")
 	println("verbose:", verbose.Value())
 }
 
