@@ -294,7 +294,7 @@ func ParseArgs(args []string) *pkg.Result {
 func CheckExclusiveFlags(flags ...pkg.Flag) {
 	parsedSignatures := []string{}
 	for _, flag := range flags {
-		if flag.IsParsed() {
+		if flag.IsProvided() {
 			parsedSignatures = append(parsedSignatures, flag.Signature())
 		}
 	}
@@ -308,7 +308,7 @@ func CheckExclusiveFlags(flags ...pkg.Flag) {
 // function should be called after Parse().
 func CheckAnyFlag(flags ...pkg.Flag) {
 	for _, flag := range flags {
-		if flag.IsParsed() {
+		if flag.IsProvided() {
 			return
 		}
 	}

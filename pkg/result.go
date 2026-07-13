@@ -127,7 +127,7 @@ func (a *Result) parseFlag(name string, value string) error {
 		return err
 	}
 
-	if flag.IsParsed() {
+	if flag.IsProvided() {
 		if !a.app.repeatedFlagsAllowed && !flag.IsRepeatable() {
 			return cerrors.NewRepeatedFlagError(name)
 		}
@@ -298,7 +298,7 @@ func parseArguments(app *App) (*Result, error) {
 
 	// check for required flags and positionals
 	for _, flag := range cmd.flags {
-		if flag.IsRequired() && !flag.IsParsed() {
+		if flag.IsRequired() && !flag.IsProvided() {
 			return args, cerrors.NewMissingRequiredFlagError(flag.Signature())
 		}
 	}

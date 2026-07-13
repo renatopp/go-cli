@@ -11,7 +11,7 @@ type Positional interface {
 	Description() string
 	RawValue() string
 	Parse(value string) error
-	IsParsed() bool
+	IsProvided() bool
 	IsRequired() bool
 	IsHidden() bool
 	IsVariadic() bool
@@ -26,7 +26,7 @@ type GenericPositional[T any] struct {
 	description string // description of the positional argument for help text
 	raw         string // the raw string value provided by the user
 	rawDefault  string // the raw default value for the positional argument
-	parsed      bool   // whether the positional argument has been provided by the user and parsed successfully
+	provided    bool   // whether the positional argument has been provided by the user and parsed successfully
 	defaulted   bool   // whether the positional argument has a default value
 	required    bool   // whether the positional argument is required
 	hidden      bool   // whether the positional argument should be hidden from help output
@@ -103,8 +103,8 @@ func (f *GenericPositional[T]) RawDefault() string { return f.rawDefault }
 // HasDefault returns true if the positional argument has a default value.
 func (f *GenericPositional[T]) HasDefault() bool { return f.defaulted }
 
-// IsParsed returns true if the positional argument has been provided by the user and parsed successfully.
-func (f *GenericPositional[T]) IsParsed() bool { return f.parsed }
+// IsProvided returns true if the positional argument has been provided by the user and parsed successfully.
+func (f *GenericPositional[T]) IsProvided() bool { return f.provided }
 
 // IsRequired returns true if the positional argument is required.
 func (f *GenericPositional[T]) IsRequired() bool { return f.required }
@@ -122,7 +122,7 @@ func (f *GenericPositional[T]) Default() T { return f.default_ }
 // In case of variadic positionals, this will return the last value provided by
 // the user, and all values will be stored in the `values` field.
 func (f *GenericPositional[T]) Value() T {
-	if f.IsParsed() {
+	if f.IsProvided() {
 		return f.value
 	}
 	return f.default_
@@ -132,7 +132,7 @@ func (f *GenericPositional[T]) Value() T {
 // non-variadic positionals, this will return a slice with a single value
 // (the one returned by Value()) or an empty slice
 func (f *GenericPositional[T]) Values() []T {
-	if f.IsParsed() {
+	if f.IsProvided() {
 		return f.values
 	}
 	if f.HasDefault() {
@@ -154,7 +154,7 @@ func (f *GenericPositional[T]) Parse(value string) error {
 
 	f.value = parsedValue
 	f.values = append(f.values, parsedValue)
-	f.parsed = true
+	f.provided = true
 	if f.validator != nil {
 		if err := f.validator(parsedValue); err != nil {
 			return cerrors.NewInvalidPosValueError(f.Name(), err.Error(), err)

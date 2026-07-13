@@ -210,6 +210,13 @@ func (a *App) Help() {
 	fmt.Fprintf(a.stdout, "%s\n", a.GetHelp())
 }
 
+// ParseArgs parse the given arguments instead of os.Args. This is useful for
+// testing and edge cases. The arguments should NOT INCLUDE the program name.
+func (a *App) ParseArgs(args []string) *Result {
+	a.queue = args
+	return a.Parse()
+}
+
 // Parse is called for every command in the path.
 //
 // This function is responsible for traversing the command hierarchy recursively.
@@ -253,14 +260,12 @@ func (a *App) Parse() *Result {
 	args, err := parseArguments(a)
 	a.FatalIf(err)
 	a.arguments = args
-	return args
-}
 
-// ParseArgs parse the given arguments instead of os.Args. This is useful for
-// testing and edge cases. The arguments should NOT INCLUDE the program name.
-func (a *App) ParseArgs(args []string) *Result {
-	a.queue = args
-	return a.Parse()
+	for _, flag := range a.currentCommand.flags {
+		flag.onParsed()
+	}
+
+	return args
 }
 
 func (a *App) initialize() {

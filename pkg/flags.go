@@ -3,7 +3,7 @@ package pkg
 import (
 	"fmt"
 
-	cerrors "github.com/renatopp/go-cli/pkg/errors"
+	"github.com/renatopp/go-cli/pkg/errors"
 )
 
 type Flag interface {
@@ -13,7 +13,7 @@ type Flag interface {
 	RawValue() string
 	Parse(value string) error
 	Count() int
-	IsParsed() bool
+	IsProvided() bool
 	IsRequired() bool
 	IsHidden() bool
 	IsRepeatable() bool
@@ -22,22 +22,24 @@ type Flag interface {
 	HasDefault() bool
 	RawDefault() string
 	Signature() string
+	onParsed()
 }
 
 // Implements a flag with parametric type. You can use this to create custom
 // flags of any types you want but with default behavior.
 type GenericFlag[T any] struct {
-	description string // description of the flag for help text
-	raw         string // the raw string value provided by the user
-	rawDefault  string // the raw default value for the flag, used for help text and error messages
-	parsed      bool   // whether the flag has been provided by the user and parsed successfully
-	defaulted   bool   // whether the flag has a default value
-	required    bool   // whether the flag is required
-	hidden      bool   // whether the flag should be hidden from help output
-	long        string // --name
-	short       string // -n
-	repeatable  bool   // whether the flag can be specified multiple times
-	global      bool   // whether the flag is global
+	description      string                // description of the flag for help text
+	raw              string                // the raw string value provided by the user
+	rawDefault       string                // the raw default value for the flag, used for help text and error messages
+	provided         bool                  // whether the flag has been provided by the user and parsed successfully
+	defaulted        bool                  // whether the flag has a default value
+	required         bool                  // whether the flag is required
+	hidden           bool                  // whether the flag should be hidden from help output
+	long             string                // --name
+	short            string                // -n
+	repeatable       bool                  // whether the flag can be specified multiple times
+	global           bool                  // whether the flag is global
+	onParsedCallback func(*GenericFlag[T]) // callback function to be called after parsing
 
 	value     T                       // the parsed value of the flag, only set after parsing. In case of repeatable flags, this will hold the last value provided by the user, and all values will be stored in the `values` field below.
 	values    []T                     // the parsed values of a repeatable flag, only set after parsing. For non-repeatable flags, this will be a slice with a single value (the one returned by Value()) or an empty slice if the flag was not provided and has no default.
@@ -70,6 +72,15 @@ func (f *GenericFlag[T]) WithDefault(value T) *GenericFlag[T] {
 func (f *GenericFlag[T]) WithValidation(validator func(T) error) *GenericFlag[T] {
 	f.validator = validator
 	return f
+}
+
+// OnParsed registers a callback function that will be called after all arguments have
+// been parsed successfully, just before resuming the execution of the program following
+// the `Parse` call.
+//
+// The callback receives the flag itself as an argument.
+func (f *GenericFlag[T]) OnParsed(cb func(flag *GenericFlag[T])) {
+	f.onParsedCallback = cb
 }
 
 // AsRequired marks the flag as required, meaning the user must provide a value
@@ -116,8 +127,8 @@ func (f *GenericFlag[T]) RawDefault() string { return f.rawDefault }
 // HasDefault returns true if the flag has a default value.
 func (f *GenericFlag[T]) HasDefault() bool { return f.defaulted }
 
-// IsParsed returns true if the flag has been provided by the user and parsed successfully.
-func (f *GenericFlag[T]) IsParsed() bool { return f.parsed }
+// IsProvided returns true if the flag has been provided by the user and parsed successfully.
+func (f *GenericFlag[T]) IsProvided() bool { return f.provided }
 
 // IsRequired returns true if the flag is required.
 func (f *GenericFlag[T]) IsRequired() bool { return f.required }
@@ -158,7 +169,7 @@ func (f *GenericFlag[T]) Default() T {
 // In case of repeatable flags, this will return the last value provided by the
 // user, and all values will be stored in the `Values`.
 func (f *GenericFlag[T]) Value() T {
-	if f.IsParsed() {
+	if f.IsProvided() {
 		return f.value
 	}
 	return f.default_
@@ -166,7 +177,7 @@ func (f *GenericFlag[T]) Value() T {
 
 // Values returns the parsed values for a repeatable flag. For non-repeatable flags, this will return a slice with a single value (the one returned by Value()) or an empty slice if the flag was not provided and has no default.
 func (f *GenericFlag[T]) Values() []T {
-	if f.IsParsed() {
+	if f.IsProvided() {
 		return f.values
 	}
 	if f.HasDefault() {
@@ -183,16 +194,22 @@ func (f *GenericFlag[T]) Count() int { return len(f.values) }
 func (f *GenericFlag[T]) Parse(value string) error {
 	parsedValue, err := f.parser(value)
 	if err != nil {
-		return cerrors.NewInvalidFlagValueError(f.Signature(), value, err)
+		return errors.NewInvalidFlagValueError(f.Signature(), value, err)
 	}
-	f.parsed = true
+	f.provided = true
 	f.value = parsedValue
 	f.values = append(f.values, parsedValue)
 	if f.validator != nil {
 		if err := f.validator(parsedValue); err != nil {
-			return cerrors.NewInvalidFlagValueError(f.Signature(), err.Error(), err)
+			return errors.NewInvalidFlagValueError(f.Signature(), err.Error(), err)
 		}
 	}
 
 	return nil
+}
+
+func (f *GenericFlag[T]) onParsed() {
+	if f.onParsedCallback != nil {
+		f.onParsedCallback(f)
+	}
 }
