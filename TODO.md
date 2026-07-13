@@ -1,6 +1,5 @@
 # TODO
 
-- Colored outputs
 - Rewrite documentation
 
 ## Backlog

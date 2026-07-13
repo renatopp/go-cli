@@ -12,17 +12,14 @@ const dim = "\033[2m"
 const italic = "\033[3m"
 const underline = "\033[4m"
 const reset = "\033[0m"
-const tc_red = "\033[38;2;255;51;102m"
-const tc_accent = "\033[38;2;178;53;212m"
-const ansi_red = "\033[31m"
-const ansi_accent = "\033[36m"
+const accent = "\033[38;5;171m"
+const red = "\033[38;5;9m"
 
 func init() {
-	if supportsTrueColor() {
-		colorMode = "truecolor"
-	} else if supportsColor() {
-		colorMode = "ansi"
+	if supportsColor() {
+		colorMode = "color"
 	}
+	println("mode:", colorMode)
 }
 
 func width() int {
@@ -33,10 +30,8 @@ func titleStyle(s string) string {
 	s = strings.ToUpper(s)
 
 	switch colorMode {
-	case "truecolor":
-		return bold + tc_accent + s + reset
-	case "ansi":
-		return bold + ansi_accent + s + reset
+	case "color":
+		return bold + accent + s + reset
 	default:
 		return s
 	}
@@ -46,9 +41,7 @@ func descriptionStyle(s string) string {
 	s = strings.TrimSpace(s)
 	// s = wrap(s, width())
 	switch colorMode {
-	case "truecolor":
-		return dim + s + reset
-	case "ansi":
+	case "color":
 		return dim + s + reset
 	default:
 		return s
@@ -60,9 +53,7 @@ func shortDescriptionStyle(s string) string {
 	// s = wrap(s, width())
 	s = strings.ReplaceAll(s, "\n", "\n\t")
 	switch colorMode {
-	case "truecolor":
-		return dim + s + reset
-	case "ansi":
+	case "color":
 		return dim + s + reset
 	default:
 		return s
@@ -71,9 +62,7 @@ func shortDescriptionStyle(s string) string {
 
 func tagStyle(s string) string {
 	switch colorMode {
-	case "truecolor":
-		return dim + italic + s + reset
-	case "ansi":
+	case "color":
 		return dim + italic + s + reset
 	default:
 		return s
@@ -82,10 +71,8 @@ func tagStyle(s string) string {
 
 func errorStyle(s string) string {
 	switch colorMode {
-	case "truecolor":
-		return bold + tc_red + s + reset
-	case "ansi":
-		return bold + ansi_red + s + reset
+	case "color":
+		return bold + red + s + reset
 	default:
 		return s
 	}
@@ -93,9 +80,7 @@ func errorStyle(s string) string {
 
 func argStyle(s string) string {
 	switch colorMode {
-	case "truecolor":
-		return s
-	case "ansi":
+	case "color":
 		return s
 	default:
 		return s
@@ -168,20 +153,4 @@ func supportsColor() bool {
 	}
 
 	return true
-}
-
-// supportsTrueColor returns whether 24-bit color is likely supported.
-func supportsTrueColor() bool {
-	if !supportsColor() {
-		return false
-	}
-
-	switch strings.ToLower(os.Getenv("COLORTERM")) {
-	case "truecolor", "24bit":
-		return true
-	}
-
-	// Many modern terminals advertise it in TERM.
-	term := strings.ToLower(os.Getenv("TERM"))
-	return strings.Contains(term, "direct")
 }
