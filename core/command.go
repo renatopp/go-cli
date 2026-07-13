@@ -163,6 +163,11 @@ func (c *Command) Flags() []AnyFlag {
 	return c.flags[:]
 }
 
+// Examples returns the list of examples of the command.
+func (c *Command) Examples() []Example {
+	return c.examples[:]
+}
+
 // HasFlag returns true if the command has a flag with the given long or short name.
 func (c *Command) HasFlag(n string) bool {
 	for _, f := range c.flags {

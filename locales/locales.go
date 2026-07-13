@@ -22,10 +22,12 @@ type Locale struct {
 	CommandsLabel     string // e.g. "Commands"
 	OptionsLabel      string // e.g. "Options"
 	ArgumentsLabel    string // e.g. "Arguments"
-	FlagGlobalLabel   string // e.g. "as in (global)"
-	FlagRequiredLabel string // e.g. "as in (required)"
-	FlagDefaultLabel  string // e.g. "as in (default=%v)", receives the default value
+	TagGlobalLabel    string // e.g. "as in (global)"
+	TagRequiredLabel  string // e.g. "as in (required)"
+	TagDefaultLabel   string // e.g. "as in (default=%v)", receives the default value
+	TagEnvLabel       string // e.g. "as in (env=%v)", receives the default value
 	ErrorLabel        string // e.g. "as in Error: <message>"
+	ExamplesLabel     string // e.g. "as in Examples"
 
 	// Auto-generated flag descriptions
 	HelpFlagDescription    string // description for the automatic --help/-h flag
@@ -61,10 +63,12 @@ func EN() Locale {
 		CommandsLabel:     "Commands",
 		OptionsLabel:      "Options",
 		ArgumentsLabel:    "Arguments",
-		FlagGlobalLabel:   "global",
-		FlagRequiredLabel: "required",
-		FlagDefaultLabel:  "default=%v",
+		TagGlobalLabel:    "global",
+		TagRequiredLabel:  "required",
+		TagDefaultLabel:   "default=%v",
+		TagEnvLabel:       "env=%s",
 		ErrorLabel:        "Error",
+		ExamplesLabel:     "Examples",
 
 		HelpFlagDescription:    "Show help message",
 		VersionFlagDescription: "Show version information",
@@ -93,10 +97,12 @@ func PT_BR() Locale {
 		CommandsLabel:     "Comandos",
 		OptionsLabel:      "Opções",
 		ArgumentsLabel:    "Argumentos",
-		FlagGlobalLabel:   "global",
-		FlagRequiredLabel: "obrigatório",
-		FlagDefaultLabel:  "padrão=%v",
+		TagGlobalLabel:    "global",
+		TagRequiredLabel:  "obrigatório",
+		TagDefaultLabel:   "padrão=%v",
+		TagEnvLabel:       "env=%s",
 		ErrorLabel:        "Erro",
+		ExamplesLabel:     "Exemplos",
 
 		HelpFlagDescription:    "Exibir mensagem de ajuda",
 		VersionFlagDescription: "Exibir informações da versão",

@@ -13,7 +13,7 @@ type typewriter struct {
 	// writer := tabwriter.NewWriter(buffer, 0, 0, 1, ' ', 0)
 }
 
-func newDefaultTypewriter() *typewriter {
+func newTabwriter() *typewriter {
 	return newTypewriter(20, 2, 2, ' ', 0)
 }
 
