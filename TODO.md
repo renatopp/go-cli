@@ -1,7 +1,5 @@
 # TODO
 
-- Rename Arguments? Result
-
 [output]
 - Colored outputs
 - Examples

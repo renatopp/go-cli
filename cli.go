@@ -275,7 +275,7 @@ func Help() {
 // Subcommands are executed based on the first argument that matches a defined
 // name, interrupting the execution of code after the Parse() call on the
 // parent commands.
-func Parse() *pkg.Arguments {
+func Parse() *pkg.Result {
 	return app.Parse()
 }
 
@@ -285,7 +285,7 @@ func Parse() *pkg.Arguments {
 // relying on the command-line input.
 //
 // DO NOT PROVIDE the program name (i.e., os.Args[0]) in the args slice.
-func ParseArgs(args []string) *pkg.Arguments {
+func ParseArgs(args []string) *pkg.Result {
 	return app.ParseArgs(args)
 }
 

@@ -29,7 +29,7 @@ type App struct {
 	queue                   []string // the queue of arguments to be parsed
 	rootCommand             *Command
 	currentCommand          *Command
-	arguments               *Arguments // parsed arguments
+	arguments               *Result // parsed arguments
 	stdout                  io.Writer
 	stderr                  io.Writer
 	helpFormatter           HelpFormatter
@@ -216,7 +216,7 @@ func (a *App) Help() {
 // If a subcommand is found, it will be executed and the parent command will not
 // continue execution. If no subcommand is found, it will parse the flags and
 // positionals for the current command.
-func (a *App) Parse() *Arguments {
+func (a *App) Parse() *Result {
 	// Check if already parsed
 	if a.IsParsed() {
 		return a.arguments
@@ -258,7 +258,7 @@ func (a *App) Parse() *Arguments {
 
 // ParseArgs parse the given arguments instead of os.Args. This is useful for
 // testing and edge cases. The arguments should NOT INCLUDE the program name.
-func (a *App) ParseArgs(args []string) *Arguments {
+func (a *App) ParseArgs(args []string) *Result {
 	a.queue = args
 	return a.Parse()
 }

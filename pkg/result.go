@@ -8,7 +8,7 @@ import (
 	"github.com/renatopp/go-cli/pkg/parsers"
 )
 
-type Arguments struct {
+type Result struct {
 	pos      []string // the list of registered and non-registered positional arguments
 	extraPos []string // the list of extra positional arguments that are not defined in the command
 
@@ -21,15 +21,15 @@ type Arguments struct {
 	hasVersionFlag        bool
 }
 
-func (a *Arguments) PosCount() int {
+func (a *Result) PosCount() int {
 	return len(a.pos)
 }
 
-func (a *Arguments) ExtraPosCount() int {
+func (a *Result) ExtraPosCount() int {
 	return len(a.extraPos)
 }
 
-func (a *Arguments) PosAt(index int) string {
+func (a *Result) PosAt(index int) string {
 	args := a.pos
 	if index < 0 || index >= len(args) {
 		return ""
@@ -37,7 +37,7 @@ func (a *Arguments) PosAt(index int) string {
 	return args[index]
 }
 
-func (a *Arguments) ExtraPosAt(index int) string {
+func (a *Result) ExtraPosAt(index int) string {
 	args := a.extraPos
 	if index < 0 || index >= len(args) {
 		return ""
@@ -45,18 +45,18 @@ func (a *Arguments) ExtraPosAt(index int) string {
 	return args[index]
 }
 
-func (a *Arguments) Pos() []string {
+func (a *Result) Pos() []string {
 	return a.pos[:]
 }
 
-func (a *Arguments) ExtraPos() []string {
+func (a *Result) ExtraPos() []string {
 	return a.extraPos[:]
 }
 
 // next returns the next token from the queue if any. It removes the token
 // from the queue and returns it. Token if the next argument as passed from
 // os.Args.
-func (a *Arguments) next() (string, bool) {
+func (a *Result) next() (string, bool) {
 	if len(a.queue) == 0 {
 		return "", false
 	}
@@ -66,7 +66,7 @@ func (a *Arguments) next() (string, bool) {
 }
 
 // isFlagToken checks if the token follows the flag pattern: --flag or -f
-func (a *Arguments) isFlagToken(token string) bool {
+func (a *Result) isFlagToken(token string) bool {
 	if len(token) < 2 {
 		return false
 	}
@@ -82,7 +82,7 @@ func (a *Arguments) isFlagToken(token string) bool {
 }
 
 // isBooleanFlag checks if the flag object is a boolean flag
-func (a *Arguments) isBooleanFlag(name string) bool {
+func (a *Result) isBooleanFlag(name string) bool {
 	if flag, ok := a.flags[name]; ok {
 		_, ok := flag.(*GenericFlag[bool])
 		return ok
@@ -91,7 +91,7 @@ func (a *Arguments) isBooleanFlag(name string) bool {
 }
 
 // tryGetFlag tries to get the flag from the command
-func (a *Arguments) tryGetFlag(name string) (Flag, error) {
+func (a *Result) tryGetFlag(name string) (Flag, error) {
 	if name == "help" || name == "h" {
 		a.hasHelpFlag = true
 	}
@@ -121,7 +121,7 @@ func (a *Arguments) tryGetFlag(name string) (Flag, error) {
 }
 
 // parseFlag parses the flag with the given value. It checks for repeated flags
-func (a *Arguments) parseFlag(name string, value string) error {
+func (a *Result) parseFlag(name string, value string) error {
 	flag, err := a.tryGetFlag(name)
 	if flag == nil {
 		return err
@@ -137,7 +137,7 @@ func (a *Arguments) parseFlag(name string, value string) error {
 }
 
 // --name=value | --name value | --name
-func (a *Arguments) parseLong(token string) error {
+func (a *Result) parseLong(token string) error {
 	switch {
 	case strings.Contains(token, "="):
 		// signed long flag, e.g., --name=value
@@ -165,7 +165,7 @@ func (a *Arguments) parseLong(token string) error {
 }
 
 // -f value | -fvalue | -f | -abc
-func (a *Arguments) parseShort(token string) error {
+func (a *Result) parseShort(token string) error {
 	name := token[1:]
 	for {
 		size := len(name)
@@ -200,7 +200,7 @@ func (a *Arguments) parseShort(token string) error {
 }
 
 // value
-func (a *Arguments) parsePositional(token string) error {
+func (a *Result) parsePositional(token string) error {
 	i := len(a.pos)
 	var positional Positional
 	if i < len(a.positionals) {
@@ -225,8 +225,8 @@ func (a *Arguments) parsePositional(token string) error {
 	return nil
 }
 
-func parseArguments(app *App) (*Arguments, error) {
-	args := &Arguments{
+func parseArguments(app *App) (*Result, error) {
+	args := &Result{
 		pos:            []string{},
 		extraPos:       []string{},
 		app:            app,
