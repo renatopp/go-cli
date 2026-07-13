@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"io"
+	"os"
 	"time"
 
 	"github.com/renatopp/go-cli/core"
@@ -392,4 +393,13 @@ func GetFlag[T core.AnyFlag](longOrShort string) (T, error) {
 	}
 
 	return typed, nil
+}
+
+// IsTTY returns true if stdout is attached to a terminal.
+func IsTTY() bool {
+	info, err := os.Stdout.Stat()
+	if err != nil {
+		return false
+	}
+	return (info.Mode() & os.ModeCharDevice) != 0
 }

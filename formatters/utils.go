@@ -5,9 +5,25 @@ import (
 	"strings"
 )
 
-var no_color = os.Getenv("NO_COLOR")
+var colorMode = "none"
 
-// var columns, _ = strconv.Atoi(os.Getenv("COLUMNS"))
+const bold = "\033[1m"
+const dim = "\033[2m"
+const italic = "\033[3m"
+const underline = "\033[4m"
+const reset = "\033[0m"
+const tc_red = "\033[38;2;255;51;102m"
+const tc_accent = "\033[38;2;178;53;212m"
+const ansi_red = "\033[31m"
+const ansi_accent = "\033[36m"
+
+func init() {
+	if supportsTrueColor() {
+		colorMode = "truecolor"
+	} else if supportsColor() {
+		colorMode = "ansi"
+	}
+}
 
 func width() int {
 	return 100
@@ -15,43 +31,75 @@ func width() int {
 
 func titleStyle(s string) string {
 	s = strings.ToUpper(s)
-	if no_color != "" {
+
+	switch colorMode {
+	case "truecolor":
+		return bold + tc_accent + s + reset
+	case "ansi":
+		return bold + ansi_accent + s + reset
+	default:
 		return s
 	}
-	return "\033[1m\033[38;5;5m" + s + "\033[0m"
 }
 
 func descriptionStyle(s string) string {
 	s = strings.TrimSpace(s)
 	// s = wrap(s, width())
-	if no_color != "" {
+	switch colorMode {
+	case "truecolor":
+		return dim + s + reset
+	case "ansi":
+		return dim + s + reset
+	default:
 		return s
 	}
-	return "\033[2m" + s + "\033[0m"
 }
 
 func shortDescriptionStyle(s string) string {
 	s = strings.ReplaceAll(s, "\t", "")
 	// s = wrap(s, width())
 	s = strings.ReplaceAll(s, "\n", "\n\t")
-	if no_color != "" {
+	switch colorMode {
+	case "truecolor":
+		return dim + s + reset
+	case "ansi":
+		return dim + s + reset
+	default:
 		return s
 	}
-	return "\033[2m" + s + "\033[0m"
 }
 
 func tagStyle(s string) string {
-	if no_color != "" {
+	switch colorMode {
+	case "truecolor":
+		return dim + italic + s + reset
+	case "ansi":
+		return dim + italic + s + reset
+	default:
 		return s
 	}
-	return "\033[1m\033[3m" + s + "\033[0m"
 }
 
 func errorStyle(s string) string {
-	if no_color != "" {
+	switch colorMode {
+	case "truecolor":
+		return bold + tc_red + s + reset
+	case "ansi":
+		return bold + ansi_red + s + reset
+	default:
 		return s
 	}
-	return "\033[1m\033[31m" + s + "\033[0m"
+}
+
+func argStyle(s string) string {
+	switch colorMode {
+	case "truecolor":
+		return s
+	case "ansi":
+		return s
+	default:
+		return s
+	}
 }
 
 func indent(s string, spaces int, char string) string {
@@ -88,4 +136,52 @@ func wrap(s string, width int) string {
 		lines = append(lines, currentLine)
 	}
 	return strings.Join(lines, "\n")
+}
+
+func isTTY() bool {
+	info, err := os.Stdout.Stat()
+	if err != nil {
+		return false
+	}
+	return (info.Mode() & os.ModeCharDevice) != 0
+}
+
+// supportsColor returns whether ANSI colors are likely supported.
+func supportsColor() bool {
+	if !isTTY() {
+		return false
+	}
+
+	// Explicitly disabled.
+	if os.Getenv("NO_COLOR") != "" {
+		return false
+	}
+
+	// Explicitly forced.
+	if os.Getenv("CLICOLOR_FORCE") != "" {
+		return true
+	}
+
+	term := os.Getenv("TERM")
+	if term == "" || term == "dumb" {
+		return false
+	}
+
+	return true
+}
+
+// supportsTrueColor returns whether 24-bit color is likely supported.
+func supportsTrueColor() bool {
+	if !supportsColor() {
+		return false
+	}
+
+	switch strings.ToLower(os.Getenv("COLORTERM")) {
+	case "truecolor", "24bit":
+		return true
+	}
+
+	// Many modern terminals advertise it in TERM.
+	term := strings.ToLower(os.Getenv("TERM"))
+	return strings.Contains(term, "direct")
 }

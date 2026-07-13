@@ -80,7 +80,10 @@ func DefaultHelpFormatter(cmd *core.Command, loc locales.Locale) string {
 			if sub.IsHidden() {
 				continue
 			}
-			writer.WriteLine("  %s\t%s", sub.Name(), shortDescriptionStyle(sub.ShortDescription()))
+			writer.WriteLine("  %s\t%s",
+				argStyle(sub.Name()),
+				shortDescriptionStyle(sub.ShortDescription()),
+			)
 		}
 	}
 
@@ -112,7 +115,11 @@ func DefaultHelpFormatter(cmd *core.Command, loc locales.Locale) string {
 			if len(tags) > 0 {
 				tagsString = fmt.Sprintf(" (%s)", strings.Join(tags, ", "))
 			}
-			writer.WriteLine("  %s\t%s%s", opts, shortDescriptionStyle(desc), tagStyle(tagsString))
+			writer.WriteLine("  %s\t%s%s",
+				argStyle(opts),
+				shortDescriptionStyle(desc),
+				tagStyle(tagsString),
+			)
 		}
 	}
 
@@ -140,7 +147,11 @@ func DefaultHelpFormatter(cmd *core.Command, loc locales.Locale) string {
 			if len(tags) > 0 {
 				tagsString = fmt.Sprintf(" (%s)", strings.Join(tags, ", "))
 			}
-			writer.WriteLine("  %s\t%s%s", p.Name(), shortDescriptionStyle(desc), tagStyle(tagsString))
+			writer.WriteLine("  %s\t%s%s",
+				argStyle(p.Name()),
+				shortDescriptionStyle(desc),
+				tagStyle(tagsString),
+			)
 		}
 	}
 
@@ -152,7 +163,7 @@ func DefaultHelpFormatter(cmd *core.Command, loc locales.Locale) string {
 			if i > 0 {
 				writer.WriteLine("")
 			}
-			writer.WriteLine("  %s", ex.Usage)
+			writer.WriteLine("  %s", argStyle(ex.Usage))
 			writer.WriteLine("  %s", shortDescriptionStyle(ex.Description))
 		}
 	}
