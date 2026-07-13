@@ -1,7 +1,6 @@
 # TODO
 
-- Improving/Simplifying parsing logic 
-- Remove raw default logic
+- Rename Arguments? Result
 
 [output]
 - Colored outputs
@@ -34,3 +33,6 @@
 - Add license file
 - Comparison table
 - Add design phylosophy readme
+
+Future:
+- Improving/Simplifying parsing logic

@@ -22,7 +22,6 @@ type Flag interface {
 	HasDefault() bool
 	RawDefault() string
 	Signature() string
-	SetRawDefault(rawDefault string)
 }
 
 // Implements a flag with parametric type. You can use this to create custom
@@ -30,7 +29,7 @@ type Flag interface {
 type GenericFlag[T any] struct {
 	description string // description of the flag for help text
 	raw         string // the raw string value provided by the user
-	rawDefault  string // the raw default value for the flag
+	rawDefault  string // the raw default value for the flag, used for help text and error messages
 	parsed      bool   // whether the flag has been provided by the user and parsed successfully
 	defaulted   bool   // whether the flag has a default value
 	required    bool   // whether the flag is required
@@ -57,17 +56,11 @@ func NewGenericFlag[T any](long, short, description string, parser func(string) 
 	}
 }
 
-// SetRawDefault sets the raw default value for the flag and marks it as
-// having a default value.
-func (f *GenericFlag[T]) SetRawDefault(rawDefault string) {
-	f.rawDefault = rawDefault
-	f.defaulted = true
-}
-
 // WithDefault sets the default value for the flag.
 func (f *GenericFlag[T]) WithDefault(value T) *GenericFlag[T] {
 	f.default_ = value
-	f.SetRawDefault(fmt.Sprintf("%v", value))
+	f.rawDefault = fmt.Sprintf("%v", value)
+	f.defaulted = true
 	return f
 }
 
@@ -154,6 +147,11 @@ func (f *GenericFlag[T]) Signature() string {
 		return "-" + f.short
 	}
 	return ""
+}
+
+// Default returns the default value for the flag.
+func (f *GenericFlag[T]) Default() T {
+	return f.default_
 }
 
 // Value returns the parsed value OR the default value if there is one.

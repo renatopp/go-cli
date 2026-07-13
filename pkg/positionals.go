@@ -17,7 +17,6 @@ type Positional interface {
 	IsVariadic() bool
 	HasDefault() bool
 	RawDefault() string
-	SetRawDefault(rawDefault string)
 }
 
 // Implements a positional argument with parametric type. You can use this to
@@ -53,7 +52,8 @@ func NewGenericPositional[T any](name, description string, parser func(string) (
 // WithDefault sets the default value for the positional argument.
 func (f *GenericPositional[T]) WithDefault(value T) *GenericPositional[T] {
 	f.default_ = value
-	f.SetRawDefault(fmt.Sprintf("%v", value))
+	f.rawDefault = fmt.Sprintf("%v", value)
+	f.defaulted = true
 	return f
 }
 
@@ -115,6 +115,9 @@ func (f *GenericPositional[T]) IsHidden() bool { return f.hidden }
 // IsVariadic returns true if this is a variadic positional argument (e.g., "files...").
 func (f *GenericPositional[T]) IsVariadic() bool { return f.variadic }
 
+// Default returns the default value for the positional argument.
+func (f *GenericPositional[T]) Default() T { return f.default_ }
+
 // Value returns the parsed value OR the default value if there is one.
 // In case of variadic positionals, this will return the last value provided by
 // the user, and all values will be stored in the `values` field.
@@ -159,11 +162,4 @@ func (f *GenericPositional[T]) Parse(value string) error {
 	}
 
 	return nil
-}
-
-// SetRawDefault sets the raw default value for the positional argument and
-// marks it as having a default value.
-func (f *GenericPositional[T]) SetRawDefault(rawDefault string) {
-	f.rawDefault = rawDefault
-	f.defaulted = true
 }
