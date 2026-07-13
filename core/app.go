@@ -207,7 +207,7 @@ func (a *App) Exit(code int) {
 // Help prints the help message for the current command, including its description,
 // usage, and available flags and subcommands, using the help formatter.
 func (a *App) Help() {
-	fmt.Fprintf(a.stdout, "%s\n", a.GetHelp())
+	fmt.Fprintf(a.stdout, "%s", a.GetHelp())
 }
 
 // ParseArgs parse the given arguments instead of os.Args. This is useful for

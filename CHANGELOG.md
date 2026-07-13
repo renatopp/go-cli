@@ -1,3 +1,7 @@
+# 0.6.2 (2026-07-13)
+
+Removing extra \n on help output.
+
 # 0.6.1 (2026-07-13)
 
 Removing debug print.
