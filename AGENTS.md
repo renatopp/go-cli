@@ -14,9 +14,10 @@ Philosophy:
 - Strict by default, but flexible
 
 Internal Coding Rules:
-- No global variables
+- No global state apart from the default app
 - No external dependencies
 - Public methods before private methods
 - Public functions before private functions
 - Types before functions, but struct declaraction should be followed by its factory function
 - App should have the same interface (or superset) as @cli.go
+- @cli.go follows DSL-like interface, other files should follow descritive, builder-like interface

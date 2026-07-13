@@ -10,12 +10,12 @@ func main() {
 	cli.Command("private", "an internal command", func() {}).AsHidden()
 	cli.Command("public", "a public command", func() {})
 
-	cli.Flag("secret", "s", "a secret flag").AsHidden()
-	cli.Flag("public", "p", "a public flag")
+	cli.FlagString("secret", "s", "a secret flag").AsHidden()
+	cli.FlagString("public", "p", "a public flag")
 
 	cli.Pos("hidden", "a hidden positional").AsHidden()
 	cli.Pos("public", "public positional")
 	cli.Parse()
 
-	cli.ShowHelp()
+	cli.Help()
 }

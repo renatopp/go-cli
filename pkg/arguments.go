@@ -1,14 +1,16 @@
-package internal
+package pkg
 
 import (
 	"fmt"
-	"github.com/renatopp/go-cli/parsers"
 	"strings"
+
+	cerrors "github.com/renatopp/go-cli/pkg/errors"
+	"github.com/renatopp/go-cli/pkg/parsers"
 )
 
 type Arguments struct {
-	Args      []string // the list of registered and non-registered positional arguments
-	ExtraArgs []string // the list of extra positional arguments that are not defined in the command
+	pos      []string // the list of registered and non-registered positional arguments
+	extraPos []string // the list of extra positional arguments that are not defined in the command
 
 	app                   *App     // reference to the main app for accessing configuration like AllowExtraPositionals
 	queue                 []string // the queue of arguments to be parsed
@@ -19,90 +21,36 @@ type Arguments struct {
 	hasVersionFlag        bool
 }
 
-func parseArguments(app *App) (*Arguments, error) {
-	args := &Arguments{
-		Args:           []string{},
-		ExtraArgs:      []string{},
-		app:            app,
-		queue:          app.queue,
-		flags:          map[string]Flag{},
-		positionals:    []Positional{},
-		hasHelpFlag:    false,
-		hasVersionFlag: false,
+func (a *Arguments) PosCount() int {
+	return len(a.pos)
+}
+
+func (a *Arguments) ExtraPosCount() int {
+	return len(a.extraPos)
+}
+
+func (a *Arguments) PosAt(index int) string {
+	args := a.pos
+	if index < 0 || index >= len(args) {
+		return ""
 	}
+	return args[index]
+}
 
-	cmd := app.CurrentCommand()
-
-	// prepare the flags and positionals maps for easy lookup during parsing
-	for _, flag := range cmd.flags {
-		args.flags[flag.Long()] = flag
-		args.flags[flag.Short()] = flag
+func (a *Arguments) ExtraPosAt(index int) string {
+	args := a.extraPos
+	if index < 0 || index >= len(args) {
+		return ""
 	}
-	for _, positional := range cmd.positionals {
-		args.positionals = append(args.positionals, positional)
-		if positional.IsVariadic() {
-			args.hasVariadicPositional = true
-		}
-	}
+	return args[index]
+}
 
-	// parse the arguments
-	eoo := false // end of options, i.e., after -- is encountered
-	var err error
-	for {
-		tok, ok := args.next()
-		if !ok {
-			break
-		}
+func (a *Arguments) Pos() []string {
+	return a.pos[:]
+}
 
-		switch {
-		case !eoo && tok == "--":
-			eoo = true
-			err = nil
-
-		case !eoo && args.isFlagToken(tok) && strings.HasPrefix(tok, "--"):
-			err = args.parseLong(tok)
-
-		case !eoo && args.isFlagToken(tok) && strings.HasPrefix(tok, "-"):
-			err = args.parseShort(tok)
-
-		default:
-			err = args.parsePositional(tok)
-		}
-
-		if err != nil {
-			break
-		}
-	}
-
-	// check for auto help or auto version before performing other validations
-	if app.autoHelp && args.hasHelpFlag {
-		app.ShowHelp()
-		app.Exit(0)
-	}
-
-	if app.version != "" && args.hasVersionFlag && app.CurrentCommand() == app.RootCommand() {
-		app.Print(app.version)
-		app.Exit(0)
-	}
-
-	// check validations
-	if err != nil {
-		return args, err
-	}
-
-	// check for required flags and positionals
-	for _, flag := range cmd.flags {
-		if flag.IsRequired() && !flag.IsParsed() {
-			return args, fmt.Errorf(GetLocale().ErrMissingRequiredFlag, flag.Signature())
-		}
-	}
-	for i, positional := range cmd.positionals {
-		if positional.IsRequired() && i >= len(args.Args) {
-			return args, fmt.Errorf(GetLocale().ErrMissingRequiredPositional, positional.Name())
-		}
-	}
-
-	return args, nil
+func (a *Arguments) ExtraPos() []string {
+	return a.extraPos[:]
 }
 
 // next returns the next token from the queue if any. It removes the token
@@ -169,7 +117,7 @@ func (a *Arguments) tryGetFlag(name string) (Flag, error) {
 		a.flags[name] = extraFlag
 		return extraFlag, nil
 	}
-	return nil, fmt.Errorf(GetLocale().ErrUnknownFlag, name)
+	return nil, cerrors.NewUnknownFlagError(name)
 }
 
 // parseFlag parses the flag with the given value. It checks for repeated flags
@@ -181,7 +129,7 @@ func (a *Arguments) parseFlag(name string, value string) error {
 
 	if flag.IsParsed() {
 		if !a.app.repeatedFlagsAllowed && !flag.IsRepeatable() {
-			return fmt.Errorf(GetLocale().ErrFlagSpecifiedMultiple, name)
+			return cerrors.NewRepeatedFlagError(name)
 		}
 	}
 
@@ -208,7 +156,7 @@ func (a *Arguments) parseLong(token string) error {
 		if hasFlag {
 			value, ok := a.next()
 			if !ok {
-				return fmt.Errorf(GetLocale().ErrMissingValueForFlag, name)
+				return cerrors.NewMissingFlagValueError(name)
 			}
 			return a.parseFlag(name, value)
 		}
@@ -233,7 +181,7 @@ func (a *Arguments) parseShort(token string) error {
 			_, hasFlag := a.flags[name]
 			value, ok := a.next()
 			if hasFlag && !ok {
-				return fmt.Errorf(GetLocale().ErrMissingValueForFlag, name)
+				return cerrors.NewMissingFlagValueError(name)
 			}
 			return a.parseFlag(name, value)
 
@@ -253,13 +201,13 @@ func (a *Arguments) parseShort(token string) error {
 
 // value
 func (a *Arguments) parsePositional(token string) error {
-	i := len(a.Args)
+	i := len(a.pos)
 	var positional Positional
 	if i < len(a.positionals) {
 		positional = a.positionals[i]
 	}
 
-	a.Args = append(a.Args, token)
+	a.pos = append(a.pos, token)
 	if positional != nil {
 		return positional.Parse(token)
 	} else {
@@ -269,10 +217,96 @@ func (a *Arguments) parsePositional(token string) error {
 		}
 
 		if !a.app.extraPositionalsAllowed {
-			return fmt.Errorf(GetLocale().ErrUnexpectedExtraPositional, token)
+			return cerrors.NewUnexpectedPosError(token)
 		}
 
-		a.ExtraArgs = append(a.ExtraArgs, token)
+		a.extraPos = append(a.extraPos, token)
 	}
 	return nil
+}
+
+func parseArguments(app *App) (*Arguments, error) {
+	args := &Arguments{
+		pos:            []string{},
+		extraPos:       []string{},
+		app:            app,
+		queue:          app.queue,
+		flags:          map[string]Flag{},
+		positionals:    []Positional{},
+		hasHelpFlag:    false,
+		hasVersionFlag: false,
+	}
+
+	cmd := app.CurrentCommand()
+
+	// prepare the flags and positionals maps for easy lookup during parsing
+	for _, flag := range cmd.flags {
+		args.flags[flag.Long()] = flag
+		args.flags[flag.Short()] = flag
+	}
+	for _, positional := range cmd.positionals {
+		args.positionals = append(args.positionals, positional)
+		if positional.IsVariadic() {
+			args.hasVariadicPositional = true
+		}
+	}
+
+	// parse the arguments
+	eoo := false // end of options, i.e., after -- is encountered
+	var err error
+	for {
+		tok, ok := args.next()
+		if !ok {
+			break
+		}
+
+		switch {
+		case !eoo && tok == "--":
+			eoo = true
+			err = nil
+
+		case !eoo && args.isFlagToken(tok) && strings.HasPrefix(tok, "--"):
+			err = args.parseLong(tok)
+
+		case !eoo && args.isFlagToken(tok) && strings.HasPrefix(tok, "-"):
+			err = args.parseShort(tok)
+
+		default:
+			err = args.parsePositional(tok)
+		}
+
+		if err != nil {
+			break
+		}
+	}
+
+	// check for auto help or auto version before performing other validations
+	if app.autoHelp && args.hasHelpFlag {
+		app.Help()
+		app.Exit(0)
+	}
+
+	if app.version != "" && args.hasVersionFlag && app.CurrentCommand() == app.RootCommand() {
+		fmt.Fprintf(app.stdout, "%s\n", app.version)
+		app.Exit(0)
+	}
+
+	// check validations
+	if err != nil {
+		return args, err
+	}
+
+	// check for required flags and positionals
+	for _, flag := range cmd.flags {
+		if flag.IsRequired() && !flag.IsParsed() {
+			return args, cerrors.NewMissingRequiredFlagError(flag.Signature())
+		}
+	}
+	for i, positional := range cmd.positionals {
+		if positional.IsRequired() && i >= len(args.pos) {
+			return args, cerrors.NewMissingRequiredPosError(positional.Name())
+		}
+	}
+
+	return args, nil
 }

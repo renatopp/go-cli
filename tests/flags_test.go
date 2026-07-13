@@ -9,8 +9,8 @@ import (
 
 func TestFlagInvalidExtra(t *testing.T) {
 	defer cli.Clear()
-	cli.UsePanicInsteadOfExit(true)
-	cli.StderrWith(printfContains(t, "unknown flag"))
+	cli.UsePanic(true)
+	cli.Stderr(printfContains(t, "unknown flag"))
 	expectPanicWith(t, func() {
 		cli.ParseArgs(make_args("--a", "1"))
 	}, 1)
@@ -24,14 +24,14 @@ func TestFlagExtra(t *testing.T) {
 
 func TestFlagAssignedLong(t *testing.T) {
 	defer cli.Clear()
-	a := cli.Flag("long", "", "")
+	a := cli.FlagString("long", "", "")
 	cli.ParseArgs(make_args("--long=1"))
 	assertEqual(t, a.Value(), "1")
 }
 
 func TestFlagUnassignedLong(t *testing.T) {
 	defer cli.Clear()
-	a := cli.Flag("long", "", "")
+	a := cli.FlagString("long", "", "")
 	cli.ParseArgs(make_args("--long", "1"))
 	assertEqual(t, a.Value(), "1")
 }
@@ -39,24 +39,24 @@ func TestFlagUnassignedLong(t *testing.T) {
 func TestFlagBoolean(t *testing.T) {
 	defer cli.Clear()
 	a := cli.FlagBool("long", "", "")
-	cli.AllowExtraPositionals(true)
-	cli.ParseArgs(make_args("--long", "1"))
+	cli.AllowExtraPos(true)
+	arguments := cli.ParseArgs(make_args("--long", "1"))
 	assertEqual(t, a.Value(), true)
-	assertEqual(t, cli.ExtraArg(0), "1")
+	assertEqual(t, arguments.ExtraPosAt(0), "1")
 }
 
 func TestFlagLongWithDashedValue(t *testing.T) {
 	defer cli.Clear()
-	a := cli.Flag("long", "", "")
+	a := cli.FlagString("long", "", "")
 	cli.ParseArgs(make_args("--long", "--name"))
 	assertEqual(t, a.Value(), "--name")
 }
 
 func TestFlagInvalidLongWithoutValue(t *testing.T) {
 	defer cli.Clear()
-	cli.UsePanicInsteadOfExit(true)
-	cli.StderrWith(printfContains(t, "missing value for flag"))
-	cli.Flag("long", "", "")
+	cli.UsePanic(true)
+	cli.Stderr(printfContains(t, "missing value for flag"))
+	cli.FlagString("long", "", "")
 	expectPanicWith(t, func() {
 		cli.ParseArgs(make_args("--long"))
 	}, 1)
@@ -64,14 +64,14 @@ func TestFlagInvalidLongWithoutValue(t *testing.T) {
 
 func TestFlagShortUncombined(t *testing.T) {
 	defer cli.Clear()
-	a := cli.Flag("", "s", "")
+	a := cli.FlagString("", "s", "")
 	cli.ParseArgs(make_args("-s", "1"))
 	assertEqual(t, a.Value(), "1")
 }
 
 func TestFlagShortCombinedValue(t *testing.T) {
 	defer cli.Clear()
-	a := cli.Flag("", "s", "")
+	a := cli.FlagString("", "s", "")
 	cli.ParseArgs(make_args("-s1"))
 	assertEqual(t, a.Value(), "1")
 }
@@ -79,24 +79,24 @@ func TestFlagShortCombinedValue(t *testing.T) {
 func TestFlagShortBoolean(t *testing.T) {
 	defer cli.Clear()
 	a := cli.FlagBool("", "s", "")
-	cli.AllowExtraPositionals(true)
-	cli.ParseArgs(make_args("-s", "1"))
+	cli.AllowExtraPos(true)
+	arguments := cli.ParseArgs(make_args("-s", "1"))
 	assertEqual(t, a.Value(), true)
-	assertEqual(t, cli.ExtraArg(0), "1")
+	assertEqual(t, arguments.ExtraPosAt(0), "1")
 }
 
 func TestFlagShortCombinedDashedValue(t *testing.T) {
 	defer cli.Clear()
-	a := cli.Flag("", "s", "")
+	a := cli.FlagString("", "s", "")
 	cli.ParseArgs(make_args("-s--name"))
 	assertEqual(t, a.Value(), "--name")
 }
 
 func TestFlagInvalidShortWithoutValue(t *testing.T) {
 	defer cli.Clear()
-	cli.UsePanicInsteadOfExit(true)
-	cli.StderrWith(printfContains(t, "missing value for flag"))
-	cli.Flag("", "s", "")
+	cli.UsePanic(true)
+	cli.Stderr(printfContains(t, "missing value for flag"))
+	cli.FlagString("", "s", "")
 	expectPanicWith(t, func() {
 		cli.ParseArgs(make_args("-s"))
 	}, 1)
@@ -116,7 +116,7 @@ func TestFlagCombined(t *testing.T) {
 func TestFlagCombinedWithValue(t *testing.T) {
 	defer cli.Clear()
 	a := cli.FlagBool("", "a", "")
-	b := cli.Flag("", "b", "")
+	b := cli.FlagString("", "b", "")
 	c := cli.FlagBool("", "c", "")
 	cli.ParseArgs(make_args("-ab1"))
 	assertEqual(t, a.Value(), true)
@@ -127,7 +127,7 @@ func TestFlagCombinedWithValue(t *testing.T) {
 func TestFlagCombinedWithDashedValue(t *testing.T) {
 	defer cli.Clear()
 	a := cli.FlagBool("", "a", "")
-	b := cli.Flag("", "b", "")
+	b := cli.FlagString("", "b", "")
 	c := cli.FlagBool("", "c", "")
 	cli.ParseArgs(make_args("-ab--name"))
 	assertEqual(t, a.Value(), true)
@@ -137,9 +137,9 @@ func TestFlagCombinedWithDashedValue(t *testing.T) {
 
 func TestFlagInvalidRepeatedLong(t *testing.T) {
 	defer cli.Clear()
-	cli.UsePanicInsteadOfExit(true)
-	cli.StderrWith(printfContains(t, "specified multiple times"))
-	cli.Flag("a", "", "")
+	cli.UsePanic(true)
+	cli.Stderr(printfContains(t, "specified multiple times"))
+	cli.FlagString("a", "", "")
 	expectPanicWith(t, func() {
 		cli.ParseArgs(make_args("--a", "1", "--a", "2"))
 	}, 1)
@@ -147,9 +147,9 @@ func TestFlagInvalidRepeatedLong(t *testing.T) {
 
 func TestFlagInvalidRepeatedShort(t *testing.T) {
 	defer cli.Clear()
-	cli.UsePanicInsteadOfExit(true)
-	cli.StderrWith(printfContains(t, "specified multiple times"))
-	cli.Flag("", "a", "")
+	cli.UsePanic(true)
+	cli.Stderr(printfContains(t, "specified multiple times"))
+	cli.FlagString("", "a", "")
 	expectPanicWith(t, func() {
 		cli.ParseArgs(make_args("-a", "1", "-a", "2"))
 	}, 1)
@@ -158,7 +158,7 @@ func TestFlagInvalidRepeatedShort(t *testing.T) {
 func TestFlagRepeatedAllowedGlobally(t *testing.T) {
 	defer cli.Clear()
 	cli.AllowRepeatedFlags(true)
-	a := cli.Flag("a", "", "")
+	a := cli.FlagString("a", "", "")
 	cli.ParseArgs(make_args("--a", "1", "--a", "2"))
 	assertEqual(t, a.Value(), "2")
 	assertEqual(t, a.Values()[0], "1")
@@ -168,7 +168,7 @@ func TestFlagRepeatedAllowedGlobally(t *testing.T) {
 
 func TestFlagRepeatedAllowedLocally(t *testing.T) {
 	defer cli.Clear()
-	a := cli.Flag("a", "", "").AsRepeatable()
+	a := cli.FlagString("a", "", "").AsRepeatable()
 	cli.ParseArgs(make_args("--a", "1", "--a", "2"))
 	assertEqual(t, a.Value(), "2")
 	assertEqual(t, a.Values()[0], "1")
@@ -187,9 +187,9 @@ func TestFlagRepeatedCombined(t *testing.T) {
 
 func TestFlagRequired(t *testing.T) {
 	defer cli.Clear()
-	cli.UsePanicInsteadOfExit(true)
-	cli.StderrWith(printfContains(t, "missing required flag"))
-	cli.Flag("a", "", "").AsRequired()
+	cli.UsePanic(true)
+	cli.Stderr(printfContains(t, "missing required flag"))
+	cli.FlagString("a", "", "").AsRequired()
 	expectPanicWith(t, func() {
 		cli.ParseArgs(make_args())
 	}, 1)
@@ -197,7 +197,7 @@ func TestFlagRequired(t *testing.T) {
 
 func TestFlagRequiredWithValue(t *testing.T) {
 	defer cli.Clear()
-	a := cli.Flag("a", "", "").AsRequired()
+	a := cli.FlagString("a", "", "").AsRequired()
 	cli.ParseArgs(make_args("--a", "1"))
 	assertEqual(t, a.Value(), "1")
 }
@@ -213,14 +213,14 @@ func TestFlagRequiredCombined(t *testing.T) {
 
 func TestFlagOptional(t *testing.T) {
 	defer cli.Clear()
-	a := cli.Flag("a", "", "").WithDefault("defaulted")
+	a := cli.FlagString("a", "", "").WithDefault("defaulted")
 	cli.ParseArgs(make_args())
 	assertEqual(t, a.Value(), "defaulted")
 }
 
 func TestFlagOptionalWithValue(t *testing.T) {
 	defer cli.Clear()
-	a := cli.Flag("a", "", "").WithDefault("defaulted")
+	a := cli.FlagString("a", "", "").WithDefault("defaulted")
 	cli.ParseArgs(make_args("--a", "1"))
 	assertEqual(t, a.Value(), "1")
 }
@@ -228,10 +228,10 @@ func TestFlagOptionalWithValue(t *testing.T) {
 func TestFlagHiddenNotInHelpButParses(t *testing.T) {
 	defer cli.Clear()
 
-	hidden := cli.Flag("secret", "s", "hidden flag").AsHidden()
-	visible := cli.Flag("name", "n", "visible flag")
+	hidden := cli.FlagString("secret", "s", "hidden flag").AsHidden()
+	visible := cli.FlagString("name", "n", "visible flag")
 
-	help := cli.HelpString()
+	help := cli.GetHelp()
 	assertFalse(t, strings.Contains(help, "--secret"))
 	assertFalse(t, strings.Contains(help, "hidden flag"))
 	assertTrue(t, strings.Contains(help, "--name"))
@@ -244,9 +244,9 @@ func TestFlagHiddenNotInHelpButParses(t *testing.T) {
 func TestFlagHiddenRequiredStillValidated(t *testing.T) {
 	defer cli.Clear()
 
-	cli.UsePanicInsteadOfExit(true)
-	cli.StderrWith(printfContains(t, "missing required flag"))
-	cli.Flag("secret", "s", "hidden required flag").AsHidden().AsRequired()
+	cli.UsePanic(true)
+	cli.Stderr(printfContains(t, "missing required flag"))
+	cli.FlagString("secret", "s", "hidden required flag").AsHidden().AsRequired()
 
 	expectPanicWith(t, func() {
 		cli.ParseArgs(make_args())

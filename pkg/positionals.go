@@ -1,6 +1,10 @@
-package internal
+package pkg
 
-import "fmt"
+import (
+	"fmt"
+
+	cerrors "github.com/renatopp/go-cli/pkg/errors"
+)
 
 type Positional interface {
 	Name() string
@@ -46,68 +50,6 @@ func NewGenericPositional[T any](name, description string, parser func(string) (
 	}
 }
 
-// Description returns the description of the positional argument for help text.
-func (f *GenericPositional[T]) Description() string { return f.description }
-
-// RawValue returns the raw string value provided by the user for this positional argument.
-func (f *GenericPositional[T]) RawValue() string { return f.raw }
-
-// IsParsed returns true if the positional argument has been provided by the user and parsed successfully.
-func (f *GenericPositional[T]) IsParsed() bool { return f.parsed }
-
-// IsRequired returns true if the positional argument is required.
-func (f *GenericPositional[T]) IsRequired() bool { return f.required }
-
-// IsHidden returns true if the positional argument should be hidden from help output.
-func (f *GenericPositional[T]) IsHidden() bool { return f.hidden }
-
-// HasDefault returns true if the positional argument has a default value.
-func (f *GenericPositional[T]) HasDefault() bool { return f.defaulted }
-
-// RawDefault returns the raw default value for the positional argument as a
-// string. Used for help text and error messages.
-func (f *GenericPositional[T]) RawDefault() string { return f.rawDefault }
-
-// SetRawDefault sets the raw default value for the positional argument and
-// marks it as having a default value.
-func (f *GenericPositional[T]) SetRawDefault(rawDefault string) {
-	f.rawDefault = rawDefault
-	f.defaulted = true
-}
-
-// Name returns the name of the positional argument for help text.
-func (f *GenericPositional[T]) Name() string { return f.name }
-
-// IsVariadic returns true if this is a variadic positional argument (e.g., "files...").
-func (f *GenericPositional[T]) IsVariadic() bool { return f.variadic }
-
-// Value returns the parsed value OR the default value if there is one.
-// In case of variadic positionals, this will return the last value provided by
-// the user, and all values will be stored in the `values` field.
-func (f *GenericPositional[T]) Value() T {
-	if f.IsParsed() {
-		return f.value
-	}
-	return f.default_
-}
-
-// Values returns the parsed values for a variadic positional argument. For
-// non-variadic positionals, this will return a slice with a single value
-// (the one returned by Value()) or an empty slice
-func (f *GenericPositional[T]) Values() []T {
-	if f.IsParsed() {
-		return f.values
-	}
-	if f.HasDefault() {
-		return []T{f.default_}
-	}
-	return []T{}
-}
-
-// Count returns the number of times the positional argument was specified by
-// the user. For non-variadic positionals, this will be either 0 or 1.
-func (f *GenericPositional[T]) Count() int { return len(f.values) }
-
 // WithDefault sets the default value for the positional argument.
 func (f *GenericPositional[T]) WithDefault(value T) *GenericPositional[T] {
 	f.default_ = value
@@ -145,11 +87,66 @@ func (f *GenericPositional[T]) AsHidden() *GenericPositional[T] {
 	return f
 }
 
+// Name returns the name of the positional argument for help text.
+func (f *GenericPositional[T]) Name() string { return f.name }
+
+// Description returns the description of the positional argument for help text.
+func (f *GenericPositional[T]) Description() string { return f.description }
+
+// RawValue returns the raw string value provided by the user for this positional argument.
+func (f *GenericPositional[T]) RawValue() string { return f.raw }
+
+// RawDefault returns the raw default value for the positional argument as a
+// string. Used for help text and error messages.
+func (f *GenericPositional[T]) RawDefault() string { return f.rawDefault }
+
+// HasDefault returns true if the positional argument has a default value.
+func (f *GenericPositional[T]) HasDefault() bool { return f.defaulted }
+
+// IsParsed returns true if the positional argument has been provided by the user and parsed successfully.
+func (f *GenericPositional[T]) IsParsed() bool { return f.parsed }
+
+// IsRequired returns true if the positional argument is required.
+func (f *GenericPositional[T]) IsRequired() bool { return f.required }
+
+// IsHidden returns true if the positional argument should be hidden from help output.
+func (f *GenericPositional[T]) IsHidden() bool { return f.hidden }
+
+// IsVariadic returns true if this is a variadic positional argument (e.g., "files...").
+func (f *GenericPositional[T]) IsVariadic() bool { return f.variadic }
+
+// Value returns the parsed value OR the default value if there is one.
+// In case of variadic positionals, this will return the last value provided by
+// the user, and all values will be stored in the `values` field.
+func (f *GenericPositional[T]) Value() T {
+	if f.IsParsed() {
+		return f.value
+	}
+	return f.default_
+}
+
+// Values returns the parsed values for a variadic positional argument. For
+// non-variadic positionals, this will return a slice with a single value
+// (the one returned by Value()) or an empty slice
+func (f *GenericPositional[T]) Values() []T {
+	if f.IsParsed() {
+		return f.values
+	}
+	if f.HasDefault() {
+		return []T{f.default_}
+	}
+	return []T{}
+}
+
+// Count returns the number of times the positional argument was specified by
+// the user. For non-variadic positionals, this will be either 0 or 1.
+func (f *GenericPositional[T]) Count() int { return len(f.values) }
+
 // Parse implements the parsing logic for the generic positional argument.
 func (f *GenericPositional[T]) Parse(value string) error {
 	parsedValue, err := f.parser(value)
 	if err != nil {
-		return fmt.Errorf(GetLocale().ErrInvalidPositionalValue, f.Name(), value)
+		return cerrors.NewInvalidPosValueError(f.Name(), value, err)
 	}
 
 	f.value = parsedValue
@@ -157,9 +154,16 @@ func (f *GenericPositional[T]) Parse(value string) error {
 	f.parsed = true
 	if f.validator != nil {
 		if err := f.validator(parsedValue); err != nil {
-			return fmt.Errorf(GetLocale().ErrInvalidPositionalValue, f.Name(), err.Error())
+			return cerrors.NewInvalidPosValueError(f.Name(), err.Error(), err)
 		}
 	}
 
 	return nil
+}
+
+// SetRawDefault sets the raw default value for the positional argument and
+// marks it as having a default value.
+func (f *GenericPositional[T]) SetRawDefault(rawDefault string) {
+	f.rawDefault = rawDefault
+	f.defaulted = true
 }

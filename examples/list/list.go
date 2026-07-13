@@ -17,7 +17,7 @@ func main() {
 	cli.Parse()
 
 	// will only execute this if no subcommand is provided.
-	cli.ShowHelp()
+	cli.Help()
 }
 
 func cmdFolders() {

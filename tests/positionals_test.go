@@ -14,40 +14,40 @@ func TestPositionalBasic(t *testing.T) {
 	a := cli.Pos("a", "desc")
 	b := cli.PosInt("b", "desc")
 	c := cli.PosUint("c", "desc")
-	cli.ParseArgs(make_args("1", "2"))
+	arguments := cli.ParseArgs(make_args("1", "2"))
 
 	assertEqual(t, "1", a.Value())
 	assertEqual(t, 2, b.Value())
 	assertEqual(t, uint(0), c.Value())
-	assertEqual(t, cli.NArgs(), 2)
-	assertEqual(t, cli.Arg(0), "1")
-	assertEqual(t, cli.Arg(1), "2")
-	assertEqual(t, cli.Arg(2), "")
-	assertEqual(t, len(cli.Args()), 2)
-	assertEqual(t, cli.NExtraArgs(), 0)
+	assertEqual(t, arguments.PosCount(), 2)
+	assertEqual(t, arguments.PosAt(0), "1")
+	assertEqual(t, arguments.PosAt(1), "2")
+	assertEqual(t, arguments.PosAt(2), "")
+	assertEqual(t, len(arguments.Pos()), 2)
+	assertEqual(t, arguments.ExtraPosCount(), 0)
 }
 
 func TestPositionalWithExtra(t *testing.T) {
 	defer cli.Clear()
 
-	cli.AllowExtraPositionals(true)
+	cli.AllowExtraPos(true)
 	cli.Pos("a", "desc")
-	cli.ParseArgs(make_args("1", "2", "3", "4"))
+	arguments := cli.ParseArgs(make_args("1", "2", "3", "4"))
 
-	assertEqual(t, cli.NExtraArgs(), 3)
-	assertEqual(t, cli.ExtraArg(0), "2")
-	assertEqual(t, cli.ExtraArg(1), "3")
-	assertEqual(t, cli.ExtraArg(2), "4")
-	assertEqual(t, len(cli.ExtraArgs()), 3)
+	assertEqual(t, arguments.ExtraPosCount(), 3)
+	assertEqual(t, arguments.ExtraPosAt(0), "2")
+	assertEqual(t, arguments.ExtraPosAt(1), "3")
+	assertEqual(t, arguments.ExtraPosAt(2), "4")
+	assertEqual(t, len(arguments.ExtraPos()), 3)
 }
 
 func TestPositionalExtraNotAllowed(t *testing.T) {
 	defer cli.Clear()
 
-	cli.UsePanicInsteadOfExit(true)
-	cli.AllowExtraPositionals(false) // default is false, but just to be explicit
+	cli.UsePanic(true)
+	cli.AllowExtraPos(false) // default is false, but just to be explicit
 	cli.Pos("a", "desc")
-	cli.StderrWith(printfContains(t, "extra"))
+	cli.Stderr(printfContains(t, "extra"))
 	expectPanicWith(t, func() {
 		cli.ParseArgs(make_args("1", "2", "3", "4"))
 	}, 1)
@@ -63,10 +63,10 @@ func TestPositionalCustomValidation(t *testing.T) {
 		return fmt.Errorf("invalid value")
 	}
 
-	cli.UsePanicInsteadOfExit(true)
+	cli.UsePanic(true)
 	a := cli.Pos("a", "desc").WithValidation(validFn)
 	cli.Pos("b", "desc").WithValidation(validFn)
-	cli.StderrWith(printfContains(t, "invalid value"))
+	cli.Stderr(printfContains(t, "invalid value"))
 	expectPanicWith(t, func() {
 		cli.ParseArgs(make_args("1", "2"))
 	}, 1)
@@ -76,10 +76,10 @@ func TestPositionalCustomValidation(t *testing.T) {
 func TestPositionalRequired(t *testing.T) {
 	defer cli.Clear()
 
-	cli.UsePanicInsteadOfExit(true)
+	cli.UsePanic(true)
 	cli.Pos("a", "desc").AsRequired()
 	cli.Pos("b", "desc").AsRequired()
-	cli.StderrWith(printfContains(t, ": b"))
+	cli.Stderr(printfContains(t, ": b"))
 	expectPanicWith(t, func() {
 		cli.ParseArgs(make_args("1"))
 	}, 1)
@@ -101,10 +101,10 @@ func TestPositionalVariadicWithMultipleValues(t *testing.T) {
 	a := cli.Pos("a", "desc").AsRequired()
 	b := cli.Pos("b", "desc").AsRequired()
 	c := cli.Pos("c", "desc").AsVariadic()
-	cli.ParseArgs(make_args("1", "2", "3", "4"))
+	arguments := cli.ParseArgs(make_args("1", "2", "3", "4"))
 
-	assertEqual(t, cli.NArgs(), 4)
-	assertEqual(t, cli.NExtraArgs(), 0)
+	assertEqual(t, arguments.PosCount(), 4)
+	assertEqual(t, arguments.ExtraPosCount(), 0)
 	assertEqual(t, a.Value(), "1")
 	assertEqual(t, b.Value(), "2")
 	assertEqual(t, c.Values()[0], "3")
@@ -117,10 +117,10 @@ func TestPositionalEmptyVariadic(t *testing.T) {
 	a := cli.Pos("a", "desc").AsRequired()
 	b := cli.Pos("b", "desc").AsRequired()
 	c := cli.Pos("c", "desc").AsVariadic()
-	cli.ParseArgs(make_args("1", "2"))
+	arguments := cli.ParseArgs(make_args("1", "2"))
 
-	assertEqual(t, cli.NArgs(), 2)
-	assertEqual(t, cli.NExtraArgs(), 0)
+	assertEqual(t, arguments.PosCount(), 2)
+	assertEqual(t, arguments.ExtraPosCount(), 0)
 	assertEqual(t, a.Value(), "1")
 	assertEqual(t, b.Value(), "2")
 	assertEqual(t, len(c.Values()), 0)
@@ -143,9 +143,9 @@ func TestPositionalWithEndOfOption(t *testing.T) {
 	a := cli.Pos("a", "desc")
 	b := cli.Pos("b", "desc").AsVariadic()
 
-	cli.ParseArgs(make_args("1", "a", "--", "--not-a-flag", "3"))
-	assertEqual(t, cli.NArgs(), 4)
-	assertEqual(t, cli.NExtraArgs(), 0)
+	arguments := cli.ParseArgs(make_args("1", "a", "--", "--not-a-flag", "3"))
+	assertEqual(t, arguments.PosCount(), 4)
+	assertEqual(t, arguments.ExtraPosCount(), 0)
 	assertEqual(t, a.Value(), "1")
 	assertEqual(t, b.Values()[0], "a")
 	assertEqual(t, b.Values()[1], "--not-a-flag")
@@ -172,7 +172,7 @@ func TestPositionalHiddenNotInHelpButParses(t *testing.T) {
 	hidden := cli.Pos("secret", "hidden positional").AsHidden().AsRequired()
 	visible := cli.Pos("name", "visible positional").AsRequired()
 
-	help := cli.HelpString()
+	help := cli.GetHelp()
 	assertFalse(t, strings.Contains(help, "<secret>"))
 	assertFalse(t, strings.Contains(help, "hidden positional"))
 	assertTrue(t, strings.Contains(help, "<name>"))
@@ -185,8 +185,8 @@ func TestPositionalHiddenNotInHelpButParses(t *testing.T) {
 func TestPositionalHiddenRequiredStillValidated(t *testing.T) {
 	defer cli.Clear()
 
-	cli.UsePanicInsteadOfExit(true)
-	cli.StderrWith(printfContains(t, "missing required positional argument"))
+	cli.UsePanic(true)
+	cli.Stderr(printfContains(t, "missing required positional argument"))
 	cli.Pos("secret", "hidden required positional").AsHidden().AsRequired()
 
 	expectPanicWith(t, func() {
