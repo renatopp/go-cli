@@ -36,7 +36,7 @@ func TestLocaleFallsBackToDefault(t *testing.T) {
 		},
 	})
 	cli.UsePanic(true)
-	cli.Stderr(printfContains(t, "unknown flag"))
+	cli.Stderr(printfContains(t, "unknown_flag"))
 	expectPanicWith(t, func() {
 		cli.ParseArgs(make_args("--a", "1"))
 	}, 1)

@@ -1,18 +1,51 @@
-# go-cli
-
 This is a simple, minimalist, intuitive CLI library that works as a state machine.
 
 **Why?**
 
-I created this library because other existing CLI libs for Golang are complex or require too much boilerplate that requires checking documentation every time I use it. This library is intuitive, configuration are explicit and does not require any additional structure but functions for subcommands.
+I created go-cli because I feel that other existing Go's CLI libraries are too complex and require too much boilerplate, demanding documentation lookup every time you use them. This library was made to be intuitive, configurations are explicit, it does not require any additional structure but functions (and only if you're using subcommands) -- you can discover the API as you go.
 
-- [Install](#install)
+- No boilerplate code
+- No need for scaffolding CLI
+- No dependencies
+
+## Table of Contents
+
+- [Features](#features)
+- [The Bads](#the-bads)
+- [Installation](#installation)
 - [Overview](#overview)
-- [Usage and Cookbook](#usage-and-cookbook)
+  - [Commands and Subcommands](#overview)
+  - [Flags](#overview)
+  - [Positional Arguments](#overview)
+- [Cookbook](#cookbook)
   - [Flags and Positional Arguments](#flags-and-positional-arguments)
   - [Sub Commands](#sub-commands)
 
-## Install
+## Features
+
+- **Strict by default**.
+- Nested **subcommands**.
+- Optional **global flags**, applying to all nested subcommands.
+- Optional **auto help** and **auto version**.
+- Optional **repeated flags**, collecting all values.
+- **Required, default values** and **custom validation** for flags and positional arguments.
+- Optional **positional variadic**, collecting all positional arguments in the list.
+- Support for **extra flags** and **extra positional arguments**.
+- **Locale** support.
+- **Custom help and error formatting**.
+- **Custom flags**
+
+## The Bads
+
+As any piece of technology, this library has its trade-offs:
+
+- It uses a global instance by default, similar to what logging library do (eg. `log`). You can create your own instance of `App` if you want to avoid global state but it is not as ergonomic.
+- It requires that you call `cli.Parse()` at all commands and subcommands. Missing this call will result in some unexpected behaviors. 
+- It uses interruptions (os.Exit) as default to stop the flow of the CLI, which is not always desired. You may use `cli.UsePanic` to change how the interruption occours, but again, not always desired.
+
+For most use cases, these trade-offs are acceptable.
+
+## Installation
 
 ```bash
 go get github.com/renatopp/go-cli
@@ -21,23 +54,30 @@ go get github.com/renatopp/go-cli
 After that, just import the package and use the `cli` name:
 
 ```go
-import (
-  "fmt"
-
-  "github.com/renatopp/go-cli"
-)
+import "github.com/renatopp/go-cli"
 
 func main() {
   cli.Name("hello")
   cli.Description("Prints a classical message.")
   cli.AutoHelp(true)
   cli.Parse()
-
-  fmt.Println("Hello, World!")
+  println("Hello, World!")
 }
 ```
 
 ## Overview
+
+```go
+import "github.com/renatopp/go-cli"
+
+func main() {
+  cli.Name("hello")
+  cli.Description("Prints a classical message.")
+  cli.AutoHelp(true)
+  cli.Parse()
+  println("Hello, World!")
+}
+```
 
 Go-cli uses some traditional conventions for flags and positional arguments, supporting POSIX/Unix/GNU syntax style. The table below shows the syntax used for flags: 
 
@@ -57,17 +97,6 @@ Go-cli uses some traditional conventions for flags and positional arguments, sup
 | `--`                        | End-of-options followed by forced positional arguments          |
 | `-`                         | Single dash as positional                                       |
 
-Additionally, there are other interesting features:
-
-- **Strict by default**.
-- Optional **global flags**, applying to all subcommands.
-- Optional **auto help** and **auto version**.
-- Optional **positional variadic**, collecting all positional arguments in the list.
-- Support for nested **subcommands**.
-- Optional **repeated flags**, collecting all values.
-- **Required, default value** and **custom validation** for flags and positional arguments.
-- Support for **extra flags** and **extra positional arguments**.
-- **Locale** support.
 
 ## Usage and Cookbook
 
