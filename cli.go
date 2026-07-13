@@ -275,8 +275,8 @@ func Help() {
 // Subcommands are executed based on the first argument that matches a defined
 // name, interrupting the execution of code after the Parse() call on the
 // parent commands.
-func Parse() {
-	app.Parse()
+func Parse() *pkg.Arguments {
+	return app.Parse()
 }
 
 // ParseArgs is similar to Parse but allows you to specify a custom slice of
@@ -285,8 +285,8 @@ func Parse() {
 // relying on the command-line input.
 //
 // DO NOT PROVIDE the program name (i.e., os.Args[0]) in the args slice.
-func ParseArgs(args []string) {
-	app.ParseArgs(args)
+func ParseArgs(args []string) *pkg.Arguments {
+	return app.ParseArgs(args)
 }
 
 // CheckExclusiveFlags checks that at most one of the provided flags is passed.
@@ -331,53 +331,6 @@ func GetRootCommand() *pkg.Command { return app.RootCommand() }
 
 // GetCurrentCommand returns the current command being executed.
 func GetCurrentCommand() *pkg.Command { return app.CurrentCommand() }
-
-// TODO: Remove
-// GetPosCount returns the number of positional arguments provided by the user.
-// Should be used only after Parse() is called, otherwise it will return 0.
-func GetPosCount() int {
-	return app.GetPosCount()
-}
-
-// TODO: Remove
-// GetPosAt retrieves the value of a positional argument by its index.
-// Should be used only after Parse() is called, otherwise it will return an
-// empty string.
-func GetPosAt(index int) string {
-	return app.GetPosAt(index)
-}
-
-// TODO: Remove
-// GetPos retrieves all positional arguments provided by the user.
-// Should be used only after Parse() is called, otherwise it will return an
-// empty slice.
-func GetPos() []string {
-	return app.GetPos()
-}
-
-// TODO: Remove
-// GetExtraPosCount returns the number of extra positional arguments provided by the user,
-// i.e., those that are not defined in the command. Should be used only after
-// Parse() is called, otherwise it will return 0.
-func GetExtraPosCount() int {
-	return app.GetExtraPosCount()
-}
-
-// TODO: Remove
-// GetExtraPosAt retrieves the value of an extra positional argument by its index, i.e.,
-// those that are not defined in the command. Should be used only after Parse() is
-// called, otherwise it will return an empty string.
-func GetExtraPosAt(index int) string {
-	return app.GetExtraPosAt(index)
-}
-
-// TODO: Remove
-// GetExtraPos retrieves all extra positional arguments provided by the user, i.e.,
-// those that are not defined in the command. Should be used only after Parse() is
-// called, otherwise it will return an empty slice.
-func GetExtraPos() []string {
-	return app.GetExtraPos()
-}
 
 // GetHelp returns the help message for the current command as a string.
 func GetHelp() string {

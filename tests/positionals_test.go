@@ -14,17 +14,17 @@ func TestPositionalBasic(t *testing.T) {
 	a := cli.Pos("a", "desc")
 	b := cli.PosInt("b", "desc")
 	c := cli.PosUint("c", "desc")
-	cli.ParseArgs(make_args("1", "2"))
+	arguments := cli.ParseArgs(make_args("1", "2"))
 
 	assertEqual(t, "1", a.Value())
 	assertEqual(t, 2, b.Value())
 	assertEqual(t, uint(0), c.Value())
-	assertEqual(t, cli.GetPosCount(), 2)
-	assertEqual(t, cli.GetPosAt(0), "1")
-	assertEqual(t, cli.GetPosAt(1), "2")
-	assertEqual(t, cli.GetPosAt(2), "")
-	assertEqual(t, len(cli.GetPos()), 2)
-	assertEqual(t, cli.GetExtraPosCount(), 0)
+	assertEqual(t, arguments.PosCount(), 2)
+	assertEqual(t, arguments.PosAt(0), "1")
+	assertEqual(t, arguments.PosAt(1), "2")
+	assertEqual(t, arguments.PosAt(2), "")
+	assertEqual(t, len(arguments.Pos()), 2)
+	assertEqual(t, arguments.ExtraPosCount(), 0)
 }
 
 func TestPositionalWithExtra(t *testing.T) {
@@ -32,13 +32,13 @@ func TestPositionalWithExtra(t *testing.T) {
 
 	cli.AllowExtraPos(true)
 	cli.Pos("a", "desc")
-	cli.ParseArgs(make_args("1", "2", "3", "4"))
+	arguments := cli.ParseArgs(make_args("1", "2", "3", "4"))
 
-	assertEqual(t, cli.GetExtraPosCount(), 3)
-	assertEqual(t, cli.GetExtraPosAt(0), "2")
-	assertEqual(t, cli.GetExtraPosAt(1), "3")
-	assertEqual(t, cli.GetExtraPosAt(2), "4")
-	assertEqual(t, len(cli.GetExtraPos()), 3)
+	assertEqual(t, arguments.ExtraPosCount(), 3)
+	assertEqual(t, arguments.ExtraPosAt(0), "2")
+	assertEqual(t, arguments.ExtraPosAt(1), "3")
+	assertEqual(t, arguments.ExtraPosAt(2), "4")
+	assertEqual(t, len(arguments.ExtraPos()), 3)
 }
 
 func TestPositionalExtraNotAllowed(t *testing.T) {
@@ -101,10 +101,10 @@ func TestPositionalVariadicWithMultipleValues(t *testing.T) {
 	a := cli.Pos("a", "desc").AsRequired()
 	b := cli.Pos("b", "desc").AsRequired()
 	c := cli.Pos("c", "desc").AsVariadic()
-	cli.ParseArgs(make_args("1", "2", "3", "4"))
+	arguments := cli.ParseArgs(make_args("1", "2", "3", "4"))
 
-	assertEqual(t, cli.GetPosCount(), 4)
-	assertEqual(t, cli.GetExtraPosCount(), 0)
+	assertEqual(t, arguments.PosCount(), 4)
+	assertEqual(t, arguments.ExtraPosCount(), 0)
 	assertEqual(t, a.Value(), "1")
 	assertEqual(t, b.Value(), "2")
 	assertEqual(t, c.Values()[0], "3")
@@ -117,10 +117,10 @@ func TestPositionalEmptyVariadic(t *testing.T) {
 	a := cli.Pos("a", "desc").AsRequired()
 	b := cli.Pos("b", "desc").AsRequired()
 	c := cli.Pos("c", "desc").AsVariadic()
-	cli.ParseArgs(make_args("1", "2"))
+	arguments := cli.ParseArgs(make_args("1", "2"))
 
-	assertEqual(t, cli.GetPosCount(), 2)
-	assertEqual(t, cli.GetExtraPosCount(), 0)
+	assertEqual(t, arguments.PosCount(), 2)
+	assertEqual(t, arguments.ExtraPosCount(), 0)
 	assertEqual(t, a.Value(), "1")
 	assertEqual(t, b.Value(), "2")
 	assertEqual(t, len(c.Values()), 0)
@@ -143,9 +143,9 @@ func TestPositionalWithEndOfOption(t *testing.T) {
 	a := cli.Pos("a", "desc")
 	b := cli.Pos("b", "desc").AsVariadic()
 
-	cli.ParseArgs(make_args("1", "a", "--", "--not-a-flag", "3"))
-	assertEqual(t, cli.GetPosCount(), 4)
-	assertEqual(t, cli.GetExtraPosCount(), 0)
+	arguments := cli.ParseArgs(make_args("1", "a", "--", "--not-a-flag", "3"))
+	assertEqual(t, arguments.PosCount(), 4)
+	assertEqual(t, arguments.ExtraPosCount(), 0)
 	assertEqual(t, a.Value(), "1")
 	assertEqual(t, b.Values()[0], "a")
 	assertEqual(t, b.Values()[1], "--not-a-flag")

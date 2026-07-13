@@ -40,9 +40,9 @@ func TestFlagBoolean(t *testing.T) {
 	defer cli.Clear()
 	a := cli.FlagBool("long", "", "")
 	cli.AllowExtraPos(true)
-	cli.ParseArgs(make_args("--long", "1"))
+	arguments := cli.ParseArgs(make_args("--long", "1"))
 	assertEqual(t, a.Value(), true)
-	assertEqual(t, cli.GetExtraPosAt(0), "1")
+	assertEqual(t, arguments.ExtraPosAt(0), "1")
 }
 
 func TestFlagLongWithDashedValue(t *testing.T) {
@@ -80,9 +80,9 @@ func TestFlagShortBoolean(t *testing.T) {
 	defer cli.Clear()
 	a := cli.FlagBool("", "s", "")
 	cli.AllowExtraPos(true)
-	cli.ParseArgs(make_args("-s", "1"))
+	arguments := cli.ParseArgs(make_args("-s", "1"))
 	assertEqual(t, a.Value(), true)
-	assertEqual(t, cli.GetExtraPosAt(0), "1")
+	assertEqual(t, arguments.ExtraPosAt(0), "1")
 }
 
 func TestFlagShortCombinedDashedValue(t *testing.T) {

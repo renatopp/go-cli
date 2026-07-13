@@ -146,84 +146,6 @@ func (a *App) Locale() Locale { return a.locale }
 // successfully.
 func (a *App) IsParsed() bool { return a.arguments != nil }
 
-// TODO: REMOVE
-// Arguments returns the parsed arguments for the current command. It will be
-// nil if the arguments have not been parsed yet.
-func (a *App) Arguments() *Arguments { return a.arguments }
-
-// TODO: REMOVE
-// GetPosCount returns the number of positional arguments provided by the user.
-// Should be used only after Parse() is called, otherwise it will return 0.
-func (a *App) GetPosCount() int {
-	if !a.IsParsed() {
-		return 0
-	}
-	return len(a.Arguments().pos)
-}
-
-// TODO: REMOVE
-// GetPosAt retrieves the value of a positional argument by its index.
-// Should be used only after Parse() is called, otherwise it will return an
-// empty string.
-func (a *App) GetPosAt(index int) string {
-	if !a.IsParsed() {
-		return ""
-	}
-	args := a.Arguments().pos
-	if index < 0 || index >= len(args) {
-		return ""
-	}
-	return args[index]
-}
-
-// TODO: REMOVE
-// GetPos retrieves all positional arguments provided by the user.
-// Should be used only after Parse() is called, otherwise it will return an
-// empty slice.
-func (a *App) GetPos() []string {
-	if !a.IsParsed() {
-		return []string{}
-	}
-	return a.Arguments().pos
-}
-
-// TODO: REMOVE
-// GetExtraPosCount returns the number of extra positional arguments provided by the user,
-// i.e., those that are not defined in the command. Should be used only after
-// Parse() is called, otherwise it will return 0.
-func (a *App) GetExtraPosCount() int {
-	if !a.IsParsed() {
-		return 0
-	}
-	return len(a.Arguments().extraPos)
-}
-
-// TODO: REMOVE
-// GetExtraPosAt retrieves the value of an extra positional argument by its index, i.e.,
-// those that are not defined in the command. Should be used only after Parse() is
-// called, otherwise it will return an empty string.
-func (a *App) GetExtraPosAt(index int) string {
-	if !a.IsParsed() {
-		return ""
-	}
-	extraArgs := a.Arguments().extraPos
-	if index < 0 || index >= len(extraArgs) {
-		return ""
-	}
-	return extraArgs[index]
-}
-
-// TODO: REMOVE
-// GetExtraPos retrieves all extra positional arguments provided by the user, i.e.,
-// those that are not defined in the command. Should be used only after Parse() is
-// called, otherwise it will return an empty slice.
-func (a *App) GetExtraPos() []string {
-	if !a.IsParsed() {
-		return []string{}
-	}
-	return a.Arguments().extraPos
-}
-
 // GetHelp generates and returns the help message string for the current
 // command using the help formatter.
 func (a *App) GetHelp() string {
@@ -289,10 +211,15 @@ func (a *App) Help() {
 }
 
 // Parse is called for every command in the path.
-func (a *App) Parse() {
+//
+// This function is responsible for traversing the command hierarchy recursively.
+// If a subcommand is found, it will be executed and the parent command will not
+// continue execution. If no subcommand is found, it will parse the flags and
+// positionals for the current command.
+func (a *App) Parse() *Arguments {
 	// Check if already parsed
 	if a.IsParsed() {
-		return
+		return a.arguments
 	}
 
 	a.initialize()
@@ -321,17 +248,19 @@ func (a *App) Parse() {
 		}
 	}
 
+	// There is no match with any subcommand, so this command will execute.
 	// Parse the flags and positionals of the stack
 	args, err := parseArguments(a)
 	a.FatalIf(err)
 	a.arguments = args
+	return args
 }
 
 // ParseArgs parse the given arguments instead of os.Args. This is useful for
-// testing and edge cases. The arguments should not include the program name.
-func (a *App) ParseArgs(args []string) {
+// testing and edge cases. The arguments should NOT INCLUDE the program name.
+func (a *App) ParseArgs(args []string) *Arguments {
 	a.queue = args
-	a.Parse()
+	return a.Parse()
 }
 
 func (a *App) initialize() {

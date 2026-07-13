@@ -1,6 +1,5 @@
 # TODO
 
-- Move functions that are only available after parsing to Arguments
 - Improving/Simplifying parsing logic 
 - Remove raw default logic
 
@@ -21,6 +20,7 @@
 - More typed parsers
 - Command aliases
 - AllowFlagRedefinitions
+- AsFastInterrupt to custom help commands (not depend on naming logic)
 
 [interface]
 - Lifecycle hooks before and after command execution
