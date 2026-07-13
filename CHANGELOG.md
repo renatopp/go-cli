@@ -1,3 +1,7 @@
+# 0.6.1 (2026-07-13)
+
+Removing debug print.
+
 # 0.6.0 (2026-07-13)
 
 Major overhaul of the API, file structure, and internal implementation.

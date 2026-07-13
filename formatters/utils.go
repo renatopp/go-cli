@@ -19,7 +19,6 @@ func init() {
 	if supportsColor() {
 		colorMode = "color"
 	}
-	println("mode:", colorMode)
 }
 
 func width() int {
