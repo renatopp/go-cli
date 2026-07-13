@@ -1,14 +1,16 @@
-# 0.6.0 (TBD)
+# 0.6.0 (2026-07-13)
 
-- Removing the Shell wrapper as it is not on the scope of this library.
-- Renaming StdoutWith/StderrWith to SetStdout/SetStderr.
-- Removing Print and Error functions; use fmt directly instead.
-- Adding SetHelpFormatter and SetErrorFormatter to customize help and error styles, with DefaultHelpFormatter and DefaultErrorFormatter as the built-in styles.
-- Adding typed parsing errors (e.g. UnknownFlagError, MissingRequiredFlagError) that can be inspected with errors.As in custom error formatters.
-- Localizing CheckExclusiveFlags and CheckAnyFlag error messages.
-- Moving the internal package into the root cli package, removing the type alias layer (TFlag, TPositional, TCommand).
-- Removing the package-level Arguments function to avoid conflict with the Arguments type. Flag and Command remain as aliases to FlagString and Cmd.
-- Moving the core implementation to the core/ package (github.com/renatopp/go-cli/core), with locales and parsers as its subpackages; the root package keeps the global convenience API.
+Major overhaul of the API, file structure, and internal implementation.
+
+- Removing many functions out of the scope of the library, such as Print, Error and Shell.
+- Pruning the API surface to remove uncommon flag and positional types 
+- Adding support for custom flag and positional types.
+- Adding formatters for help and error messages.
+- Improving error handling.
+- Adding ENV support for flags and positionals.
+- Adding OnParsed callback for global flags.
+- Improving help and error styles.
+- Improving docs.
 
 # 0.5.0 (2026-07-07)
 
