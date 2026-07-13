@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/renatopp/go-cli"
+	"github.com/renatopp/go-cli/core"
 )
 
 func TestFlagInvalidExtra(t *testing.T) {
@@ -273,4 +274,117 @@ func TestFlagHiddenRequiredStillValidated(t *testing.T) {
 	expectPanicWith(t, func() {
 		cli.ParseArgs(make_args())
 	}, 1)
+}
+
+func TestFlagEnvGetters(t *testing.T) {
+	defer cli.Clear()
+	a := cli.FlagString("a", "", "")
+	assertFalse(t, a.HasEnv())
+	assertEqual(t, a.Env(), "")
+
+	a.WithEnv("MY_FLAG_ENV")
+	assertTrue(t, a.HasEnv())
+	assertEqual(t, a.Env(), "MY_FLAG_ENV")
+}
+
+func TestFlagEnvUsedWhenNotProvided(t *testing.T) {
+	defer cli.Clear()
+	t.Setenv("GO_CLI_TEST_FLAG_A", "from-env")
+
+	a := cli.FlagString("a", "", "").WithEnv("GO_CLI_TEST_FLAG_A")
+	cli.ParseArgs(make_args())
+
+	assertEqual(t, a.Value(), "from-env")
+	assertTrue(t, a.IsProvided())
+}
+
+func TestFlagEnvNotUsedWhenProvidedByUser(t *testing.T) {
+	defer cli.Clear()
+	t.Setenv("GO_CLI_TEST_FLAG_A", "from-env")
+
+	a := cli.FlagString("a", "", "").WithEnv("GO_CLI_TEST_FLAG_A")
+	cli.ParseArgs(make_args("--a", "from-cli"))
+
+	assertEqual(t, a.Value(), "from-cli")
+}
+
+func TestFlagEnvFallsBackToDefaultWhenUnset(t *testing.T) {
+	defer cli.Clear()
+
+	a := cli.FlagString("a", "", "").WithEnv("GO_CLI_TEST_FLAG_UNSET").WithDefault("defaulted")
+	cli.ParseArgs(make_args())
+
+	assertEqual(t, a.Value(), "defaulted")
+	assertFalse(t, a.IsProvided())
+}
+
+func TestFlagEnvSatisfiesRequired(t *testing.T) {
+	defer cli.Clear()
+	t.Setenv("GO_CLI_TEST_FLAG_REQUIRED", "from-env")
+
+	a := cli.FlagString("a", "", "").WithEnv("GO_CLI_TEST_FLAG_REQUIRED").AsRequired()
+	cli.ParseArgs(make_args())
+
+	assertEqual(t, a.Value(), "from-env")
+}
+
+// Regression test: resolving one flag's value from the environment must not
+// short-circuit validation of the other flags that follow it.
+func TestFlagEnvDoesNotBlockOtherRequiredFlags(t *testing.T) {
+	defer cli.Clear()
+
+	cli.UsePanic(true)
+	cli.Stderr(printfContains(t, "missing required flag"))
+	cli.FlagString("a", "", "").WithEnv("GO_CLI_TEST_FLAG_UNSET_2")
+	cli.FlagString("b", "", "").AsRequired()
+
+	expectPanicWith(t, func() {
+		cli.ParseArgs(make_args())
+	}, 1)
+}
+
+func TestFlagOnParsedCalledAfterParse(t *testing.T) {
+	defer cli.Clear()
+
+	a := cli.FlagString("a", "", "")
+	called := false
+	a.OnParsed(func(f *core.Flag[string]) {
+		called = true
+		assertEqual(t, f.Value(), "1")
+	})
+
+	cli.ParseArgs(make_args("--a", "1"))
+	assertTrue(t, called)
+}
+
+func TestFlagOnParsedCalledEvenWhenNotProvided(t *testing.T) {
+	defer cli.Clear()
+
+	a := cli.FlagString("a", "", "").WithDefault("defaulted")
+	called := false
+	a.OnParsed(func(f *core.Flag[string]) {
+		called = true
+		assertEqual(t, f.Value(), "defaulted")
+		assertFalse(t, f.IsProvided())
+	})
+
+	cli.ParseArgs(make_args())
+	assertTrue(t, called)
+}
+
+func TestFlagOnParsedNotCalledOnParseError(t *testing.T) {
+	defer cli.Clear()
+
+	cli.UsePanic(true)
+	cli.Stderr(printfContains(t, "missing required flag"))
+
+	called := false
+	cli.FlagString("a", "", "").AsRequired().OnParsed(func(f *core.Flag[string]) {
+		called = true
+	})
+
+	expectPanicWith(t, func() {
+		cli.ParseArgs(make_args())
+	}, 1)
+	assertFalse(t, called)
 }

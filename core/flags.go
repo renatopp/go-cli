@@ -10,18 +10,20 @@ type AnyFlag interface {
 	Long() string
 	Short() string
 	Description() string
+	Env() string
 	RawValue() string
-	Parse(value string) error
+	RawDefault() string
+	Signature() string
 	Count() int
+	HasDefault() bool
+	HasEnv() bool
 	IsProvided() bool
 	IsRequired() bool
 	IsHidden() bool
 	IsRepeatable() bool
 	IsRepeated() bool
 	IsGlobal() bool
-	HasDefault() bool
-	RawDefault() string
-	Signature() string
+	parse(value string) error
 	onParsed()
 }
 
@@ -30,6 +32,7 @@ type AnyFlag interface {
 type Flag[T any] struct {
 	description      string         // description of the flag for help text
 	raw              string         // the raw string value provided by the user
+	env              string         // the name of the environment variable that can be used to set the flag value
 	rawDefault       string         // the raw default value for the flag, used for help text and error messages
 	provided         bool           // whether the flag has been provided by the user and parsed successfully
 	defaulted        bool           // whether the flag has a default value
@@ -74,9 +77,19 @@ func (f *Flag[T]) WithValidation(validator func(T) error) *Flag[T] {
 	return f
 }
 
+// WithEnv allows the flag to be set from an environment variable. The environment variable
+// will be used if the flag is not provided by the user. Notice that the default value will
+// only be used if the flag is not provided and the environment variable is not set.
+func (f *Flag[T]) WithEnv(name string) *Flag[T] {
+	f.env = name
+	return f
+}
+
 // OnParsed registers a callback function that will be called after all arguments have
 // been parsed successfully, just before resuming the execution of the program following
 // the `Parse` call.
+//
+// You can use this callback to define a base behavior for a global flag.
 //
 // The callback receives the flag itself as an argument.
 func (f *Flag[T]) OnParsed(cb func(flag *Flag[T])) {
@@ -117,6 +130,9 @@ func (f *Flag[T]) Short() string { return f.short }
 // Description returns the description of the flag for help text.
 func (f *Flag[T]) Description() string { return f.description }
 
+// Env returns the name of the environment variable that can be used to set the flag value.
+func (f *Flag[T]) Env() string { return f.env }
+
 // RawValue returns the raw string value provided by the user for this flag.
 func (f *Flag[T]) RawValue() string { return f.raw }
 
@@ -126,6 +142,9 @@ func (f *Flag[T]) RawDefault() string { return f.rawDefault }
 
 // HasDefault returns true if the flag has a default value.
 func (f *Flag[T]) HasDefault() bool { return f.defaulted }
+
+// HasEnv returns true if the flag can be set from an environment variable.
+func (f *Flag[T]) HasEnv() bool { return f.env != "" }
 
 // IsProvided returns true if the flag has been provided by the user and parsed successfully.
 func (f *Flag[T]) IsProvided() bool { return f.provided }
@@ -191,7 +210,7 @@ func (f *Flag[T]) Values() []T {
 func (f *Flag[T]) Count() int { return len(f.values) }
 
 // Parse implements the parsing logic for the generic flag.
-func (f *Flag[T]) Parse(value string) error {
+func (f *Flag[T]) parse(value string) error {
 	parsedValue, err := f.parser(value)
 	if err != nil {
 		return errors.NewInvalidFlagValueError(f.Signature(), value, err)

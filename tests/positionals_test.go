@@ -193,3 +193,70 @@ func TestPositionalHiddenRequiredStillValidated(t *testing.T) {
 		cli.ParseArgs(make_args())
 	}, 1)
 }
+
+func TestPositionalEnvGetters(t *testing.T) {
+	defer cli.Clear()
+	a := cli.Pos("a", "desc")
+	assertFalse(t, a.HasEnv())
+	assertEqual(t, a.Env(), "")
+
+	a.WithEnv("MY_POS_ENV")
+	assertTrue(t, a.HasEnv())
+	assertEqual(t, a.Env(), "MY_POS_ENV")
+}
+
+func TestPositionalEnvUsedWhenNotProvided(t *testing.T) {
+	defer cli.Clear()
+	t.Setenv("GO_CLI_TEST_POS_A", "from-env")
+
+	a := cli.Pos("a", "desc").WithEnv("GO_CLI_TEST_POS_A")
+	cli.ParseArgs(make_args())
+
+	assertEqual(t, a.Value(), "from-env")
+	assertTrue(t, a.IsProvided())
+}
+
+func TestPositionalEnvNotUsedWhenProvidedByUser(t *testing.T) {
+	defer cli.Clear()
+	t.Setenv("GO_CLI_TEST_POS_A", "from-env")
+
+	a := cli.Pos("a", "desc").WithEnv("GO_CLI_TEST_POS_A")
+	cli.ParseArgs(make_args("from-cli"))
+
+	assertEqual(t, a.Value(), "from-cli")
+}
+
+func TestPositionalEnvFallsBackToDefaultWhenUnset(t *testing.T) {
+	defer cli.Clear()
+
+	a := cli.Pos("a", "desc").WithEnv("GO_CLI_TEST_POS_UNSET").WithDefault("defaulted")
+	cli.ParseArgs(make_args())
+
+	assertEqual(t, a.Value(), "defaulted")
+	assertFalse(t, a.IsProvided())
+}
+
+func TestPositionalEnvSatisfiesRequired(t *testing.T) {
+	defer cli.Clear()
+	t.Setenv("GO_CLI_TEST_POS_REQUIRED", "from-env")
+
+	a := cli.Pos("a", "desc").WithEnv("GO_CLI_TEST_POS_REQUIRED").AsRequired()
+	cli.ParseArgs(make_args())
+
+	assertEqual(t, a.Value(), "from-env")
+}
+
+// Regression test: resolving one positional's value from the environment must
+// not block validation of the other required positionals.
+func TestPositionalEnvDoesNotBlockOtherRequiredPositionals(t *testing.T) {
+	defer cli.Clear()
+
+	cli.UsePanic(true)
+	cli.Stderr(printfContains(t, "missing required positional argument"))
+	cli.Pos("a", "desc").WithEnv("GO_CLI_TEST_POS_UNSET_2")
+	cli.Pos("b", "desc").AsRequired()
+
+	expectPanicWith(t, func() {
+		cli.ParseArgs(make_args())
+	}, 1)
+}

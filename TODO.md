@@ -1,16 +1,11 @@
 # TODO
 
-- Add WithEnv() binding on flags and positionals
 - Colored outputs
-- Examples
 - Rewrite documentation
-
 
 ## Backlog
 
 [output]
-- Colored outputs
-- Examples
 - Did you mean... suggestions
 - man pages
 - groups

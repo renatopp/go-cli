@@ -5,6 +5,11 @@ import (
 	"slices"
 )
 
+type Example struct {
+	Usage       string
+	Description string
+}
+
 type Command struct {
 	parent           *Command
 	name             string
@@ -15,6 +20,7 @@ type Command struct {
 	positionals      []AnyPositional
 	flags            []AnyFlag
 	subcommands      []*Command
+	examples         []Example
 }
 
 func NewCommand(parent *Command) *Command {
@@ -53,6 +59,16 @@ func (c *Command) WithShortDescription(shortDescription string) *Command {
 // WithExecute sets the function to be executed when the command is invoked.
 func (c *Command) WithExecute(execute func()) *Command {
 	c.execute = execute
+	return c
+}
+
+// WithExample adds an example usage for the command. The example is used in the help
+// output for this command.
+func (c *Command) WithExample(example, description string) *Command {
+	c.examples = append(c.examples, Example{
+		Usage:       example,
+		Description: description,
+	})
 	return c
 }
 

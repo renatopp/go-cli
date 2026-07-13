@@ -2,6 +2,7 @@ package core
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/renatopp/go-cli/errors"
@@ -133,7 +134,7 @@ func (a *Result) parseFlag(name string, value string) error {
 		}
 	}
 
-	return flag.Parse(value)
+	return flag.parse(value)
 }
 
 // --name=value | --name value | --name
@@ -209,11 +210,11 @@ func (a *Result) parsePositional(token string) error {
 
 	a.pos = append(a.pos, token)
 	if positional != nil {
-		return positional.Parse(token)
+		return positional.parse(token)
 	} else {
 		if a.hasVariadicPositional {
 			last := a.positionals[len(a.positionals)-1]
-			return last.Parse(token)
+			return last.parse(token)
 		}
 
 		if !a.app.extraPositionalsAllowed {
@@ -298,12 +299,28 @@ func parseArguments(app *App) (*Result, error) {
 
 	// check for required flags and positionals
 	for _, flag := range cmd.flags {
+		if !flag.IsProvided() && flag.HasEnv() {
+			if value, ok := os.LookupEnv(flag.Env()); ok {
+				if err := flag.parse(value); err != nil {
+					return args, err
+				}
+			}
+		}
+
 		if flag.IsRequired() && !flag.IsProvided() {
 			return args, errors.NewMissingRequiredFlagError(flag.Signature())
 		}
 	}
-	for i, positional := range cmd.positionals {
-		if positional.IsRequired() && i >= len(args.pos) {
+	for _, positional := range cmd.positionals {
+		if !positional.IsProvided() && positional.HasEnv() {
+			if value, ok := os.LookupEnv(positional.Env()); ok {
+				if err := positional.parse(value); err != nil {
+					return args, err
+				}
+			}
+		}
+
+		if positional.IsRequired() && !positional.IsProvided() {
 			return args, errors.NewMissingRequiredPosError(positional.Name())
 		}
 	}

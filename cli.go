@@ -140,6 +140,15 @@ func Command(name string, shortDescription string, execute func()) *core.Command
 	return c
 }
 
+// Example adds an example usage for the current command. The example is used in
+// the help output for this command. The usage string should show how to use the
+// command, and the description should explain what the example does.
+func Example(usage, description string) {
+	app.CurrentCommand().WithExample(usage, description)
+}
+
+// Pos is an alias for PosString. It creates a string positional argument with
+// the given name and description.
 func Pos(name, description string) *core.Positional[string] {
 	return PosString(name, description)
 }
@@ -155,36 +164,51 @@ func PosFunc[T any](name, description string, parser func(string) (T, error)) *c
 	return p
 }
 
+// PosString creates a string positional argument with the given name and
+// description.
 func PosString(name, description string) *core.Positional[string] {
 	p := core.NewPositional(name, description, parsers.String)
 	app.CurrentCommand().WithPositional(p)
 	return p
 }
 
+// PosInt creates an integer positional argument with the given name and
+// description.
 func PosInt(name, description string) *core.Positional[int] {
 	p := core.NewPositional(name, description, parsers.Int[int])
 	app.CurrentCommand().WithPositional(p)
 	return p
 }
 
+// PosUint creates an unsigned integer positional argument with the given name and
+// description.
 func PosUint(name, description string) *core.Positional[uint] {
 	p := core.NewPositional(name, description, parsers.Uint[uint])
 	app.CurrentCommand().WithPositional(p)
 	return p
 }
 
+// PosFloat creates a floating-point positional argument with the given name and
+// description.
 func PosFloat(name, description string) *core.Positional[float64] {
 	p := core.NewPositional(name, description, parsers.Float[float64])
 	app.CurrentCommand().WithPositional(p)
 	return p
 }
 
+// PosBool creates a boolean positional argument with the given name and
+// description.
 func PosBool(name, description string) *core.Positional[bool] {
 	p := core.NewPositional(name, description, parsers.Bool)
 	app.CurrentCommand().WithPositional(p)
 	return p
 }
 
+// PosDuration creates a time.Duration positional argument with the given name and
+// description.
+//
+// Durations are parsed using the time.ParseDuration function, which supports
+// formats like "300ms", "-1.5h" or "2h45m".
 func PosDuration(name, description string) *core.Positional[time.Duration] {
 	p := core.NewPositional(name, description, parsers.Duration)
 	app.CurrentCommand().WithPositional(p)
@@ -208,36 +232,51 @@ func FlagFunc[T any](long, short, description string, parser func(string) (T, er
 	return f
 }
 
+// FlagString creates a string flag with the given long name, short name, and
+// description.
 func FlagString(long, short, description string) *core.Flag[string] {
 	f := core.NewFlag(long, short, description, parsers.String)
 	app.CurrentCommand().WithFlag(f)
 	return f
 }
 
+// FlagInt creates an integer flag with the given long name, short name, and
+// description.
 func FlagInt(long, short, description string) *core.Flag[int] {
 	f := core.NewFlag(long, short, description, parsers.Int[int])
 	app.CurrentCommand().WithFlag(f)
 	return f
 }
 
+// FlagUint creates an unsigned integer flag with the given long name, short
+// name, and description.
 func FlagUint(long, short, description string) *core.Flag[uint] {
 	f := core.NewFlag(long, short, description, parsers.Uint[uint])
 	app.CurrentCommand().WithFlag(f)
 	return f
 }
 
+// FlagFloat creates a floating-point flag with the given long name, short
+// name, and description.
 func FlagFloat(long, short, description string) *core.Flag[float64] {
 	f := core.NewFlag(long, short, description, parsers.Float[float64])
 	app.CurrentCommand().WithFlag(f)
 	return f
 }
 
+// FlagBool creates a boolean flag with the given long name, short name, and
+// description.
 func FlagBool(long, short, description string) *core.Flag[bool] {
 	f := core.NewFlag(long, short, description, parsers.Bool)
 	app.CurrentCommand().WithFlag(f)
 	return f
 }
 
+// FlagDuration creates a time.Duration flag with the given long name, short
+// name, and description.
+//
+// Durations are parsed using the time.ParseDuration function, which supports
+// formats like "300ms", "-1.5h" or "2h45m".
 func FlagDuration(long, short, description string) *core.Flag[time.Duration] {
 	f := core.NewFlag(long, short, description, parsers.Duration)
 	app.CurrentCommand().WithFlag(f)
