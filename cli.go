@@ -134,6 +134,13 @@ func AutoCompletion(enabled bool) {
 	app.WithAutoCompletion(enabled)
 }
 
+// Suggestions configures the CLI to suggest the closest match when the user
+// mistypes a flag or a subcommand, e.g. "did you mean --verbose?". By
+// default, suggestions are enabled.
+func Suggestions(enabled bool) {
+	app.WithSuggestions(enabled)
+}
+
 func Args(args []string) {
 	app.WithArgs(args)
 }

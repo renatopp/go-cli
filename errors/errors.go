@@ -25,6 +25,7 @@ const (
 	ErrUnexpectedPos       ErrorCode = "unexpected_positional"
 	ErrExclusiveFlags      ErrorCode = "exclusive_flags"
 	ErrAtLeastOneFlag      ErrorCode = "at_least_one_flag"
+	ErrUnknownCommand      ErrorCode = "unknown_command"
 )
 
 func As(err error, target any) bool {
@@ -38,10 +39,14 @@ func Is(err, target error) bool {
 // CliError represents a CLI parsing or execution error with a code and
 // parameters. Error() returns a generic, unlocalized message; use
 // locales.Locale.LocalizedError to render the message in a specific locale.
+//
+// Suggestion holds a "did you mean" hint for typos, e.g. "--verbose" for an
+// unknown flag "verbos", or "" when there is no close match.
 type CliError struct {
 	Code       ErrorCode
 	Parameters []any
 	Cause      error
+	Suggestion string
 }
 
 func (e *CliError) Error() string {
@@ -101,6 +106,10 @@ func NewMissingFlagValueError(name string) *CliError {
 
 func NewUnexpectedPosError(token string) *CliError {
 	return NewCliError(ErrUnexpectedPos, token)
+}
+
+func NewUnknownCommandError(name string) *CliError {
+	return NewCliError(ErrUnknownCommand, name)
 }
 
 func NewExclusiveFlagsError(signatures []string) *CliError {

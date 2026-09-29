@@ -1,17 +1,23 @@
+# 0.7.0 (2026-09-28)
+
+- Adding completion support for bash and zsh shells.
+- Adding "did you mean" suggestions for mistyped flags and subcommands.
+- Adding unknown command error.
+
 # 0.6.2 (2026-07-13)
 
-Removing extra \n on help output.
+- Removing extra \n on help output.
 
 # 0.6.1 (2026-07-13)
 
-Removing debug print.
+- Removing debug print.
 
 # 0.6.0 (2026-07-13)
 
 Major overhaul of the API, file structure, and internal implementation.
 
 - Removing many functions out of the scope of the library, such as Print, Error and Shell.
-- Pruning the API surface to remove uncommon flag and positional types 
+- Pruning the API surface to remove uncommon flag and positional types
 - Adding support for custom flag and positional types.
 - Adding formatters for help and error messages.
 - Improving error handling.

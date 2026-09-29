@@ -28,6 +28,7 @@ type Locale struct {
 	TagEnvLabel       string // e.g. "as in (env=%v)", receives the default value
 	ErrorLabel        string // e.g. "as in Error: <message>"
 	ExamplesLabel     string // e.g. "as in Examples"
+	DidYouMeanLabel   string // e.g. "did you mean %s?", receives the suggestion
 
 	// Auto-generated flag descriptions
 	HelpFlagDescription    string // description for the automatic --help/-h flag
@@ -69,6 +70,7 @@ func EN() Locale {
 		TagEnvLabel:       "env=%s",
 		ErrorLabel:        "Error",
 		ExamplesLabel:     "Examples",
+		DidYouMeanLabel:   "did you mean %s?",
 
 		HelpFlagDescription:    "Show help message",
 		VersionFlagDescription: "Show version information",
@@ -84,6 +86,7 @@ func EN() Locale {
 			errors.ErrUnexpectedPos:       "unexpected extra positional argument: %s",
 			errors.ErrExclusiveFlags:      "mutually exclusive flags provided: %s",
 			errors.ErrAtLeastOneFlag:      "at least one of the following flags must be provided: %s",
+			errors.ErrUnknownCommand:      "unknown command %s",
 		},
 	}
 }
@@ -103,6 +106,7 @@ func PT_BR() Locale {
 		TagEnvLabel:       "env=%s",
 		ErrorLabel:        "Erro",
 		ExamplesLabel:     "Exemplos",
+		DidYouMeanLabel:   "você quis dizer %s?",
 
 		HelpFlagDescription:    "Exibir mensagem de ajuda",
 		VersionFlagDescription: "Exibir informações da versão",
@@ -118,6 +122,7 @@ func PT_BR() Locale {
 			errors.ErrUnexpectedPos:       "argumento posicional extra inesperado: %s",
 			errors.ErrExclusiveFlags:      "flags mutuamente exclusivas fornecidas: %s",
 			errors.ErrAtLeastOneFlag:      "pelo menos uma das seguintes flags deve ser fornecida: %s",
+			errors.ErrUnknownCommand:      "comando desconhecido %s",
 		},
 	}
 }

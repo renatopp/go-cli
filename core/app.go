@@ -42,7 +42,8 @@ type App struct {
 	repeatedFlagsAllowed    bool
 	autoHelp                bool
 	autoCompletion          bool
-	completing              bool // whether the app was invoked by the shell completion script
+	suggestions             bool
+	completing            bool // whether the app was invoked by the shell completion script
 	version                 string
 }
 
@@ -111,6 +112,14 @@ func (a *App) WithAutoHelp(enabled bool) {
 // or output before Parse. By default, auto completion is disabled.
 func (a *App) WithAutoCompletion(enabled bool) {
 	a.autoCompletion = enabled
+}
+
+// WithSuggestions configures the CLI to suggest the closest match when the
+// user mistypes a flag or a subcommand, e.g. "did you mean --verbose?". The
+// suggestion is available in the Suggestion field of *errors.CliError. By
+// default, suggestions are enabled.
+func (a *App) WithSuggestions(enabled bool) {
+	a.suggestions = enabled
 }
 
 // UsePanic configures the CLI to panic instead of exiting when
@@ -189,6 +198,7 @@ func (a *App) Clear() {
 	a.repeatedFlagsAllowed = false
 	a.autoHelp = false
 	a.autoCompletion = false
+	a.suggestions = true
 	a.completing = false
 	a.version = ""
 }

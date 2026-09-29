@@ -118,7 +118,20 @@ func (a *Result) tryGetFlag(name string) (AnyFlag, error) {
 		a.flags[name] = extraFlag
 		return extraFlag, nil
 	}
-	return nil, errors.NewUnknownFlagError(name)
+
+	err := errors.NewUnknownFlagError(name)
+	if a.app.suggestions && len(name) > 1 {
+		names := []string{}
+		for _, f := range a.app.currentCommand.flags {
+			if !f.IsHidden() && f.Long() != "" {
+				names = append(names, f.Long())
+			}
+		}
+		if s := suggest(name, names); s != "" {
+			err.Suggestion = "--" + s
+		}
+	}
+	return nil, err
 }
 
 // parseFlag parses the flag with the given value. It checks for repeated flags
@@ -218,6 +231,21 @@ func (a *Result) parsePositional(token string) error {
 		}
 
 		if !a.app.extraPositionalsAllowed {
+			// The first token of a command without positionals is probably a
+			// mistyped subcommand
+			names := []string{}
+			for _, sub := range a.app.currentCommand.subcommands {
+				if !sub.hidden {
+					names = append(names, sub.name)
+				}
+			}
+			if i == 0 && len(names) > 0 {
+				err := errors.NewUnknownCommandError(token)
+				if a.app.suggestions {
+					err.Suggestion = suggest(token, names)
+				}
+				return err
+			}
 			return errors.NewUnexpectedPosError(token)
 		}
 
