@@ -51,5 +51,5 @@ func TestLocaleHelpLabels(t *testing.T) {
 	})
 	cli.FlagString("name", "n", "your name")
 	help := cli.GetHelp()
-	assertTrue(t, strings.Contains(help, "Uso:"), "expected help to contain translated usage label")
+	assertTrue(t, strings.Contains(help, "USO"), "expected help to contain translated usage label")
 }

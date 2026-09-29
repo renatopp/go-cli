@@ -30,7 +30,7 @@ func TestHiddenSubcommandNotInHelp(t *testing.T) {
 	cli.Command("public", "public command", func() {}).AsHidden()
 
 	help := cli.GetHelp()
-	assertFalse(t, strings.Contains(help, "Commands:"))
+	assertFalse(t, strings.Contains(help, "COMMANDS"))
 	assertFalse(t, strings.Contains(help, "public"))
 	assertFalse(t, strings.Contains(help, "<command>"))
 }
