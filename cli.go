@@ -120,6 +120,20 @@ func AutoHelp(enabled bool) {
 	app.WithAutoHelp(enabled)
 }
 
+// AutoCompletion configures the CLI to support shell completion on TAB for bash
+// and zsh. It adds a hidden `completion <shell>` command that prints the
+// script to be installed by the user, e.g.:
+//
+//	source <(myapp completion bash)
+//
+// Subcommands, flags and bool values are completed automatically. Use
+// WithCompletion on flags and positionals to suggest dynamic values. Since the
+// program is called on every TAB, avoid side effects or output before Parse.
+// By default, auto completion is disabled.
+func AutoCompletion(enabled bool) {
+	app.WithAutoCompletion(enabled)
+}
+
 func Args(args []string) {
 	app.WithArgs(args)
 }

@@ -146,6 +146,7 @@ func main() {
 - [Custom Flags and Positionals](.docs/cookbook/custom-types.md)
 - [Mutually exclusive flags](.docs/cookbook/mutually-exclusive-flags.md)
 - [Testing CLI applications](.docs/cookbook/testing.md)
+- [Shell completion](.docs/cookbook/shell-completion.md)
 
 ## Examples
 

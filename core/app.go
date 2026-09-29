@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"path"
+	"slices"
 
 	"github.com/renatopp/go-cli/locales"
 	"github.com/renatopp/go-cli/parsers"
@@ -40,6 +41,8 @@ type App struct {
 	extraPositionalsAllowed bool
 	repeatedFlagsAllowed    bool
 	autoHelp                bool
+	autoCompletion          bool
+	completing              bool // whether the app was invoked by the shell completion script
 	version                 string
 }
 
@@ -95,6 +98,19 @@ func (a *App) WithArgs(args []string) *App {
 // provides the `-h` or `--help` flag. By default, auto help is disabled.
 func (a *App) WithAutoHelp(enabled bool) {
 	a.autoHelp = enabled
+}
+
+// WithAutoCompletion configures the CLI to support shell completion on TAB. It
+// adds a hidden `completion <shell>` command to the root command, which prints
+// the completion script for bash or zsh, e.g.:
+//
+//	source <(myapp completion bash)
+//
+// The script calls the program back on every TAB to get the candidates, so the
+// command functions are executed up to their Parse call. Avoid side effects
+// or output before Parse. By default, auto completion is disabled.
+func (a *App) WithAutoCompletion(enabled bool) {
+	a.autoCompletion = enabled
 }
 
 // UsePanic configures the CLI to panic instead of exiting when
@@ -172,6 +188,8 @@ func (a *App) Clear() {
 	a.extraPositionalsAllowed = false
 	a.repeatedFlagsAllowed = false
 	a.autoHelp = false
+	a.autoCompletion = false
+	a.completing = false
 	a.version = ""
 }
 
@@ -231,8 +249,19 @@ func (a *App) Parse() *Result {
 
 	a.initialize()
 
-	// Check new subcommand
-	if len(a.queue) > 0 {
+	// Check if invoked by the shell completion script. The last argument is the
+	// partial word being completed.
+	if a.autoCompletion && !a.completing && a.currentCommand == a.rootCommand &&
+		len(a.queue) > 0 && a.queue[0] == completeCommandName {
+		a.completing = true
+		a.queue = a.queue[1:]
+		if len(a.queue) == 0 {
+			a.queue = []string{""}
+		}
+	}
+
+	// Check new subcommand, ignoring the partial word when completing
+	if len(a.queue) > 0 && !(a.completing && len(a.queue) == 1) {
 		next := a.queue[0]
 
 		// There is a subcommand, so we execute it
@@ -247,12 +276,21 @@ func (a *App) Parse() *Result {
 				cmd.inheritFlags()
 				cmd.execute()
 
+				// The subcommand did not call Parse, so complete it here
+				if a.completing {
+					a.complete()
+				}
+
 				// Exit as the first command fully executes, interrupting the flow of
 				// the parent command, i.e., if there is a subcommand, the parent
 				// command will not execute after Parse
 				a.Exit(0)
 			}
 		}
+	}
+
+	if a.completing {
+		a.complete()
 	}
 
 	// There is no match with any subcommand, so this command will execute.
@@ -295,5 +333,10 @@ func (a *App) initialize() {
 			rootCmd.name = name
 		}
 		a.path = append(a.path, rootCmd.name)
+	}
+
+	if a.autoCompletion && curCmd == rootCmd &&
+		!slices.ContainsFunc(rootCmd.subcommands, func(c *Command) bool { return c.name == completionCommandName }) {
+		rootCmd.WithSubcommand(a.newCompletionCommand())
 	}
 }

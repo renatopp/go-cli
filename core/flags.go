@@ -25,6 +25,7 @@ type AnyFlag interface {
 	IsGlobal() bool
 	parse(value string) error
 	onParsed()
+	complete(prefix string) ([]string, bool)
 }
 
 // Implements a flag with parametric type. You can use this to create custom
@@ -49,6 +50,7 @@ type Flag[T any] struct {
 	default_  T                       // the default value of the flag
 	parser    func(string) (T, error) // base parser function to convert string input to the desired type
 	validator func(T) error           // custom validator function, provided by the user
+	completer func(string) []string   // function to suggest values on shell completion
 }
 
 // NewFlag creates a new GenericFlag.
@@ -74,6 +76,15 @@ func (f *Flag[T]) WithDefault(value T) *Flag[T] {
 // will be used to provide better error messages to the user.
 func (f *Flag[T]) WithValidation(validator func(T) error) *Flag[T] {
 	f.validator = validator
+	return f
+}
+
+// WithCompletion sets the function used to suggest values for the flag when
+// the user presses TAB (see AutoCompletion). The function receives the partial
+// value typed so far and returns the candidates. A candidate may include a
+// description separated by a tab, e.g. "prod\tProduction environment".
+func (f *Flag[T]) WithCompletion(completer func(prefix string) []string) *Flag[T] {
+	f.completer = completer
 	return f
 }
 
@@ -231,4 +242,16 @@ func (f *Flag[T]) onParsed() {
 	if f.onParsedCallback != nil {
 		f.onParsedCallback(f)
 	}
+}
+
+// complete returns the completion candidates for the flag value, and whether
+// the flag knows its candidates. Unknown candidates fall back to file names.
+func (f *Flag[T]) complete(prefix string) ([]string, bool) {
+	if f.completer != nil {
+		return f.completer(prefix), true
+	}
+	if _, ok := any(f).(*Flag[bool]); ok {
+		return []string{"true", "false"}, true
+	}
+	return nil, false
 }

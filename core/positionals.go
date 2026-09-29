@@ -19,6 +19,7 @@ type AnyPositional interface {
 	IsHidden() bool
 	IsVariadic() bool
 	parse(value string) error
+	complete(prefix string) ([]string, bool)
 }
 
 // Implements a positional argument with parametric type. You can use this to
@@ -41,6 +42,7 @@ type Positional[T any] struct {
 	default_  T                       // the default value of the positional argument
 	parser    func(string) (T, error) // base parser function to convert string input to the desired type
 	validator func(T) error           // custom validator function, provided by the user
+	completer func(string) []string   // function to suggest values on shell completion
 }
 
 // NewPositional creates a new GenericPositional.
@@ -65,6 +67,16 @@ func (f *Positional[T]) WithDefault(value T) *Positional[T] {
 // which will be used to provide better error messages to the user.
 func (f *Positional[T]) WithValidation(validator func(T) error) *Positional[T] {
 	f.validator = validator
+	return f
+}
+
+// WithCompletion sets the function used to suggest values for the positional
+// argument when the user presses TAB (see AutoCompletion). The function
+// receives the partial value typed so far and returns the candidates. A
+// candidate may include a description separated by a tab, e.g.
+// "main\tDefault branch".
+func (f *Positional[T]) WithCompletion(completer func(prefix string) []string) *Positional[T] {
+	f.completer = completer
 	return f
 }
 
@@ -181,4 +193,17 @@ func (f *Positional[T]) parse(value string) error {
 	}
 
 	return nil
+}
+
+// complete returns the completion candidates for the positional argument, and
+// whether the positional knows its candidates. Unknown candidates fall back to
+// file names.
+func (f *Positional[T]) complete(prefix string) ([]string, bool) {
+	if f.completer != nil {
+		return f.completer(prefix), true
+	}
+	if _, ok := any(f).(*Positional[bool]); ok {
+		return []string{"true", "false"}, true
+	}
+	return nil, false
 }
